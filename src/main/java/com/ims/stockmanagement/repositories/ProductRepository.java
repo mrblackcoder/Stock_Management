@@ -2,6 +2,7 @@ package com.ims.stockmanagement.repositories;
 
 import com.ims.stockmanagement.models.Category;
 import com.ims.stockmanagement.models.Product;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -21,5 +22,12 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findLowStockProducts();
 
     boolean existsBySku(String sku);
+
+    // Son eklenen ürünleri getir (createdAt'e göre azalan sıralı)
+    List<Product> findAllByOrderByCreatedAtDesc();
+
+    // Pageable ile limitli sorgulama için
+    @Query("SELECT p FROM Product p ORDER BY p.createdAt DESC")
+    List<Product> findRecentProducts(Pageable pageable);
 }
 

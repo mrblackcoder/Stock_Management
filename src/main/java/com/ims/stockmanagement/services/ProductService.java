@@ -33,10 +33,10 @@ public class ProductService {
 
     /**
      * Tüm ürünleri listele (READ - CRUD)
-     * En yeni ürünler önce gelir (ID'ye göre azalan sırada)
+     * En yeni ürünler önce gelir (createdAt'e göre azalan sırada)
      */
     public Response getAllProducts() {
-        List<Product> products = productRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
+        List<Product> products = productRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
         List<ProductDTO> productDTOs = products.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -262,16 +262,26 @@ public class ProductService {
     }
 
     /**
-     * Product entity'yi DTO'ya dönüştür
+     * Product entity'sini ProductDTO'ya çevirir
      */
     private ProductDTO convertToDTO(Product product) {
         ProductDTO dto = modelMapper.map(product, ProductDTO.class);
-        dto.setCategoryId(product.getCategory().getId());
-        dto.setCategoryName(product.getCategory().getName());
+
+        // Category bilgileri
+        if (product.getCategory() != null) {
+            dto.setCategoryId(product.getCategory().getId());
+            dto.setCategoryName(product.getCategory().getName());
+        }
+
+        // Supplier bilgileri - Her ürün için kendi tedarikçisi
         if (product.getSupplier() != null) {
             dto.setSupplierId(product.getSupplier().getId());
             dto.setSupplierName(product.getSupplier().getName());
         }
+
+        // Stok miktarı
+        dto.setStockQuantity(product.getStockQuantity());
+
         return dto;
     }
 }
