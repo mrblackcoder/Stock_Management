@@ -15,7 +15,7 @@ function ProductPage() {
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
-        name: '', sku: '', description: '', price: '', stockQuantity: '', categoryId: '', supplierId: ''
+        name: '', sku: '', description: '', price: '', stockQuantity: '', reorderLevel: '10', categoryId: '', supplierId: ''
     });
 
     useEffect(() => {
@@ -74,7 +74,7 @@ function ProductPage() {
         try {
             await ApiService.createProduct(formData);
             setShowForm(false);
-            setFormData({ name: '', sku: '', description: '', price: '', stockQuantity: '', categoryId: '', supplierId: '' });
+            setFormData({ name: '', sku: '', description: '', price: '', stockQuantity: '', reorderLevel: '10', categoryId: '', supplierId: '' });
             fetchData();
         } catch (err) {
             setError('Ürün eklenemedi: ' + err.message);
@@ -122,7 +122,7 @@ function ProductPage() {
                             >
                                 {showPricesInUSD ? '💵 USD (External API)' : '💰 TRY'}
                             </button>
-                            <button onClick={() => { setShowForm(!showForm); setFormData({ name: '', sku: '', description: '', price: '', stockQuantity: '', categoryId: '', supplierId: '' }); }}
+                            <button onClick={() => { setShowForm(!showForm); setFormData({ name: '', sku: '', description: '', price: '', stockQuantity: '', reorderLevel: '10', categoryId: '', supplierId: '' }); }}
                                     className="action-btn">
                                 {showForm ? 'İptal' : '+ Yeni Ürün'}
                             </button>

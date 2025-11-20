@@ -125,8 +125,8 @@ public class ProductService {
         product.setSku(productDTO.getSku());
         product.setDescription(productDTO.getDescription());
         product.setPrice(productDTO.getPrice());
-        product.setStockQuantity(productDTO.getStockQuantity());
-        product.setReorderLevel(productDTO.getReorderLevel());
+        product.setStockQuantity(productDTO.getStockQuantity() != null ? productDTO.getStockQuantity() : 0);
+        product.setReorderLevel(productDTO.getReorderLevel() != null ? productDTO.getReorderLevel() : 10);
         product.setCategory(category);
         product.setSupplier(supplier);
         product.setImageUrl(productDTO.getImageUrl());
@@ -171,8 +171,8 @@ public class ProductService {
         existingProduct.setSku(productDTO.getSku());
         existingProduct.setDescription(productDTO.getDescription());
         existingProduct.setPrice(productDTO.getPrice());
-        existingProduct.setStockQuantity(productDTO.getStockQuantity());
-        existingProduct.setReorderLevel(productDTO.getReorderLevel());
+        existingProduct.setStockQuantity(productDTO.getStockQuantity() != null ? productDTO.getStockQuantity() : existingProduct.getStockQuantity());
+        existingProduct.setReorderLevel(productDTO.getReorderLevel() != null ? productDTO.getReorderLevel() : existingProduct.getReorderLevel());
         existingProduct.setCategory(category);
         existingProduct.setSupplier(supplier);
         existingProduct.setImageUrl(productDTO.getImageUrl());
