@@ -83,24 +83,6 @@
     border-top: 1px solid rgba(255,255,255,0.1);
 }
 
-.user-info {
-    display: flex;
-    align-items: center;
-    padding: 10px;
-    background-color: rgba(255,255,255,0.1);
-    border-radius: 8px;
-    margin-bottom: 15px;
-}
-
-.user-icon {
-    font-size: 24px;
-    margin-right: 10px;
-}
-
-.user-name {
-    font-size: 14px;
-    font-weight: 500;
-}
 
 .logout-btn {
     width: 100%;
@@ -243,8 +225,7 @@
     }
 
     .sidebar-header p,
-    .nav-text,
-    .user-name {
+    .nav-text {
         display: none;
     }
 

@@ -54,10 +54,6 @@ function Layout({ children }) {
                 </nav>
 
                 <div className="sidebar-footer">
-                    <div className="user-info">
-                        <span className="user-icon">👤</span>
-                        <span className="user-name">{user.username || 'User'}</span>
-                    </div>
                     <button className="logout-btn" onClick={handleLogout}>
                         🚪 Logout
                     </button>
