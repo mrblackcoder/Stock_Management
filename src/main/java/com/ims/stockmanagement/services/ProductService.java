@@ -34,9 +34,10 @@ public class ProductService {
     /**
      * Tüm ürünleri listele (READ - CRUD)
      * En yeni ürünler önce gelir (createdAt'e göre azalan sırada)
+     * Supplier ve Category bilgileri FETCH JOIN ile yüklenir
      */
     public Response getAllProducts() {
-        List<Product> products = productRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+        List<Product> products = productRepository.findAllByOrderByCreatedAtDesc();
         List<ProductDTO> productDTOs = products.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -51,9 +52,10 @@ public class ProductService {
 
     /**
      * Tüm ürünleri sayfalı listele
+     * Supplier ve Category bilgileri FETCH JOIN ile yüklenir
      */
     public Response getAllProducts(Pageable pageable) {
-        Page<Product> productPage = productRepository.findAll(pageable);
+        Page<Product> productPage = productRepository.findAllWithRelations(pageable);
         List<ProductDTO> productDTOs = productPage.getContent().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());

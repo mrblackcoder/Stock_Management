@@ -26,8 +26,9 @@ function DashboardPage() {
             setLoading(true);
 
             // Fetch all data with correct API methods
+            // Dashboard için tüm ürünleri getir (büyük size ile) - supplier bilgileri dahil
             const [productsRes, categoriesRes, suppliersRes, transactionsRes] = await Promise.all([
-                ApiService.getAllProducts(),
+                ApiService.getAllProducts(0, 1000, "createdAt"), // Büyük size ve createdAt sıralaması
                 ApiService.getAllCategories(),
                 ApiService.getAllSuppliers(),
                 ApiService.getAllTransactions()
@@ -44,13 +45,14 @@ function DashboardPage() {
                 totalTransactions: transactionsRes.transactionList?.length || 0
             });
 
-            // Son 5 ürünü al (en yeni önce)
+            // Son 5 ürünü al (en yeni önce) - Supplier bilgileriyle birlikte
             const recentProductsList = productsRes.productList?.slice(0, 5) || [];
             console.log('Recent Products with Suppliers:', recentProductsList.map(p => ({
                 id: p.id,
                 name: p.name,
                 supplier: p.supplierName,
-                supplierId: p.supplierId
+                supplierId: p.supplierId,
+                category: p.categoryName
             })));
 
             setRecentProducts(recentProductsList);
