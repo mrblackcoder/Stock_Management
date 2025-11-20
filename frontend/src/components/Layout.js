@@ -66,6 +66,27 @@ function Layout({ children }) {
 
             {/* Main Content */}
             <main className="main-content">
+                {/* Top Header Bar */}
+                <header className="top-header">
+                    <div className="header-left">
+                        <h1 className="page-title">📦 Inventory Management System</h1>
+                    </div>
+                    <div className="header-right">
+                        <div className="user-profile">
+                            <div className="user-avatar">
+                                {(user.username || 'G').charAt(0).toUpperCase()}
+                            </div>
+                            <div className="user-details">
+                                <span className="user-display-name">{user.username || 'Guest'}</span>
+                                <span className="user-role-badge">{user.role || 'USER'}</span>
+                            </div>
+                        </div>
+                        <button className="header-logout-btn" onClick={handleLogout} title="Logout">
+                            🚪 Çıkış
+                        </button>
+                    </div>
+                </header>
+
                 <div className="content-wrapper">
                     {children}
                 </div>
