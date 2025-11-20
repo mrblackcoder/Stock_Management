@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,9 +33,10 @@ public class ProductService {
 
     /**
      * Tüm ürünleri listele (READ - CRUD)
+     * En yeni ürünler önce gelir (ID'ye göre azalan sırada)
      */
     public Response getAllProducts() {
-        List<Product> products = productRepository.findAll();
+        List<Product> products = productRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
         List<ProductDTO> productDTOs = products.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());

@@ -44,7 +44,16 @@ function DashboardPage() {
                 totalTransactions: transactionsRes.transactionList?.length || 0
             });
 
-            setRecentProducts(productsRes.productList?.slice(0, 5) || []);
+            // Son 5 ürünü al (en yeni önce)
+            const recentProductsList = productsRes.productList?.slice(0, 5) || [];
+            console.log('Recent Products with Suppliers:', recentProductsList.map(p => ({
+                id: p.id,
+                name: p.name,
+                supplier: p.supplierName,
+                supplierId: p.supplierId
+            })));
+
+            setRecentProducts(recentProductsList);
             setLowStockItems(lowStockRes.productList?.slice(0, 5) || []);
 
             setLoading(false);
