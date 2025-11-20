@@ -194,11 +194,10 @@
         <!-- Top Navbar -->
         <nav class="navbar">
             <div class="d-flex justify-content-between align-items-center w-100">
-                <h4 class="mb-0">Dashboard</h4>
+                <h4 class="mb-0">📦 Inventory Management System</h4>
                 <div class="d-flex align-items-center">
-                    <span class="me-3" id="welcomeText">Welcome, User</span>
                     <button class="btn btn-logout" onclick="logout()">
-                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                        <i class="fas fa-sign-out-alt me-2"></i>Çıkış
                     </button>
                 </div>
             </div>
@@ -277,15 +276,11 @@
     <script>
         // Check authentication
         const token = localStorage.getItem('token');
-        const username = localStorage.getItem('username');
 
         if (!token) {
             window.location.href = '/login';
         }
 
-        if (username) {
-            document.getElementById('welcomeText').textContent = `Welcome, ${username}`;
-        }
 
         // Fetch dashboard data
         async function fetchDashboardData() {
