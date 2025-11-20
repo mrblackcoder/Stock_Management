@@ -11,6 +11,8 @@ function CategoryPage() {
     const [editMode, setEditMode] = useState(false);
     const [currentCategory, setCurrentCategory] = useState({ id: null, name: '', description: '' });
     const navigate = useNavigate();
+    const role = ApiService.getRole();
+    const isAdmin = role === 'ADMIN';
 
     useEffect(() => {
         fetchCategories();

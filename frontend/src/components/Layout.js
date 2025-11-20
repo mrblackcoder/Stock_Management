@@ -6,6 +6,8 @@ import './Layout.css';
 function Layout({ children }) {
     const navigate = useNavigate();
     const user = ApiService.getUser() || { username: 'Guest', role: 'USER' };
+    const role = ApiService.getRole();
+    const isAdmin = role === 'ADMIN';
 
     const handleLogout = () => {
         ApiService.clearAuth();
@@ -32,20 +34,25 @@ function Layout({ children }) {
                         <span className="nav-text">Products</span>
                     </NavLink>
 
-                    <NavLink to="/categories" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-                        <span className="nav-icon">🏷️</span>
-                        <span className="nav-text">Categories</span>
-                    </NavLink>
+                    {/* Admin Only Menu Items */}
+                    {isAdmin && (
+                        <>
+                            <NavLink to="/categories" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+                                <span className="nav-icon">🏷️</span>
+                                <span className="nav-text">Categories</span>
+                            </NavLink>
 
-                    <NavLink to="/suppliers" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-                        <span className="nav-icon">🚚</span>
-                        <span className="nav-text">Suppliers</span>
-                    </NavLink>
+                            <NavLink to="/suppliers" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+                                <span className="nav-icon">🚚</span>
+                                <span className="nav-text">Suppliers</span>
+                            </NavLink>
 
-                    <NavLink to="/transactions" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-                        <span className="nav-icon">🔄</span>
-                        <span className="nav-text">Transactions</span>
-                    </NavLink>
+                            <NavLink to="/transactions" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+                                <span className="nav-icon">🔄</span>
+                                <span className="nav-text">Transactions</span>
+                            </NavLink>
+                        </>
+                    )}
 
                     <NavLink to="/profile" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
                         <span className="nav-icon">👤</span>
@@ -74,7 +81,9 @@ function Layout({ children }) {
                             </div>
                             <div className="user-details">
                                 <span className="user-display-name">{user.username || 'Guest'}</span>
-                                <span className="user-role-badge">{user.role || 'USER'}</span>
+                                <span className={`user-role-badge ${role?.toLowerCase() || 'user'}`}>
+                                    {isAdmin ? '👑 Admin' : '👤 User'}
+                                </span>
                             </div>
                         </div>
                         <button className="header-logout-btn" onClick={handleLogout} title="Logout">

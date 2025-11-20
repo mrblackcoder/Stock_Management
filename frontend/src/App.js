@@ -58,11 +58,11 @@ function App() {
           </ProtectedRoute>
         } />
         <Route path="/transactions" element={
-          <ProtectedRoute>
+          <AdminRoute>
             <Layout>
               <TransactionPage />
             </Layout>
-          </ProtectedRoute>
+          </AdminRoute>
         } />
         <Route path="/profile" element={
           <ProtectedRoute>
