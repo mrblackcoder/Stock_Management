@@ -155,6 +155,7 @@ function DashboardPage() {
                                     <th>Product Name</th>
                                     <th>SKU</th>
                                     <th>Category</th>
+                                    <th>Supplier</th>
                                     <th>Price</th>
                                     <th>Current Stock</th>
                                     <th>Status</th>
@@ -171,6 +172,18 @@ function DashboardPage() {
                                             <td><strong>{product.name}</strong></td>
                                             <td><code>{product.sku}</code></td>
                                             <td>{product.categoryName || 'N/A'}</td>
+                                            <td>
+                                                <span style={{
+                                                    background: '#e6efff',
+                                                    color: '#667eea',
+                                                    padding: '4px 10px',
+                                                    borderRadius: '6px',
+                                                    fontSize: '13px',
+                                                    fontWeight: '600'
+                                                }}>
+                                                    🚚 {product.supplierName || 'N/A'}
+                                                </span>
+                                            </td>
                                             <td><strong>₺{product.price?.toFixed(2)}</strong></td>
                                             <td>
                                                 <span className={`stock-badge ${stockStatus}`}>
