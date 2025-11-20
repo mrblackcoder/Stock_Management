@@ -25,27 +25,27 @@ function DashboardPage() {
         try {
             setLoading(true);
 
-            // Fetch all data with correct API endpoints
+            // Fetch all data with correct API methods
             const [productsRes, categoriesRes, suppliersRes, transactionsRes] = await Promise.all([
-                ApiService.get('/products'),
-                ApiService.get('/categories'),
-                ApiService.get('/suppliers'),
-                ApiService.get('/transactions')
+                ApiService.getAllProducts(),
+                ApiService.getAllCategories(),
+                ApiService.getAllSuppliers(),
+                ApiService.getAllTransactions()
             ]);
 
             // Get low stock products
-            const lowStockRes = await ApiService.get('/products/low-stock');
+            const lowStockRes = await ApiService.getLowStockProducts();
 
             setStats({
-                totalProducts: productsRes.data?.productList?.length || 0,
-                totalCategories: categoriesRes.data?.categoryList?.length || 0,
-                totalSuppliers: suppliersRes.data?.supplierList?.length || 0,
-                lowStockProducts: lowStockRes.data?.productList?.length || 0,
-                totalTransactions: transactionsRes.data?.transactionList?.length || 0
+                totalProducts: productsRes.productList?.length || 0,
+                totalCategories: categoriesRes.categoryList?.length || 0,
+                totalSuppliers: suppliersRes.supplierList?.length || 0,
+                lowStockProducts: lowStockRes.productList?.length || 0,
+                totalTransactions: transactionsRes.transactionList?.length || 0
             });
 
-            setRecentProducts(productsRes.data?.productList?.slice(0, 5) || []);
-            setLowStockItems(lowStockRes.data?.productList?.slice(0, 5) || []);
+            setRecentProducts(productsRes.productList?.slice(0, 5) || []);
+            setLowStockItems(lowStockRes.productList?.slice(0, 5) || []);
 
             setLoading(false);
         } catch (err) {

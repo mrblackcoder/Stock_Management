@@ -271,7 +271,12 @@ export default class ApiService {
     }
 
     static async createTransaction(transactionData) {
-        const response = await axios.post(`${this.BASE_URL}/transactions`, transactionData, {
+        const user = this.getUser();
+        const dataWithUserId = {
+            ...transactionData,
+            userId: user?.id || 1 // Fallback to 1 if user not found
+        };
+        const response = await axios.post(`${this.BASE_URL}/transactions`, dataWithUserId, {
             headers: this.getHeader()
         });
         return response.data;
