@@ -67,3 +67,13 @@ mesaj
 *.tar.gz
 *.rar
 
+
+# Auto-added by cleanup
+*.log
+*.tmp
+/node_modules/
+/build/
+/out/
+/.idea/
+/*.iml
+.DS_Store
