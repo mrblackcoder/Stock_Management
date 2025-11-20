@@ -76,14 +76,6 @@ function CategoryPage() {
 
     return (
         <div className="dashboard-page">
-            <div className="dashboard-header">
-                <h1>📦 Inventory Management System</h1>
-                <div className="user-info">
-                    <span className="username">{ApiService.getUsername()}</span>
-                    <button onClick={() => navigate('/dashboard')} className="action-btn" style={{marginRight: '10px'}}>Dashboard</button>
-                    <button onClick={handleLogout} className="logout-btn">Çıkış</button>
-                </div>
-            </div>
 
             <div className="dashboard-container">
                 <div className="quick-actions">

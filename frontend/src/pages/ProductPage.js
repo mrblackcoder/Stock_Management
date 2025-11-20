@@ -92,23 +92,11 @@ function ProductPage() {
         }
     };
 
-    const handleLogout = () => {
-        ApiService.logout();
-        navigate('/login');
-    };
 
     if (loading) return <div className="dashboard-page"><div className="dashboard-container">Yükleniyor...</div></div>;
 
     return (
         <div className="dashboard-page">
-            <div className="dashboard-header">
-                <h1>📦 Inventory Management System</h1>
-                <div className="user-info">
-                    <span className="username">{ApiService.getUsername()}</span>
-                    <button onClick={() => navigate('/dashboard')} className="action-btn" style={{marginRight: '10px'}}>Dashboard</button>
-                    <button onClick={handleLogout} className="logout-btn">Çıkış</button>
-                </div>
-            </div>
 
             <div className="dashboard-container">
                 <div className="quick-actions">
@@ -195,18 +183,86 @@ function ProductPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {products.map((prod, index) => (
-                                        <tr key={prod.id} style={{borderBottom: '1px solid #ddd', background: index % 2 === 0 ? '#f9f9f9' : 'white'}}>
-                                            <td style={{padding: '12px'}}>{prod.sku}</td>
-                                            <td style={{padding: '12px'}}>{prod.name}</td>
-                                            <td style={{padding: '12px', textAlign: 'right', fontWeight: 'bold'}}>{formatPrice(prod.price)}</td>
-                                            <td style={{padding: '12px', textAlign: 'center'}}>{prod.quantity}</td>
-                                            <td style={{padding: '12px'}}>{prod.categoryName || 'N/A'}</td>
-                                            <td style={{padding: '12px', textAlign: 'center'}}>
-                                                <button onClick={() => handleDelete(prod.id)} style={{padding: '5px 15px', background: '#f56565', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer'}}>Sil</button>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                    {products.map((prod, index) => {
+                                        const stockQty = prod.stockQuantity || prod.quantity || 0;
+                                        const reorderLevel = prod.reorderLevel || 10;
+
+                                        // Stok durumu belirleme
+                                        const getStockColor = () => {
+                                            if (stockQty === 0) return '#f56565';
+                                            if (stockQty <= reorderLevel) return '#ed8936';
+                                            return '#48bb78';
+                                        };
+
+                                        const getStockBadge = () => {
+                                            if (stockQty === 0) return '⚠️ Stok Yok';
+                                            if (stockQty <= reorderLevel) return '⚠️ Düşük';
+                                            return '✅ Normal';
+                                        };
+
+                                        return (
+                                            <tr key={prod.id} style={{
+                                                borderBottom: '1px solid #ddd',
+                                                background: index % 2 === 0 ? '#f9f9f9' : 'white',
+                                                transition: 'background 0.2s'
+                                            }}
+                                            onMouseEnter={(e) => e.currentTarget.style.background = '#e8f4f8'}
+                                            onMouseLeave={(e) => e.currentTarget.style.background = index % 2 === 0 ? '#f9f9f9' : 'white'}
+                                            >
+                                                <td style={{padding: '12px', fontFamily: 'monospace', color: '#4a5568'}}>{prod.sku}</td>
+                                                <td style={{padding: '12px', fontWeight: 'bold', color: '#2d3748'}}>{prod.name}</td>
+                                                <td style={{padding: '12px', textAlign: 'right', fontWeight: 'bold', fontSize: '15px', color: '#667eea'}}>
+                                                    {formatPrice(prod.price)}
+                                                </td>
+                                                <td style={{padding: '12px', textAlign: 'center'}}>
+                                                    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px'}}>
+                                                        <div style={{
+                                                            padding: '6px 12px',
+                                                            borderRadius: '8px',
+                                                            background: getStockColor() + '20',
+                                                            border: `2px solid ${getStockColor()}`,
+                                                            fontWeight: 'bold',
+                                                            fontSize: '16px',
+                                                            color: getStockColor(),
+                                                            minWidth: '60px'
+                                                        }}>
+                                                            {stockQty}
+                                                        </div>
+                                                        <span style={{
+                                                            fontSize: '11px',
+                                                            padding: '3px 8px',
+                                                            borderRadius: '10px',
+                                                            background: getStockColor(),
+                                                            color: 'white',
+                                                            fontWeight: 'bold'
+                                                        }}>
+                                                            {getStockBadge()}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td style={{padding: '12px', color: '#4a5568'}}>{prod.categoryName || 'N/A'}</td>
+                                                <td style={{padding: '12px', textAlign: 'center'}}>
+                                                    <button
+                                                        onClick={() => handleDelete(prod.id)}
+                                                        style={{
+                                                            padding: '6px 16px',
+                                                            background: '#f56565',
+                                                            color: 'white',
+                                                            border: 'none',
+                                                            borderRadius: '6px',
+                                                            cursor: 'pointer',
+                                                            fontWeight: 'bold',
+                                                            transition: 'all 0.2s'
+                                                        }}
+                                                        onMouseEnter={(e) => e.target.style.background = '#e53e3e'}
+                                                        onMouseLeave={(e) => e.target.style.background = '#f56565'}
+                                                    >
+                                                        🗑️ Sil
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         )}
