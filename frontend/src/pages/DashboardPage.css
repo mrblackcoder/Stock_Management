@@ -154,6 +154,143 @@
     margin-top: 0;
     color: #333;
     font-size: 1.5rem;
+    margin-bottom: 20px;
+}
+
+/* Low Stock Section Enhancements */
+.low-stock-section {
+    border-left: 4px solid #f59e0b;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.badge-count {
+    background: #fef3c7;
+    color: #f59e0b;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+/* Data Tables */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.data-table thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.data-table thead th {
+    padding: 14px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.data-table tbody tr {
+    border-bottom: 1px solid #e5e7eb;
+    transition: background 0.2s;
+}
+
+.data-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.data-table tbody td {
+    padding: 14px 12px;
+    font-size: 0.95rem;
+}
+
+/* Alert Table Specific */
+.alert-table tbody tr.critical-row {
+    background: #fef2f2;
+    border-left: 4px solid #dc2626;
+}
+
+.alert-table tbody tr.warning-row {
+    background: #fffbeb;
+    border-left: 4px solid #f59e0b;
+}
+
+.alert-table tbody tr.critical-row:hover {
+    background: #fee2e2;
+}
+
+.alert-table tbody tr.warning-row:hover {
+    background: #fef3c7;
+}
+
+/* Stock Badges */
+.stock-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.stock-badge.critical {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.stock-badge.low {
+    background: #fef3c7;
+    color: #f59e0b;
+}
+
+.stock-badge.good {
+    background: #d1fae5;
+    color: #10b981;
+}
+
+/* Reorder Button */
+.reorder-btn {
+    transition: all 0.2s;
+}
+
+.reorder-btn:hover {
+    background: #2563eb !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.reorder-btn:active {
+    transform: translateY(0);
+}
+
+/* No Data State */
+.no-data {
+    text-align: center;
+    padding: 40px;
+    color: #9ca3af;
+    font-style: italic;
+    background: #f9fafb;
+    border-radius: 8px;
+    margin: 15px 0;
+}
+
+/* Code Styling */
+code {
+    font-family: 'Courier New', monospace;
+}
+
+.dashboard-section h2 {
+    margin-top: 0;
+    color: #333;
+    font-size: 1.5rem;
 }
 
 /* Data Tables */

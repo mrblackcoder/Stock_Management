@@ -152,21 +152,35 @@ function DashboardPage() {
                         <table className="data-table">
                             <thead>
                                 <tr>
-                                    <th>Name</th>
+                                    <th>Product Name</th>
                                     <th>SKU</th>
+                                    <th>Category</th>
                                     <th>Price</th>
-                                    <th>Stock</th>
+                                    <th>Current Stock</th>
+                                    <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {recentProducts.map(product => (
-                                    <tr key={product.id}>
-                                        <td>{product.name}</td>
-                                        <td>{product.sku}</td>
-                                        <td>₺{product.price?.toFixed(2)}</td>
-                                        <td>{product.stockQuantity || product.quantity || 0}</td>
-                                    </tr>
-                                ))}
+                                {recentProducts.map(product => {
+                                    const stock = product.stockQuantity || product.quantity || 0;
+                                    const stockStatus = stock <= 5 ? 'critical' : stock <= 10 ? 'low' : 'good';
+                                    const statusIcon = stock <= 5 ? '🔴' : stock <= 10 ? '🟡' : '🟢';
+
+                                    return (
+                                        <tr key={product.id}>
+                                            <td><strong>{product.name}</strong></td>
+                                            <td><code>{product.sku}</code></td>
+                                            <td>{product.categoryName || 'N/A'}</td>
+                                            <td><strong>₺{product.price?.toFixed(2)}</strong></td>
+                                            <td>
+                                                <span className={`stock-badge ${stockStatus}`}>
+                                                    {stock} units
+                                                </span>
+                                            </td>
+                                            <td>{statusIcon} {stockStatus === 'critical' ? 'Critical' : stockStatus === 'low' ? 'Low' : 'Good'}</td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     ) : (
@@ -174,30 +188,137 @@ function DashboardPage() {
                     )}
                 </div>
 
-                {/* Low Stock Alert */}
-                <div className="dashboard-section">
-                    <h2>⚠️ Low Stock Alert</h2>
+                {/* Low Stock Alert - Enhanced */}
+                <div className="dashboard-section low-stock-section">
+                    <div className="section-header">
+                        <h2>⚠️ Low Stock Alert</h2>
+                        <span className="badge-count">{lowStockItems.length} items</span>
+                    </div>
                     {lowStockItems.length > 0 ? (
-                        <table className="data-table alert">
+                        <table className="data-table alert-table">
                             <thead>
                                 <tr>
-                                    <th>Product</th>
+                                    <th>Priority</th>
+                                    <th>Product Name</th>
+                                    <th>SKU</th>
+                                    <th>Category</th>
+                                    <th>Supplier</th>
                                     <th>Current Stock</th>
+                                    <th>Price/Unit</th>
                                     <th>Status</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {lowStockItems.map(product => (
-                                    <tr key={product.id} className="warning">
-                                        <td>{product.name}</td>
-                                        <td className="stock-low">{product.stockQuantity || product.quantity || 0}</td>
-                                        <td>⚠️ Low Stock</td>
-                                    </tr>
-                                ))}
+                                {lowStockItems.map((product, index) => {
+                                    const stock = product.stockQuantity || product.quantity || 0;
+                                    const isCritical = stock <= 5;
+                                    const priorityLevel = isCritical ? 'HIGH' : 'MEDIUM';
+                                    const priorityColor = isCritical ? '#dc2626' : '#f59e0b';
+
+                                    return (
+                                        <tr key={product.id} className={isCritical ? 'critical-row' : 'warning-row'}>
+                                            <td>
+                                                <span
+                                                    className="priority-badge"
+                                                    style={{
+                                                        background: priorityColor,
+                                                        color: 'white',
+                                                        padding: '4px 8px',
+                                                        borderRadius: '4px',
+                                                        fontSize: '11px',
+                                                        fontWeight: 'bold'
+                                                    }}
+                                                >
+                                                    {priorityLevel}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <strong>{product.name}</strong>
+                                            </td>
+                                            <td>
+                                                <code style={{
+                                                    background: '#f3f4f6',
+                                                    padding: '2px 6px',
+                                                    borderRadius: '3px',
+                                                    fontSize: '12px'
+                                                }}>
+                                                    {product.sku}
+                                                </code>
+                                            </td>
+                                            <td>{product.categoryName || 'N/A'}</td>
+                                            <td>{product.supplierName || 'N/A'}</td>
+                                            <td>
+                                                <span
+                                                    className="stock-indicator"
+                                                    style={{
+                                                        background: isCritical ? '#fee2e2' : '#fef3c7',
+                                                        color: isCritical ? '#dc2626' : '#f59e0b',
+                                                        padding: '6px 12px',
+                                                        borderRadius: '6px',
+                                                        fontWeight: 'bold',
+                                                        fontSize: '14px',
+                                                        display: 'inline-block'
+                                                    }}
+                                                >
+                                                    {isCritical ? '🔴' : '🟡'} {stock} units
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <strong>₺{product.price?.toFixed(2)}</strong>
+                                            </td>
+                                            <td>
+                                                <span style={{
+                                                    color: isCritical ? '#dc2626' : '#f59e0b',
+                                                    fontWeight: 'bold'
+                                                }}>
+                                                    {isCritical ? '⚠️ CRITICAL' : '⚡ LOW'}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button
+                                                    className="reorder-btn"
+                                                    onClick={() => navigate('/transactions')}
+                                                    style={{
+                                                        background: '#3b82f6',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        padding: '6px 12px',
+                                                        borderRadius: '5px',
+                                                        cursor: 'pointer',
+                                                        fontSize: '12px',
+                                                        fontWeight: 'bold'
+                                                    }}
+                                                >
+                                                    📦 Reorder
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     ) : (
-                        <p className="no-data success">✅ All products have sufficient stock!</p>
+                        <div style={{
+                            background: '#ecfdf5',
+                            border: '2px solid #10b981',
+                            borderRadius: '10px',
+                            padding: '30px',
+                            textAlign: 'center'
+                        }}>
+                            <div style={{ fontSize: '48px', marginBottom: '10px' }}>✅</div>
+                            <p style={{
+                                color: '#10b981',
+                                fontSize: '18px',
+                                fontWeight: 'bold',
+                                margin: 0
+                            }}>
+                                All products have sufficient stock!
+                            </p>
+                            <p style={{ color: '#6b7280', marginTop: '5px' }}>
+                                No action required at this time.
+                            </p>
+                        </div>
                     )}
                 </div>
             </div>

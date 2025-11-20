@@ -189,123 +189,294 @@ Aşağıdaki yazılımların sisteminizde yüklü olması gerekmektedir:
 | MySQL | 8.0+ | 8.0.43 |
 | Git | 2.0+ | Son versiyon |
 
-### 1️⃣ Projeyi Klonlama
+---
+
+## 🎯 HIZLI BAŞLANGIÇ - SİSTEM ÇALIŞTIRMA
+
+> **ÖNEMLİ:** Uygulamayı çalıştırmadan önce aşağıdaki adımları sırayla takip edin!
+
+### ⚠️ Çalıştırma Sırası (ÇOK ÖNEMLİ!)
+
+Sistem **mutlaka** aşağıdaki sırada başlatılmalıdır:
+
+1. **MySQL Veritabanı** (İlk önce)
+2. **Backend API** (İkinci)
+3. **Frontend React App** (En son)
+
+---
+
+### 🗄️ ADIM 1: MySQL Veritabanı Kurulumu
+
+#### MySQL Servisini Başlatma
 ```bash
-git clone https://github.com/mrblackcoder/Stock_Management.git
-cd Stock_Management
+# Linux/Mac
+sudo service mysql start
+# veya
+sudo systemctl start mysql
+
+# Windows
+net start mysql
 ```
 
-### 2️⃣ MySQL Veritabanı Yapılandırması
-
-#### MySQL'e Bağlanma
+#### Veritabanını Oluşturma
 ```bash
+# MySQL'e root olarak giriş yapın
 mysql -u root -p
 ```
 
-#### Veritabanı Oluşturma
 ```sql
+-- Veritabanını oluştur
 CREATE DATABASE IF NOT EXISTS inventory_management_db 
 CHARACTER SET utf8mb4 
 COLLATE utf8mb4_unicode_ci;
 
--- Kullanıcı oluşturma (opsiyonel)
-CREATE USER 'ims_user'@'localhost' IDENTIFIED BY 'ims_password';
-GRANT ALL PRIVILEGES ON inventory_management_db.* TO 'ims_user'@'localhost';
+-- Çıkış
+EXIT;
+```
+
+#### Veritabanı Ayarlarını Kontrol Etme
+`src/main/resources/application.properties` dosyasını açın ve kontrol edin:
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/inventory_management_db?createDatabaseIfNotExist=true
+spring.datasource.username=root
+spring.datasource.password=root
+```
+> **Not:** MySQL şifreniz farklıysa `password` değerini güncelleyin!
+
+---
+
+### 🔧 ADIM 2: Backend (Spring Boot) Başlatma
+
+#### İlk Kurulum (Sadece bir kez)
+```bash
+# Proje dizinine gidin
+cd /home/taha/IdeaProjects/StockManagement
+
+# Gradle wrapper'a yürütme izni verin (Linux/Mac)
+chmod +x gradlew
+
+# Build işlemini gerçekleştirin
+./gradlew clean build -x test
+```
+
+#### Backend'i Çalıştırma (ÖNEMLİ!)
+
+**Terminal 1'de aşağıdaki komutu çalıştırın:**
+```bash
+cd /home/taha/IdeaProjects/StockManagement
+./gradlew bootRun
+```
+
+**✅ Başarı Mesajları:**
+```
+Started StockManagementApplication in X.XXX seconds
+Tomcat started on port 8080
+```
+
+**🌐 Backend Erişim:**
+- API Base URL: http://localhost:8080
+- API Status: http://localhost:8080/api
+- Swagger (eğer aktifse): http://localhost:8080/swagger-ui.html
+
+> **⚠️ DİKKAT:** Backend tamamen başlayana kadar (yaklaşık 15-20 saniye) frontend'i başlatmayın!
+
+---
+
+### 🎨 ADIM 3: Frontend (React) Başlatma
+
+#### İlk Kurulum (Sadece bir kez)
+```bash
+# Frontend dizinine gidin
+cd /home/taha/IdeaProjects/StockManagement/frontend
+
+# Node.js bağımlılıklarını yükleyin
+npm install
+```
+
+#### Frontend'i Çalıştırma (ÖNEMLİ!)
+
+**Terminal 2'de aşağıdaki komutu çalıştırın:**
+```bash
+cd /home/taha/IdeaProjects/StockManagement/frontend
+npm start
+```
+
+**✅ Başarı Mesajları:**
+```
+Compiled successfully!
+You can now view frontend in the browser.
+Local: http://localhost:3000
+```
+
+**🌐 Frontend Erişim:**
+- Ana Sayfa: http://localhost:3000
+- Login Sayfası: http://localhost:3000/login
+- Dashboard: http://localhost:3000/dashboard
+
+> **⚠️ NOT:** Tarayıcı otomatik açılmazsa manuel olarak http://localhost:3000 adresine gidin.
+
+---
+
+### 🔄 KAPSAMLI ÇALIŞTIRMA KOMUTLARI
+
+#### Tüm Sistemi Sıfırdan Başlatma (TAM KOMUT)
+
+```bash
+# 1. MySQL'i başlat
+sudo service mysql start
+
+# 2. Eski process'leri temizle
+cd /home/taha/IdeaProjects/StockManagement
+lsof -ti:8080 | xargs -r kill -9
+lsof -ti:3000 | xargs -r kill -9
+
+# 3. Backend'i başlat (Terminal 1)
+./gradlew bootRun &
+
+# 4. 15 saniye bekle (Backend'in başlaması için)
+sleep 15
+
+# 5. Frontend'i başlat (Terminal 2)
+cd frontend
+npm start
+```
+
+#### Hızlı Yeniden Başlatma
+```bash
+# Backend'i durdur ve yeniden başlat
+pkill -9 -f "gradle"
+./gradlew bootRun &
+
+# Frontend'i durdur ve yeniden başlat
+pkill -9 -f "react-scripts"
+cd frontend && npm start
+```
+
+---
+
+### ✅ Kurulum Doğrulama
+
+#### 1. Backend Kontrolü
+```bash
+# API status kontrolü
+curl http://localhost:8080/api
+
+# Beklenen çıktı:
+# {"status":"running","message":"Inventory Management System API is running","version":"1.0.0","endpoints":{...}}
+```
+
+#### 2. Frontend Kontrolü
+```bash
+# Frontend erişim kontrolü
+curl -I http://localhost:3000
+
+# Beklenen durum kodu: 200 OK
+```
+
+#### 3. Veritabanı Kontrolü
+```sql
+mysql -u root -p
+USE inventory_management_db;
+SHOW TABLES;
+
+-- Beklenen tablolar:
+-- users, products, categories, suppliers, stock_transactions
+```
+
+#### 4. Manuel Tarayıcı Testi
+1. http://localhost:3000 adresine gidin
+2. Login sayfası görünmeli
+3. Test kullanıcısı ile giriş yapın:
+   - **Username:** `admin`
+   - **Password:** `admin123`
+4. Dashboard açılmalı
+
+---
+
+### ❌ Sık Karşılaşılan Sorunlar ve Çözümleri
+
+#### Port Zaten Kullanımda Hatası
+```bash
+# Hata: "Address already in use: bind"
+# Çözüm: Port'u kullanan process'i öldürün
+
+# 8080 portunu temizle (Backend)
+lsof -ti:8080 | xargs -r kill -9
+
+# 3000 portunu temizle (Frontend)
+lsof -ti:3000 | xargs -r kill -9
+```
+
+#### MySQL Bağlantı Hatası
+```bash
+# Hata: "Access denied for user 'root'@'localhost'"
+# Çözüm: application.properties'deki şifreyi kontrol edin
+
+# MySQL şifrenizi öğrenin/değiştirin
+sudo mysql -u root
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'yeni_sifre';
 FLUSH PRIVILEGES;
 EXIT;
 ```
 
-#### Veritabanı Ayarlarını Güncelleme
-`src/main/resources/application.properties` dosyasını kontrol edin:
-```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/inventory_management_db
-spring.datasource.username=root
-spring.datasource.password=root
-```
-
-### 3️⃣ Backend Kurulumu ve Çalıştırma
-
-#### Gradle ile Build
+#### Frontend Backend'e Bağlanamıyor
 ```bash
-# Projeyi build etme
-./gradlew clean build
+# Hata: "Network Error" veya "CORS Error"
+# Çözüm: Backend'in çalıştığından emin olun
 
-# Testleri atlayarak build (daha hızlı)
-./gradlew clean build -x test
+# Backend durumunu kontrol et
+curl http://localhost:8080/api
 
-# Uygulamayı çalıştırma
+# Backend yoksa başlat
+cd /home/taha/IdeaProjects/StockManagement
 ./gradlew bootRun
 ```
 
-#### JAR Dosyası ile Çalıştırma
+---
+
+### 🛑 Sistemi Durdurma
+
+#### Güvenli Durdurma
 ```bash
-# Build edip JAR oluşturma
+# Backend'i durdur (Terminal 1'de Ctrl+C)
+# veya
+pkill -9 -f "gradle"
+
+# Frontend'i durdur (Terminal 2'de Ctrl+C)
+# veya
+pkill -9 -f "react-scripts"
+
+# MySQL'i durdur (opsiyonel)
+sudo service mysql stop
+```
+
+---
+
+## 📦 Production Build (Canlı Ortam için)
+
+### Backend JAR Dosyası Oluşturma
+```bash
+cd /home/taha/IdeaProjects/StockManagement
 ./gradlew clean bootJar
+
+# JAR dosyası şurada oluşur:
+# build/libs/StockManagement-0.0.1-SNAPSHOT.jar
 
 # JAR'ı çalıştırma
 java -jar build/libs/StockManagement-0.0.1-SNAPSHOT.jar
 ```
 
-**Backend başarıyla başladı! 🎉**
-- Backend API: http://localhost:8080
-- Health Check: http://localhost:8080/actuator/health (eğer Actuator aktifse)
-
-### 4️⃣ Frontend Kurulumu ve Çalıştırma
-
-#### Bağımlılıkları Yükleme
+### Frontend Production Build
 ```bash
-cd frontend
-npm install
-# veya
-npm ci  # Daha hızlı ve güvenilir
-```
-
-#### Development Modda Çalıştırma
-```bash
-npm start
-```
-
-#### Production Build
-```bash
+cd /home/taha/IdeaProjects/StockManagement/frontend
 npm run build
+
+# Build dosyaları şurada oluşur:
+# frontend/build/
+
+# Static server ile çalıştırma
+npx serve -s build -l 3000
 ```
-
-**Frontend başarıyla başladı! 🎉**
-- Frontend URL: http://localhost:3000
-- API Proxy: Backend'e otomatik yönlendirme yapılır
-
-### 5️⃣ Tam Sistem Başlatma (Önerilen)
-
-#### Terminal 1: Backend
-```bash
-cd /path/to/Stock_Management
-./gradlew bootRun
-```
-
-#### Terminal 2: Frontend
-```bash
-cd /path/to/Stock_Management/frontend
-npm start
-```
-
-### ✅ Kurulum Doğrulama
-
-1. **Backend Kontrolü**
-   ```bash
-   curl http://localhost:8080/api/health
-   ```
-
-2. **Frontend Kontrolü**
-   - Tarayıcıda http://localhost:3000 açın
-   - Login sayfası görünmeli
-
-3. **Veritabanı Kontrolü**
-   ```sql
-   mysql -u root -p
-   USE inventory_management_db;
-   SHOW TABLES;
-   ```
-   5 tablo görmelisiniz: users, products, categories, suppliers, stock_transactions
 
 
 ## 📱 Kullanım Kılavuzu
