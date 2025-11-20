@@ -36,8 +36,8 @@ public class ProductController {
     public ResponseEntity<Response> getAllProducts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String sortBy) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+            @RequestParam(defaultValue = "createdAt") String sortBy) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, sortBy));
         Response response = productService.getAllProducts(pageable);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }

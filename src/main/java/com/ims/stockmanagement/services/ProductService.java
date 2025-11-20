@@ -53,8 +53,20 @@ public class ProductService {
     /**
      * Tüm ürünleri sayfalı listele
      * Supplier ve Category bilgileri FETCH JOIN ile yüklenir
+     * createdAt'e göre azalan sırada (en yeni önce)
      */
     public Response getAllProducts(Pageable pageable) {
+        // Eğer sortBy parametresi "createdAt" ise azalan sırada sırala
+        if (pageable.getSort().isSorted() &&
+            pageable.getSort().stream().anyMatch(order -> order.getProperty().equals("createdAt"))) {
+            // createdAt'e göre azalan sırada sırala
+            pageable = org.springframework.data.domain.PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.DESC, "createdAt")
+            );
+        }
+
         Page<Product> productPage = productRepository.findAllWithRelations(pageable);
         List<ProductDTO> productDTOs = productPage.getContent().stream()
                 .map(this::convertToDTO)
