@@ -185,60 +185,19 @@ function ProductPage() {
                                 <tbody>
                                     {products.map((prod, index) => {
                                         const stockQty = prod.stockQuantity || prod.quantity || 0;
-                                        const reorderLevel = prod.reorderLevel || 10;
-
-                                        // Stok durumu belirleme
-                                        const getStockColor = () => {
-                                            if (stockQty === 0) return '#f56565';
-                                            if (stockQty <= reorderLevel) return '#ed8936';
-                                            return '#48bb78';
-                                        };
-
-                                        const getStockBadge = () => {
-                                            if (stockQty === 0) return '⚠️ Stok Yok';
-                                            if (stockQty <= reorderLevel) return '⚠️ Düşük';
-                                            return '✅ Normal';
-                                        };
 
                                         return (
                                             <tr key={prod.id} style={{
                                                 borderBottom: '1px solid #ddd',
-                                                background: index % 2 === 0 ? '#f9f9f9' : 'white',
-                                                transition: 'background 0.2s'
-                                            }}
-                                            onMouseEnter={(e) => e.currentTarget.style.background = '#e8f4f8'}
-                                            onMouseLeave={(e) => e.currentTarget.style.background = index % 2 === 0 ? '#f9f9f9' : 'white'}
-                                            >
+                                                background: index % 2 === 0 ? '#f9f9f9' : 'white'
+                                            }}>
                                                 <td style={{padding: '12px', fontFamily: 'monospace', color: '#4a5568'}}>{prod.sku}</td>
                                                 <td style={{padding: '12px', fontWeight: 'bold', color: '#2d3748'}}>{prod.name}</td>
                                                 <td style={{padding: '12px', textAlign: 'right', fontWeight: 'bold', fontSize: '15px', color: '#667eea'}}>
                                                     {formatPrice(prod.price)}
                                                 </td>
-                                                <td style={{padding: '12px', textAlign: 'center'}}>
-                                                    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px'}}>
-                                                        <div style={{
-                                                            padding: '6px 12px',
-                                                            borderRadius: '8px',
-                                                            background: getStockColor() + '20',
-                                                            border: `2px solid ${getStockColor()}`,
-                                                            fontWeight: 'bold',
-                                                            fontSize: '16px',
-                                                            color: getStockColor(),
-                                                            minWidth: '60px'
-                                                        }}>
-                                                            {stockQty}
-                                                        </div>
-                                                        <span style={{
-                                                            fontSize: '11px',
-                                                            padding: '3px 8px',
-                                                            borderRadius: '10px',
-                                                            background: getStockColor(),
-                                                            color: 'white',
-                                                            fontWeight: 'bold'
-                                                        }}>
-                                                            {getStockBadge()}
-                                                        </span>
-                                                    </div>
+                                                <td style={{padding: '12px', textAlign: 'center', fontWeight: 'bold', fontSize: '16px'}}>
+                                                    {stockQty}
                                                 </td>
                                                 <td style={{padding: '12px', color: '#4a5568'}}>{prod.categoryName || 'N/A'}</td>
                                                 <td style={{padding: '12px', textAlign: 'center'}}>
@@ -251,11 +210,8 @@ function ProductPage() {
                                                             border: 'none',
                                                             borderRadius: '6px',
                                                             cursor: 'pointer',
-                                                            fontWeight: 'bold',
-                                                            transition: 'all 0.2s'
+                                                            fontWeight: 'bold'
                                                         }}
-                                                        onMouseEnter={(e) => e.target.style.background = '#e53e3e'}
-                                                        onMouseLeave={(e) => e.target.style.background = '#f56565'}
                                                     >
                                                         🗑️ Sil
                                                     </button>

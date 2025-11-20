@@ -164,7 +164,7 @@ function DashboardPage() {
                                         <td>{product.name}</td>
                                         <td>{product.sku}</td>
                                         <td>₺{product.price?.toFixed(2)}</td>
-                                        <td>{product.quantity}</td>
+                                        <td>{product.stockQuantity || product.quantity || 0}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -190,7 +190,7 @@ function DashboardPage() {
                                 {lowStockItems.map(product => (
                                     <tr key={product.id} className="warning">
                                         <td>{product.name}</td>
-                                        <td className="stock-low">{product.quantity}</td>
+                                        <td className="stock-low">{product.stockQuantity || product.quantity || 0}</td>
                                         <td>⚠️ Low Stock</td>
                                     </tr>
                                 ))}

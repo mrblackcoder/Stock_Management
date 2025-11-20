@@ -19,6 +19,37 @@ public class StockTransactionController {
 
     private final StockTransactionService transactionService;
 
+    @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<Response> createTransaction(@RequestBody TransactionRequest request) {
+        Response response;
+        // TransactionType'a göre uygun metodu çağır
+        if (request.getTransactionType() == null) {
+            response = Response.builder()
+                    .statusCode(400)
+                    .message("Transaction type is required")
+                    .build();
+        } else {
+            switch (request.getTransactionType()) {
+                case PURCHASE:
+                    response = transactionService.purchaseProduct(request);
+                    break;
+                case SALE:
+                    response = transactionService.saleProduct(request);
+                    break;
+                case ADJUSTMENT:
+                    response = transactionService.adjustStock(request);
+                    break;
+                default:
+                    response = Response.builder()
+                            .statusCode(400)
+                            .message("Invalid transaction type: " + request.getTransactionType())
+                            .build();
+            }
+        }
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
+
     @PostMapping("/purchase")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<Response> purchaseProduct(@RequestBody TransactionRequest request) {
@@ -67,6 +98,13 @@ public class StockTransactionController {
             @PathVariable Long id,
             @RequestParam String status) {
         Response response = transactionService.updateTransactionStatus(id, status);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<Response> deleteTransaction(@PathVariable Long id) {
+        Response response = transactionService.deleteTransaction(id);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 }

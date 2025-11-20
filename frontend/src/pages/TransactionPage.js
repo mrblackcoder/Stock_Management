@@ -74,26 +74,6 @@ function TransactionPage() {
         }
     };
 
-    const getTransactionColor = (type) => {
-        switch(type) {
-            case 'PURCHASE': return '#48bb78';
-            case 'SALE': return '#f56565';
-            case 'ADJUSTMENT': return '#ed8936';
-            default: return '#667eea';
-        }
-    };
-
-    const getStockStatusColor = (quantity, reorderLevel = 10) => {
-        if (quantity === 0) return '#f56565'; // Kırmızı - Stok yok
-        if (quantity <= reorderLevel) return '#ed8936'; // Turuncu - Düşük stok
-        return '#48bb78'; // Yeşil - Normal stok
-    };
-
-    const getStockStatusText = (quantity, reorderLevel = 10) => {
-        if (quantity === 0) return '⚠️ Stok Yok';
-        if (quantity <= reorderLevel) return '⚠️ Düşük Stok';
-        return '✅ Normal';
-    };
 
     if (loading) return <div className="dashboard-page"><div className="dashboard-container">Yükleniyor...</div></div>;
 
@@ -128,10 +108,9 @@ function TransactionPage() {
                                         <option value="">Ürün Seçiniz</option>
                                         {products.map(prod => {
                                             const stockQty = prod.stockQuantity || prod.quantity || 0;
-                                            const stockStatus = getStockStatusText(stockQty, prod.reorderLevel);
                                             return (
                                                 <option key={prod.id} value={prod.id}>
-                                                    {prod.name} - Stok: {stockQty} {stockStatus}
+                                                    {prod.name} (Stok: {stockQty})
                                                 </option>
                                             );
                                         })}
@@ -183,18 +162,17 @@ function TransactionPage() {
                                 <p>Yeni bir transaction eklemek için yukarıdaki butona tıklayın.</p>
                             </div>
                         ) : (
-                            <table style={{width: '100%', borderCollapse: 'collapse', minWidth: '900px'}}>
+                            <table style={{width: '100%', borderCollapse: 'collapse', minWidth: '800px'}}>
                                 <thead>
                                     <tr style={{background: '#667eea', color: 'white'}}>
-                                        <th style={{padding: '12px', textAlign: 'left'}}>📅 Tarih</th>
-                                        <th style={{padding: '12px', textAlign: 'left'}}>📦 Ürün</th>
-                                        <th style={{padding: '12px', textAlign: 'center'}}>🔄 Tip</th>
-                                        <th style={{padding: '12px', textAlign: 'right'}}>📊 Miktar</th>
-                                        <th style={{padding: '12px', textAlign: 'center'}}>📦 Güncel Stok</th>
-                                        <th style={{padding: '12px', textAlign: 'center'}}>⚠️ Stok Durumu</th>
-                                        <th style={{padding: '12px', textAlign: 'left'}}>👤 Kullanıcı</th>
-                                        <th style={{padding: '12px', textAlign: 'left'}}>📝 Notlar</th>
-                                        <th style={{padding: '12px', textAlign: 'center'}}>⚙️ İşlemler</th>
+                                        <th style={{padding: '12px', textAlign: 'left'}}>Tarih</th>
+                                        <th style={{padding: '12px', textAlign: 'left'}}>Ürün</th>
+                                        <th style={{padding: '12px', textAlign: 'center'}}>Tip</th>
+                                        <th style={{padding: '12px', textAlign: 'right'}}>Miktar</th>
+                                        <th style={{padding: '12px', textAlign: 'center'}}>Güncel Stok</th>
+                                        <th style={{padding: '12px', textAlign: 'left'}}>Kullanıcı</th>
+                                        <th style={{padding: '12px', textAlign: 'left'}}>Notlar</th>
+                                        <th style={{padding: '12px', textAlign: 'center'}}>İşlemler</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -202,17 +180,12 @@ function TransactionPage() {
                                         // İlgili ürünü bul
                                         const product = products.find(p => p.id === trans.productId || p.name === trans.productName);
                                         const currentStock = product ? (product.stockQuantity || product.quantity || 0) : 0;
-                                        const reorderLevel = product?.reorderLevel || 10;
 
                                         return (
                                             <tr key={trans.id} style={{
                                                 borderBottom: '1px solid #ddd',
-                                                background: index % 2 === 0 ? '#f9f9f9' : 'white',
-                                                transition: 'background 0.2s'
-                                            }}
-                                            onMouseEnter={(e) => e.currentTarget.style.background = '#e8f4f8'}
-                                            onMouseLeave={(e) => e.currentTarget.style.background = index % 2 === 0 ? '#f9f9f9' : 'white'}
-                                            >
+                                                background: index % 2 === 0 ? '#f9f9f9' : 'white'
+                                            }}>
                                                 <td style={{padding: '12px', fontSize: '13px'}}>
                                                     {trans.transactionDate ? new Date(trans.transactionDate).toLocaleDateString('tr-TR', {
                                                         day: '2-digit',
@@ -222,67 +195,18 @@ function TransactionPage() {
                                                         minute: '2-digit'
                                                     }) : 'N/A'}
                                                 </td>
-                                                <td style={{padding: '12px', fontWeight: 'bold', color: '#2d3748'}}>{trans.productName || 'N/A'}</td>
+                                                <td style={{padding: '12px', fontWeight: 'bold'}}>{trans.productName || 'N/A'}</td>
                                                 <td style={{padding: '12px', textAlign: 'center'}}>
-                                                    <span style={{
-                                                        padding: '6px 12px',
-                                                        borderRadius: '20px',
-                                                        background: getTransactionColor(trans.transactionType),
-                                                        color: 'white',
-                                                        fontSize: '12px',
-                                                        fontWeight: 'bold',
-                                                        display: 'inline-block',
-                                                        minWidth: '100px'
-                                                    }}>
-                                                        {getTransactionIcon(trans.transactionType)} {trans.transactionType}
-                                                    </span>
+                                                    {getTransactionIcon(trans.transactionType)} {trans.transactionType}
                                                 </td>
-                                                <td style={{
-                                                    padding: '12px',
-                                                    textAlign: 'right',
-                                                    fontWeight: 'bold',
-                                                    fontSize: '16px',
-                                                    color: trans.transactionType === 'PURCHASE' ? '#48bb78' : trans.transactionType === 'SALE' ? '#f56565' : '#ed8936'
-                                                }}>
-                                                    {trans.transactionType === 'PURCHASE' ? '+' : '-'}{trans.quantity}
+                                                <td style={{padding: '12px', textAlign: 'right', fontWeight: 'bold'}}>
+                                                    {trans.quantity}
                                                 </td>
-                                                <td style={{padding: '12px', textAlign: 'center'}}>
-                                                    <div style={{
-                                                        display: 'inline-block',
-                                                        padding: '6px 12px',
-                                                        borderRadius: '8px',
-                                                        background: getStockStatusColor(currentStock, reorderLevel) + '20',
-                                                        border: `2px solid ${getStockStatusColor(currentStock, reorderLevel)}`,
-                                                        fontWeight: 'bold',
-                                                        color: getStockStatusColor(currentStock, reorderLevel)
-                                                    }}>
-                                                        {currentStock} adet
-                                                    </div>
+                                                <td style={{padding: '12px', textAlign: 'center', fontWeight: 'bold'}}>
+                                                    {currentStock}
                                                 </td>
-                                                <td style={{padding: '12px', textAlign: 'center'}}>
-                                                    <span style={{
-                                                        padding: '5px 10px',
-                                                        borderRadius: '15px',
-                                                        background: getStockStatusColor(currentStock, reorderLevel),
-                                                        color: 'white',
-                                                        fontSize: '11px',
-                                                        fontWeight: 'bold',
-                                                        display: 'inline-block',
-                                                        minWidth: '90px'
-                                                    }}>
-                                                        {getStockStatusText(currentStock, reorderLevel)}
-                                                    </span>
-                                                </td>
-                                                <td style={{padding: '12px', color: '#4a5568'}}>{trans.userName || 'N/A'}</td>
-                                                <td style={{
-                                                    padding: '12px',
-                                                    maxWidth: '180px',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    whiteSpace: 'nowrap',
-                                                    color: '#718096',
-                                                    fontSize: '13px'
-                                                }} title={trans.notes}>
+                                                <td style={{padding: '12px'}}>{trans.userName || 'N/A'}</td>
+                                                <td style={{padding: '12px', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis'}} title={trans.notes}>
                                                     {trans.notes || '-'}
                                                 </td>
                                                 <td style={{padding: '12px', textAlign: 'center'}}>
@@ -295,12 +219,8 @@ function TransactionPage() {
                                                             border: 'none',
                                                             borderRadius: '6px',
                                                             cursor: 'pointer',
-                                                            fontWeight: 'bold',
-                                                            fontSize: '13px',
-                                                            transition: 'all 0.2s'
+                                                            fontWeight: 'bold'
                                                         }}
-                                                        onMouseEnter={(e) => e.target.style.background = '#e53e3e'}
-                                                        onMouseLeave={(e) => e.target.style.background = '#f56565'}
                                                     >
                                                         🗑️ Sil
                                                     </button>

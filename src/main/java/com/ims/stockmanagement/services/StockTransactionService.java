@@ -88,6 +88,15 @@ public class StockTransactionService {
     }
 
     /**
+     * Stok düzeltme (ADJUSTMENT)
+     */
+    @Transactional
+    public Response adjustStock(TransactionRequest request) {
+        request.setTransactionType(TransactionType.ADJUSTMENT);
+        return createTransaction(request);
+    }
+
+    /**
      * İşlem durumunu güncelle
      */
     @Transactional
@@ -145,9 +154,18 @@ public class StockTransactionService {
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + request.getProductId()));
 
-        // Kullanıcı kontrolü
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new NotFoundException("User not found with id: " + request.getUserId()));
+        // Kullanıcı kontrolü - request'ten gelmiyorsa authenticated user'ı al
+        User user;
+        if (request.getUserId() != null) {
+            user = userRepository.findById(request.getUserId())
+                    .orElseThrow(() -> new NotFoundException("User not found with id: " + request.getUserId()));
+        } else {
+            // Spring Security context'inden authenticated user'ı al
+            String username = org.springframework.security.core.context.SecurityContextHolder
+                    .getContext().getAuthentication().getName();
+            user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new NotFoundException("User not found with username: " + username));
+        }
 
         // İşlem tipine göre stok kontrolü
         if (request.getTransactionType() == TransactionType.SALE) {
