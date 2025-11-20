@@ -1,0 +1,12 @@
+* text=auto
+
+# Script satır sonları
+*.sh text eol=lf
+*.bat text eol=crlf
+
+# Ortak ikililer
+*.jar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary

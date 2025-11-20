@@ -1,0 +1,308 @@
+package com.ims.stockmanagement.services;
+
+import com.ims.stockmanagement.dtos.Response;
+import com.ims.stockmanagement.dtos.TransactionDTO;
+import com.ims.stockmanagement.dtos.TransactionRequest;
+import com.ims.stockmanagement.enums.TransactionStatus;
+import com.ims.stockmanagement.enums.TransactionType;
+import com.ims.stockmanagement.exceptions.InsufficientStockException;
+import com.ims.stockmanagement.exceptions.NotFoundException;
+import com.ims.stockmanagement.models.Product;
+import com.ims.stockmanagement.models.StockTransaction;
+import com.ims.stockmanagement.models.User;
+import com.ims.stockmanagement.repositories.ProductRepository;
+import com.ims.stockmanagement.repositories.StockTransactionRepository;
+import com.ims.stockmanagement.repositories.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class StockTransactionService {
+
+    private final StockTransactionRepository transactionRepository;
+    private final ProductRepository productRepository;
+    private final UserRepository userRepository;
+    private final ModelMapper modelMapper;
+
+    /**
+     * Tüm işlemleri listele (READ - CRUD)
+     */
+    public Response getAllTransactions() {
+        List<StockTransaction> transactions = transactionRepository.findAll();
+        List<TransactionDTO> transactionDTOs = transactions.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return Response.builder()
+                .statusCode(200)
+                .message("Transactions retrieved successfully")
+                .transactionList(transactionDTOs)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    /**
+     * Tüm işlemleri sayfalı listele
+     */
+    public Response getAllTransactions(Pageable pageable) {
+        Page<StockTransaction> transactionPage = transactionRepository.findAll(pageable);
+        List<TransactionDTO> transactionDTOs = transactionPage.getContent().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return Response.builder()
+                .statusCode(200)
+                .message("Transactions retrieved successfully")
+                .transactionList(transactionDTOs)
+                .data(transactionPage)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    /**
+     * Ürün satın alma (PURCHASE)
+     */
+    @Transactional
+    public Response purchaseProduct(TransactionRequest request) {
+        request.setTransactionType(TransactionType.PURCHASE);
+        return createTransaction(request);
+    }
+
+    /**
+     * Ürün satışı (SALE)
+     */
+    @Transactional
+    public Response saleProduct(TransactionRequest request) {
+        request.setTransactionType(TransactionType.SALE);
+        return createTransaction(request);
+    }
+
+    /**
+     * İşlem durumunu güncelle
+     */
+    @Transactional
+    public Response updateTransactionStatus(Long id, String statusStr) {
+        StockTransaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Transaction not found with id: " + id));
+
+        try {
+            TransactionStatus newStatus = TransactionStatus.valueOf(statusStr.toUpperCase());
+            transaction.setStatus(newStatus);
+            StockTransaction updatedTransaction = transactionRepository.save(transaction);
+            TransactionDTO transactionDTO = convertToDTO(updatedTransaction);
+
+            return Response.builder()
+                    .statusCode(200)
+                    .message("Transaction status updated successfully")
+                    .transaction(transactionDTO)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.builder()
+                    .statusCode(400)
+                    .message("Invalid transaction status: " + statusStr)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        }
+    }
+
+    /**
+     * ID'ye göre işlem getir (READ - CRUD)
+     */
+    public Response getTransactionById(Long id) {
+        StockTransaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Transaction not found with id: " + id));
+
+        TransactionDTO transactionDTO = convertToDTO(transaction);
+
+        return Response.builder()
+                .statusCode(200)
+                .message("Transaction retrieved successfully")
+                .transaction(transactionDTO)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    /**
+     * Yeni stok işlemi oluştur (CREATE - CRUD)
+     * PURCHASE: Alım (Stok artar)
+     * SALE: Satış (Stok azalır)
+     * ADJUSTMENT: Düzeltme (Stok artar veya azalır)
+     */
+    @Transactional
+    public Response createTransaction(TransactionRequest request) {
+        // Ürün kontrolü
+        Product product = productRepository.findById(request.getProductId())
+                .orElseThrow(() -> new NotFoundException("Product not found with id: " + request.getProductId()));
+
+        // Kullanıcı kontrolü
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new NotFoundException("User not found with id: " + request.getUserId()));
+
+        // İşlem tipine göre stok kontrolü
+        if (request.getTransactionType() == TransactionType.SALE) {
+            if (product.getStockQuantity() < request.getQuantity()) {
+                throw new InsufficientStockException(
+                        "Insufficient stock for product: " + product.getName() +
+                        ". Available: " + product.getStockQuantity() +
+                        ", Requested: " + request.getQuantity()
+                );
+            }
+        }
+
+        // Transaction oluştur
+        StockTransaction transaction = new StockTransaction();
+        transaction.setProduct(product);
+        transaction.setUser(user);
+        transaction.setTransactionType(request.getTransactionType());
+        transaction.setQuantity(request.getQuantity());
+        transaction.setUnitPrice(request.getUnitPrice() != null ? request.getUnitPrice() : product.getPrice());
+        transaction.setTotalPrice(transaction.getUnitPrice().multiply(BigDecimal.valueOf(request.getQuantity())));
+        transaction.setStatus(TransactionStatus.COMPLETED);
+        transaction.setNotes(request.getNotes());
+
+        // Stok güncelle
+        updateProductStock(product, request.getTransactionType(), request.getQuantity());
+
+        StockTransaction savedTransaction = transactionRepository.save(transaction);
+        TransactionDTO transactionDTO = convertToDTO(savedTransaction);
+
+        return Response.builder()
+                .statusCode(201)
+                .message("Transaction created successfully")
+                .transaction(transactionDTO)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    /**
+     * İşlem sil (DELETE - CRUD)
+     * Not: Stok işlemi silme genelde önerilmez, ancak CRUD için eklendi
+     */
+    @Transactional
+    public Response deleteTransaction(Long id) {
+        StockTransaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Transaction not found with id: " + id));
+
+        // Stoku geri al (reverse operation)
+        Product product = transaction.getProduct();
+        TransactionType reverseType;
+
+        switch (transaction.getTransactionType()) {
+            case PURCHASE:
+                reverseType = TransactionType.SALE;
+                break;
+            case SALE:
+                reverseType = TransactionType.PURCHASE;
+                break;
+            default:
+                reverseType = TransactionType.ADJUSTMENT;
+        }
+
+        updateProductStock(product, reverseType, transaction.getQuantity());
+
+        transactionRepository.delete(transaction);
+
+        return Response.builder()
+                .statusCode(200)
+                .message("Transaction deleted successfully and stock reverted")
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    /**
+     * Ürüne göre işlemleri getir
+     */
+    public Response getTransactionsByProduct(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new NotFoundException("Product not found with id: " + productId));
+
+        List<StockTransaction> transactions = transactionRepository.findByProduct(product);
+        List<TransactionDTO> transactionDTOs = transactions.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return Response.builder()
+                .statusCode(200)
+                .message("Transactions found: " + transactionDTOs.size())
+                .transactionList(transactionDTOs)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    /**
+     * Kullanıcıya göre işlemleri getir
+     */
+    public Response getTransactionsByUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
+
+        List<StockTransaction> transactions = transactionRepository.findByUser(user);
+        List<TransactionDTO> transactionDTOs = transactions.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return Response.builder()
+                .statusCode(200)
+                .message("Transactions found: " + transactionDTOs.size())
+                .transactionList(transactionDTOs)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    /**
+     * Tarih aralığına göre işlemleri getir
+     */
+    public Response getTransactionsByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
+        List<StockTransaction> transactions = transactionRepository.findByTransactionDateBetween(startDate, endDate);
+        List<TransactionDTO> transactionDTOs = transactions.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return Response.builder()
+                .statusCode(200)
+                .message("Transactions found: " + transactionDTOs.size())
+                .transactionList(transactionDTOs)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    /**
+     * Ürün stok güncellemesi
+     */
+    private void updateProductStock(Product product, TransactionType type, Integer quantity) {
+        switch (type) {
+            case PURCHASE:
+            case ADJUSTMENT:
+                product.setStockQuantity(product.getStockQuantity() + quantity);
+                break;
+            case SALE:
+                product.setStockQuantity(product.getStockQuantity() - quantity);
+                break;
+        }
+        productRepository.save(product);
+    }
+
+    /**
+     * StockTransaction entity'yi DTO'ya dönüştür
+     */
+    private TransactionDTO convertToDTO(StockTransaction transaction) {
+        TransactionDTO dto = modelMapper.map(transaction, TransactionDTO.class);
+        dto.setProductId(transaction.getProduct().getId());
+        dto.setProductName(transaction.getProduct().getName());
+        dto.setUserId(transaction.getUser().getId());
+        dto.setUsername(transaction.getUser().getUsername());
+        return dto;
+    }
+}
+

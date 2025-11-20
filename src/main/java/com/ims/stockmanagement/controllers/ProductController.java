@@ -1,0 +1,193 @@
+package com.ims.stockmanagement.controllers;
+
+import com.ims.stockmanagement.dtos.ProductDTO;
+import com.ims.stockmanagement.dtos.Response;
+import com.ims.stockmanagement.services.ExternalApiService;
+import com.ims.stockmanagement.services.ProductService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/products")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "*")
+public class ProductController {
+
+    private final ProductService productService;
+    private final ExternalApiService externalApiService;
+
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Response> createProduct(@RequestBody ProductDTO productDTO) {
+        Response response = productService.createProduct(productDTO);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<Response> getAllProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+        Response response = productService.getAllProducts(pageable);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Response> getProductById(@PathVariable Long id) {
+        Response response = productService.getProductById(id);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Response> searchProducts(@RequestParam String keyword) {
+        Response response = productService.searchProducts(keyword);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
+
+    @GetMapping("/category/{categoryId}")
+    public ResponseEntity<Response> getProductsByCategory(@PathVariable Long categoryId) {
+        Response response = productService.getProductsByCategory(categoryId);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
+
+    @GetMapping("/low-stock")
+    public ResponseEntity<Response> getLowStockProducts() {
+        Response response = productService.getLowStockProducts();
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Response> updateProduct(@PathVariable Long id, @RequestBody ProductDTO productDTO) {
+        Response response = productService.updateProduct(id, productDTO);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Response> deleteProduct(@PathVariable Long id) {
+        Response response = productService.deleteProduct(id);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
+
+    /**
+     * Ürün fiyatını farklı para biriminde gösterir (Harici API Entegrasyonu)
+     *
+     * @param id Ürün ID
+     * @param currency Hedef para birimi (USD, EUR, GBP, vb.)
+     * @return Dönüştürülmüş fiyat bilgisi
+     */
+    @GetMapping("/{id}/price/{currency}")
+    public ResponseEntity<Response> getProductPriceInCurrency(
+            @PathVariable Long id,
+            @PathVariable String currency) {
+
+        Response productResponse = productService.getProductById(id);
+        ProductDTO product = productResponse.getProduct();
+
+        if (product == null) {
+            return ResponseEntity.status(404).body(Response.builder()
+                    .statusCode(404)
+                    .message("Product not found")
+                    .timestamp(LocalDateTime.now())
+                    .build());
+        }
+
+        try {
+            BigDecimal originalPrice = product.getPrice();
+            BigDecimal convertedPrice = externalApiService.convertPrice(
+                    originalPrice,
+                    "TRY",  // Varsayılan kaynak para birimi
+                    currency.toUpperCase()
+            );
+
+            Response response = Response.builder()
+                    .statusCode(200)
+                    .message("Price converted successfully")
+                    .data(Map.of(
+                            "productId", product.getId(),
+                            "productName", product.getName(),
+                            "originalPrice", originalPrice,
+                            "originalCurrency", "TRY",
+                            "convertedPrice", convertedPrice,
+                            "targetCurrency", currency.toUpperCase()
+                    ))
+                    .timestamp(LocalDateTime.now())
+                    .build();
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Response.builder()
+                    .statusCode(500)
+                    .message("Currency conversion failed: " + e.getMessage())
+                    .timestamp(LocalDateTime.now())
+                    .build());
+        }
+    }
+
+    /**
+     * Desteklenen para birimlerini listeler
+     *
+     * @return Para birimi listesi
+     */
+    @GetMapping("/currencies")
+    public ResponseEntity<Response> getSupportedCurrencies() {
+        try {
+            Map<String, Object> currencies = externalApiService.getSupportedCurrencies();
+
+            Response response = Response.builder()
+                    .statusCode(200)
+                    .message("Supported currencies retrieved successfully")
+                    .data(currencies)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Response.builder()
+                    .statusCode(500)
+                    .message("Failed to fetch currencies: " + e.getMessage())
+                    .timestamp(LocalDateTime.now())
+                    .build());
+        }
+    }
+
+    /**
+     * Güncel döviz kurlarını getirir
+     *
+     * @param base Ana para birimi (opsiyonel, varsayılan: USD)
+     * @return Döviz kurları
+     */
+    @GetMapping("/exchange-rates")
+    public ResponseEntity<Response> getExchangeRates(
+            @RequestParam(defaultValue = "USD") String base) {
+        try {
+            Map<String, Object> rates = externalApiService.getExchangeRates(base.toUpperCase());
+
+            Response response = Response.builder()
+                    .statusCode(200)
+                    .message("Exchange rates retrieved successfully")
+                    .data(rates)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Response.builder()
+                    .statusCode(500)
+                    .message("Failed to fetch exchange rates: " + e.getMessage())
+                    .timestamp(LocalDateTime.now())
+                    .build());
+        }
+    }
+}
