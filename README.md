@@ -195,6 +195,41 @@ Aşağıdaki yazılımların sisteminizde yüklü olması gerekmektedir:
 
 > **ÖNEMLİ:** Uygulamayı çalıştırmadan önce aşağıdaki adımları sırayla takip edin!
 
+### 🚀 TEK KOMUTLA BAŞLATMA (ÖNERİLEN)
+
+**En hızlı yöntem - Tek terminalde çalıştırın:**
+
+```bash
+# MySQL + Backend + Frontend (Hepsi birlikte)
+cd /home/taha/IdeaProjects/StockManagement && \
+sudo service mysql start && \
+echo "✅ MySQL başlatıldı" && \
+./gradlew bootRun > /dev/null 2>&1 & \
+echo "⏳ Backend başlatılıyor (15 saniye bekleyin)..." && \
+sleep 15 && \
+echo "✅ Backend hazır: http://localhost:8080" && \
+cd frontend && npm start
+```
+
+**Not:** Bu komut MySQL'i başlatır, backend'i arka planda çalıştırır ve frontend'i başlatır.
+
+### 📋 İKİ TERMINAL İLE BAŞLATMA
+
+**Terminal 1 - Backend:**
+```bash
+cd /home/taha/IdeaProjects/StockManagement
+sudo service mysql start
+./gradlew bootRun
+```
+
+**Terminal 2 - Frontend (15 saniye bekleyin):**
+```bash
+cd /home/taha/IdeaProjects/StockManagement/frontend
+npm start
+```
+
+---
+
 ### ⚠️ Çalıştırma Sırası (ÇOK ÖNEMLİ!)
 
 Sistem **mutlaka** aşağıdaki sırada başlatılmalıdır:

@@ -7,14 +7,18 @@ import com.ims.stockmanagement.exceptions.NotFoundException;
 import com.ims.stockmanagement.models.Category;
 import com.ims.stockmanagement.models.Product;
 import com.ims.stockmanagement.models.Supplier;
+import com.ims.stockmanagement.models.User;
 import com.ims.stockmanagement.repositories.CategoryRepository;
 import com.ims.stockmanagement.repositories.ProductRepository;
 import com.ims.stockmanagement.repositories.SupplierRepository;
+import com.ims.stockmanagement.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +33,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final SupplierRepository supplierRepository;
+    private final UserRepository userRepository;
     private final ModelMapper modelMapper;
 
     /**
@@ -136,6 +141,12 @@ public class ProductService {
                     .orElseThrow(() -> new NotFoundException("Supplier not found with id: " + productDTO.getSupplierId()));
         }
 
+        // Mevcut kullanıcıyı al
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User currentUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new NotFoundException("User not found: " + username));
+
         Product product = new Product();
         product.setName(productDTO.getName());
         product.setSku(productDTO.getSku());
@@ -146,6 +157,7 @@ public class ProductService {
         product.setCategory(category);
         product.setSupplier(supplier);
         product.setImageUrl(productDTO.getImageUrl());
+        product.setCreatedBy(currentUser); // Ürünü oluşturan kullanıcı
 
         Product savedProduct = productRepository.save(product);
         ProductDTO savedProductDTO = convertToDTO(savedProduct);
@@ -206,11 +218,29 @@ public class ProductService {
 
     /**
      * Ürün sil (DELETE - CRUD)
+     * Sadece ürünü oluşturan kullanıcı veya ADMIN silebilir
      */
     @Transactional
     public Response deleteProduct(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + id));
+
+        // Mevcut kullanıcıyı al
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User currentUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new NotFoundException("User not found: " + username));
+
+        // Kullanıcı kontrolü: Sadece ürünü oluşturan kullanıcı veya ADMIN silebilir
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+
+        boolean isOwner = product.getCreatedBy() != null &&
+                         product.getCreatedBy().getId().equals(currentUser.getId());
+
+        if (!isAdmin && !isOwner) {
+            throw new SecurityException("You can only delete products that you created");
+        }
 
         productRepository.delete(product);
 
@@ -291,6 +321,12 @@ public class ProductService {
         if (product.getSupplier() != null) {
             dto.setSupplierId(product.getSupplier().getId());
             dto.setSupplierName(product.getSupplier().getName());
+        }
+
+        // CreatedBy bilgileri
+        if (product.getCreatedBy() != null) {
+            dto.setCreatedByUserId(product.getCreatedBy().getId());
+            dto.setCreatedByUsername(product.getCreatedBy().getUsername());
         }
 
         // Stok miktarı

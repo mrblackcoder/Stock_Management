@@ -23,6 +23,8 @@ public class ProductDTO {
     private Long supplierId;
     private String supplierName;
     private String imageUrl;
+    private Long createdByUserId;
+    private String createdByUsername;
     private LocalDateTime createdAt;
 }
 

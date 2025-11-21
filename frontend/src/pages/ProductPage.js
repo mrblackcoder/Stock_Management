@@ -201,6 +201,8 @@ function ProductPage() {
                                 <tbody>
                                     {products.map((prod, index) => {
                                         const stockQty = prod.stockQuantity || prod.quantity || 0;
+                                        const currentUsername = ApiService.getUsername();
+                                        const canDelete = isAdmin || prod.createdByUsername === currentUsername;
 
                                         return (
                                             <tr key={prod.id} style={{
@@ -217,20 +219,31 @@ function ProductPage() {
                                                 </td>
                                                 <td style={{padding: '12px', color: '#4a5568'}}>{prod.categoryName || 'N/A'}</td>
                                                 <td style={{padding: '12px', textAlign: 'center'}}>
-                                                    <button
-                                                        onClick={() => handleDelete(prod.id)}
-                                                        style={{
-                                                            padding: '6px 16px',
-                                                            background: '#f56565',
-                                                            color: 'white',
-                                                            border: 'none',
-                                                            borderRadius: '6px',
-                                                            cursor: 'pointer',
-                                                            fontWeight: 'bold'
-                                                        }}
-                                                    >
-                                                        🗑️ Sil
-                                                    </button>
+                                                    {canDelete ? (
+                                                        <button
+                                                            onClick={() => handleDelete(prod.id)}
+                                                            style={{
+                                                                padding: '6px 16px',
+                                                                background: '#f56565',
+                                                                color: 'white',
+                                                                border: 'none',
+                                                                borderRadius: '6px',
+                                                                cursor: 'pointer',
+                                                                fontWeight: 'bold'
+                                                            }}
+                                                        >
+                                                            🗑️ Sil
+                                                        </button>
+                                                    ) : (
+                                                        <span style={{color: '#a0aec0', fontSize: '13px'}}>
+                                                            🔒 Yetkisiz
+                                                        </span>
+                                                    )}
+                                                    {prod.createdByUsername && (
+                                                        <div style={{fontSize: '11px', color: '#718096', marginTop: '4px'}}>
+                                                            Ekleyen: {prod.createdByUsername}
+                                                        </div>
+                                                    )}
                                                 </td>
                                             </tr>
                                         );

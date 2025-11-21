@@ -50,6 +50,11 @@ public class Product {
     @JsonIgnore
     private Supplier supplier;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by_user_id")
+    @JsonIgnore
+    private User createdBy;
+
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     @JsonIgnore
     private List<StockTransaction> transactions = new ArrayList<>();
