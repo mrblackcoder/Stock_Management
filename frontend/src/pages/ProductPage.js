@@ -112,12 +112,24 @@ function ProductPage() {
                             >
                                 {showPricesInUSD ? '💵 USD (External API)' : '💰 TRY'}
                             </button>
-                            {isAdmin && (
-                                <button onClick={() => { setShowForm(!showForm); setFormData({ name: '', sku: '', description: '', price: '', stockQuantity: '', reorderLevel: '10', categoryId: '', supplierId: '' }); }}
-                                        className="action-btn">
-                                    {showForm ? 'İptal' : '+ Yeni Ürün'}
-                                </button>
-                            )}
+                            <button
+                                onClick={() => {
+                                    setShowForm(!showForm);
+                                    setFormData({
+                                        name: '',
+                                        sku: '',
+                                        description: '',
+                                        price: '',
+                                        stockQuantity: '',
+                                        reorderLevel: '10',
+                                        categoryId: '',
+                                        supplierId: ''
+                                    });
+                                }}
+                                className="action-btn"
+                            >
+                                {showForm ? 'İptal' : '+ Yeni Ürün'}
+                            </button>
                         </div>
                     </div>
 
@@ -205,26 +217,20 @@ function ProductPage() {
                                                 </td>
                                                 <td style={{padding: '12px', color: '#4a5568'}}>{prod.categoryName || 'N/A'}</td>
                                                 <td style={{padding: '12px', textAlign: 'center'}}>
-                                                    {isAdmin ? (
-                                                        <button
-                                                            onClick={() => handleDelete(prod.id)}
-                                                            style={{
-                                                                padding: '6px 16px',
-                                                                background: '#f56565',
-                                                                color: 'white',
-                                                                border: 'none',
-                                                                borderRadius: '6px',
-                                                                cursor: 'pointer',
+                                                    <button
+                                                        onClick={() => handleDelete(prod.id)}
+                                                        style={{
+                                                            padding: '6px 16px',
+                                                            background: '#f56565',
+                                                            color: 'white',
+                                                            border: 'none',
+                                                            borderRadius: '6px',
+                                                            cursor: 'pointer',
                                                             fontWeight: 'bold'
                                                         }}
                                                     >
                                                         🗑️ Sil
                                                     </button>
-                                                    ) : (
-                                                        <span style={{color: '#a0aec0', fontSize: '13px'}}>
-                                                            🔒 Sadece görüntüleme
-                                                        </span>
-                                                    )}
                                                 </td>
                                             </tr>
                                         );

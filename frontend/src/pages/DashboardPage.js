@@ -135,24 +135,6 @@ function DashboardPage() {
                 </div>
             </div>
 
-            {/* Quick Actions */}
-            <div className="quick-actions">
-                <h2>⚡ Quick Actions</h2>
-                <div className="action-buttons">
-                    <button className="action-btn" onClick={() => navigate('/products')}>
-                        ➕ Add Product
-                    </button>
-                    <button className="action-btn" onClick={() => navigate('/categories')}>
-                        🏷️ Manage Categories
-                    </button>
-                    <button className="action-btn" onClick={() => navigate('/suppliers')}>
-                        🚚 Manage Suppliers
-                    </button>
-                    <button className="action-btn" onClick={fetchDashboardData}>
-                        🔄 Refresh Data
-                    </button>
-                </div>
-            </div>
 
             {/* Data Tables */}
             <div className="dashboard-content">

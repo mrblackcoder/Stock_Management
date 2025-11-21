@@ -52,13 +52,13 @@ public class SecurityConfig {
                         .requestMatchers("GET", "/api/products/**", "/api/categories/**",
                                 "/api/suppliers/**", "/api/transactions/**").authenticated()
 
-                        // API POST/PUT/DELETE endpoints - Only ADMIN can access
+                        // API POST/PUT/DELETE endpoints - Both USER and ADMIN can access
                         .requestMatchers("POST", "/api/products/**", "/api/categories/**",
-                                "/api/suppliers/**", "/api/transactions/**").hasRole("ADMIN")
+                                "/api/suppliers/**", "/api/transactions/**").authenticated()
                         .requestMatchers("PUT", "/api/products/**", "/api/categories/**",
-                                "/api/suppliers/**", "/api/transactions/**").hasRole("ADMIN")
+                                "/api/suppliers/**", "/api/transactions/**").authenticated()
                         .requestMatchers("DELETE", "/api/products/**", "/api/categories/**",
-                                "/api/suppliers/**", "/api/transactions/**").hasRole("ADMIN")
+                                "/api/suppliers/**", "/api/transactions/**").authenticated()
 
                         // Default: require authentication
                         .anyRequest().authenticated()

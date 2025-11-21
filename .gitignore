@@ -52,17 +52,6 @@ backend_new.log
 *.tmp
 *.temp
 temp/
-
-# Node modules (already handled in frontend/.gitignore)
-node_modules/
-
-# Build artifacts
-*.jar
-!gradle/wrapper/gradle-wrapper.jar
-
-# Database files
-*.db
-*.sqlite
 test_*.sh
 *_test.sh
 
@@ -72,8 +61,12 @@ test_*.sh
 benilutfenoku.md
 mesaj
 
-# Package Files
+# Node modules (already handled in frontend/.gitignore)
+node_modules/
+
+# Build artifacts and packages
 *.jar
+!gradle/wrapper/gradle-wrapper.jar
 *.war
 *.nar
 *.ear
@@ -81,13 +74,6 @@ mesaj
 *.tar.gz
 *.rar
 
-
-# Auto-added by cleanup
-*.log
-*.tmp
-/node_modules/
-/build/
-/out/
-/.idea/
-/*.iml
-.DS_Store
+# Database files
+*.db
+*.sqlite
