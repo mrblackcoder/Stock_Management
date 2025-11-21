@@ -127,6 +127,32 @@ tail -f /tmp/frontend.log
 ✅ Real-time Dashboard  
 ✅ External API Integration (Currency Conversion)  
 ✅ Responsive UI Design  
+✅ **Admin Strategy Pattern** - Extensible admin operations (Bulk Delete, Price Update, Reports)  
+
+---
+
+## 🏗️ Mimari Özellikler
+
+### Strategy Pattern Implementation
+Proje, admin işlemleri için **Strategy Pattern** kullanır:
+
+- `AdminOperationStrategy` - Base strategy interface
+- `BulkDeleteStrategy` - Toplu silme işlemleri (ADMIN only)
+- `BulkPriceUpdateStrategy` - Toplu fiyat güncellemeleri (ADMIN only)
+- `ReportGenerationStrategy` - Rapor oluşturma (ALL users)
+- `AdminOperationContext` - Strategy yönetimi ve yetkilendirme
+
+**Örnek Kullanım:**
+```java
+@Autowired
+private AdminOperationContext operationContext;
+
+// ADMIN işlemi
+operationContext.executeStrategy("BULK_DELETE", isAdmin);
+
+// USER işlemi
+operationContext.executeStrategy("REPORT_GENERATION", false);
+```  
 
 ---
 

@@ -12,6 +12,8 @@ function SupplierPage() {
     const [supplierProducts, setSupplierProducts] = useState({});
     const [allProducts, setAllProducts] = useState([]);
     const navigate = useNavigate();
+    const role = ApiService.getRole();
+    const isAdmin = role === 'ADMIN';
 
     const [formData, setFormData] = useState({
         name: '', email: '', phone: '', address: '', description: ''
@@ -95,15 +97,17 @@ function SupplierPage() {
                 <div className="quick-actions">
                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                         <h2>🏢 Tedarikçiler</h2>
-                        <button onClick={() => { setShowForm(!showForm); setFormData({ name: '', email: '', phone: '', address: '', description: '' }); }}
-                                className="action-btn">
-                            {showForm ? 'İptal' : '+ Yeni Tedarikçi'}
-                        </button>
+                        {isAdmin && (
+                            <button onClick={() => { setShowForm(!showForm); setFormData({ name: '', email: '', phone: '', address: '', description: '' }); }}
+                                    className="action-btn">
+                                {showForm ? 'İptal' : '+ Yeni Tedarikçi'}
+                            </button>
+                        )}
                     </div>
 
                     {error && <div style={{color: 'red', margin: '10px 0'}}>{error}</div>}
 
-                    {showForm && (
+                    {showForm && isAdmin && (
                         <form onSubmit={handleSubmit} style={{marginTop: '20px', padding: '20px', background: '#f5f5f5', borderRadius: '10px'}}>
                             <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
                                 <div>
@@ -177,7 +181,10 @@ function SupplierPage() {
                                                         </button>
                                                     </td>
                                                     <td style={{padding: '12px', textAlign: 'center'}}>
-                                                        <button onClick={() => handleDelete(sup.id)} style={{padding: '5px 15px', background: '#f56565', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer'}}>Sil</button>
+                                                        {isAdmin && (
+                                                            <button onClick={() => handleDelete(sup.id)} style={{padding: '5px 15px', background: '#f56565', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer'}}>Sil</button>
+                                                        )}
+                                                        {!isAdmin && <span style={{color: '#999'}}>Yetki yok</span>}
                                                     </td>
                                                 </tr>
                                                 {isExpanded && (

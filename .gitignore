@@ -49,6 +49,20 @@ backend_new.log
 *.pid
 
 # Test scripts
+*.tmp
+*.temp
+temp/
+
+# Node modules (already handled in frontend/.gitignore)
+node_modules/
+
+# Build artifacts
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# Database files
+*.db
+*.sqlite
 test_*.sh
 *_test.sh
 

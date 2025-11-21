@@ -83,15 +83,17 @@ function CategoryPage() {
                 <div className="quick-actions">
                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                         <h2>📁 Kategoriler</h2>
-                        <button onClick={() => { setShowForm(!showForm); setEditMode(false); setCurrentCategory({ id: null, name: '', description: '' }); }}
-                                className="action-btn">
-                            {showForm ? 'İptal' : '+ Yeni Kategori'}
-                        </button>
+                        {isAdmin && (
+                            <button onClick={() => { setShowForm(!showForm); setEditMode(false); setCurrentCategory({ id: null, name: '', description: '' }); }}
+                                    className="action-btn">
+                                {showForm ? 'İptal' : '+ Yeni Kategori'}
+                            </button>
+                        )}
                     </div>
 
                     {error && <div style={{color: 'red', margin: '10px 0'}}>{error}</div>}
 
-                    {showForm && (
+                    {showForm && isAdmin && (
                         <form onSubmit={handleSubmit} style={{marginTop: '20px', padding: '20px', background: '#f5f5f5', borderRadius: '10px'}}>
                             <div style={{marginBottom: '15px'}}>
                                 <label style={{display: 'block', marginBottom: '5px'}}>Kategori Adı *</label>
@@ -136,8 +138,14 @@ function CategoryPage() {
                                             <td style={{padding: '12px'}}>{cat.name}</td>
                                             <td style={{padding: '12px'}}>{cat.description}</td>
                                             <td style={{padding: '12px', textAlign: 'center'}}>
-                                                <button onClick={() => handleEdit(cat)} style={{marginRight: '10px', padding: '5px 15px', background: '#48bb78', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer'}}>Düzenle</button>
-                                                <button onClick={() => handleDelete(cat.id)} style={{padding: '5px 15px', background: '#f56565', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer'}}>Sil</button>
+                                                {isAdmin ? (
+                                                    <>
+                                                        <button onClick={() => handleEdit(cat)} style={{marginRight: '10px', padding: '5px 15px', background: '#48bb78', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer'}}>Düzenle</button>
+                                                        <button onClick={() => handleDelete(cat.id)} style={{padding: '5px 15px', background: '#f56565', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer'}}>Sil</button>
+                                                    </>
+                                                ) : (
+                                                    <span style={{color: '#999'}}>Yetki yok</span>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}

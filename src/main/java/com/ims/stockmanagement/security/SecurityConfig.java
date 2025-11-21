@@ -22,11 +22,10 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-// @EnableMethodSecurity - Temporarily disabled for testing
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -40,7 +39,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints - no authentication required
-                        .requestMatchers("/api/auth/**", "/api/public/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/public/**", "/api").permitAll()
 
                         // Frontend pages - no authentication required
                         .requestMatchers("/", "/login", "/register", "/dashboard", "/products",
@@ -49,11 +48,20 @@ public class SecurityConfig {
                         // Static resources - no authentication required
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/static/**").permitAll()
 
-                        // API endpoints - TEMPORARILY permitAll for testing (TODO: Add JWT authentication)
-                        .requestMatchers("/api/**").permitAll()
+                        // API GET endpoints - Both USER and ADMIN can access
+                        .requestMatchers("GET", "/api/products/**", "/api/categories/**",
+                                "/api/suppliers/**", "/api/transactions/**").authenticated()
 
-                        // Default: allow all for testing
-                        .anyRequest().permitAll()
+                        // API POST/PUT/DELETE endpoints - Only ADMIN can access
+                        .requestMatchers("POST", "/api/products/**", "/api/categories/**",
+                                "/api/suppliers/**", "/api/transactions/**").hasRole("ADMIN")
+                        .requestMatchers("PUT", "/api/products/**", "/api/categories/**",
+                                "/api/suppliers/**", "/api/transactions/**").hasRole("ADMIN")
+                        .requestMatchers("DELETE", "/api/products/**", "/api/categories/**",
+                                "/api/suppliers/**", "/api/transactions/**").hasRole("ADMIN")
+
+                        // Default: require authentication
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)

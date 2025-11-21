@@ -10,6 +10,8 @@ function TransactionPage() {
     const [error, setError] = useState('');
     const [showForm, setShowForm] = useState(false);
     const navigate = useNavigate();
+    const role = ApiService.getRole();
+    const isAdmin = role === 'ADMIN';
 
     const [formData, setFormData] = useState({
         productId: '',
@@ -84,17 +86,19 @@ function TransactionPage() {
                 <div className="quick-actions">
                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                         <h2>🔄 Stock Transactions</h2>
-                        <button onClick={() => {
-                            setShowForm(!showForm);
-                            setFormData({ productId: '', transactionType: 'PURCHASE', quantity: '', notes: '' });
-                        }} className="action-btn">
-                            {showForm ? 'İptal' : '+ Yeni Transaction'}
-                        </button>
+                        {isAdmin && (
+                            <button onClick={() => {
+                                setShowForm(!showForm);
+                                setFormData({ productId: '', transactionType: 'PURCHASE', quantity: '', notes: '' });
+                            }} className="action-btn">
+                                {showForm ? 'İptal' : '+ Yeni Transaction'}
+                            </button>
+                        )}
                     </div>
 
                     {error && <div style={{color: 'red', margin: '10px 0', padding: '10px', background: '#fee', borderRadius: '5px'}}>{error}</div>}
 
-                    {showForm && (
+                    {showForm && isAdmin && (
                         <form onSubmit={handleSubmit} style={{marginTop: '20px', padding: '20px', background: '#f5f5f5', borderRadius: '10px'}}>
                             <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
                                 <div>
