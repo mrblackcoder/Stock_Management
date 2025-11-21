@@ -48,17 +48,12 @@ public class SecurityConfig {
                         // Static resources - no authentication required
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/static/**").permitAll()
 
-                        // API GET endpoints - Both USER and ADMIN can access
-                        .requestMatchers("GET", "/api/products/**", "/api/categories/**",
-                                "/api/suppliers/**", "/api/transactions/**").authenticated()
-
-                        // API POST/PUT/DELETE endpoints - Both USER and ADMIN can access
-                        .requestMatchers("POST", "/api/products/**", "/api/categories/**",
-                                "/api/suppliers/**", "/api/transactions/**").authenticated()
-                        .requestMatchers("PUT", "/api/products/**", "/api/categories/**",
-                                "/api/suppliers/**", "/api/transactions/**").authenticated()
-                        .requestMatchers("DELETE", "/api/products/**", "/api/categories/**",
-                                "/api/suppliers/**", "/api/transactions/**").authenticated()
+                        // API endpoints - All authenticated users can access (ORDER MATTERS!)
+                        .requestMatchers("/api/products/**").authenticated()
+                        .requestMatchers("/api/categories/**").authenticated()
+                        .requestMatchers("/api/suppliers/**").authenticated()
+                        .requestMatchers("/api/transactions/**").authenticated()
+                        .requestMatchers("/api/users/**").authenticated()
 
                         // Default: require authentication
                         .anyRequest().authenticated()
