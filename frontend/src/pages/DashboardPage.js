@@ -307,6 +307,7 @@ function DashboardPage() {
                                 })}
                             </tbody>
                         </table>
+                        </div>
                     ) : (
                         <div style={{
                             background: '#ecfdf5',
