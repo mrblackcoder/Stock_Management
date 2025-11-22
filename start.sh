@@ -1,92 +1,82 @@
 #!/bin/bash
 
-echo "🚀 Inventory Management System - Başlatma Scripti"
-echo "=================================================="
-echo ""
-
 # Renkler
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+BLUE='\033[0;34m'
+NC='\033[0m'
 
-# 1. Eski process'leri temizle
-echo -e "${YELLOW}⏳ Eski process'ler temizleniyor...${NC}"
-sudo lsof -ti:8080 | xargs -r sudo kill -9 2>/dev/null
-sudo lsof -ti:3000 | xargs -r sudo kill -9 2>/dev/null
+clear
+echo -e "${BLUE}╔════════════════════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}║   📦 Inventory Management System - Start Script      ║${NC}"
+echo -e "${BLUE}╚════════════════════════════════════════════════════════╝${NC}"
+echo ""
+
+# Proje dizini
+PROJECT_DIR="/home/taha/IdeaProjects/StockManagement"
+
+# 1. Port temizliği
+echo -e "${YELLOW}[1/4]${NC} Portlar temizleniyor..."
+sudo lsof -ti:8080 2>/dev/null | xargs -r sudo kill -9 2>/dev/null
+sudo lsof -ti:3000 2>/dev/null | xargs -r sudo kill -9 2>/dev/null
 pkill -9 -f "gradle" 2>/dev/null
 pkill -9 -f "react-scripts" 2>/dev/null
-sleep 2
-echo -e "${GREEN}✅ Portlar temizlendi${NC}"
-echo ""
+sleep 1
+echo -e "${GREEN}      ✓ Portlar temizlendi${NC}\n"
 
-# 2. MySQL'i başlat
-echo -e "${YELLOW}⏳ MySQL başlatılıyor...${NC}"
-sudo service mysql start
+# 2. MySQL başlatma
+echo -e "${YELLOW}[2/4]${NC} MySQL başlatılıyor..."
+sudo service mysql start > /dev/null 2>&1
 if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✅ MySQL başlatıldı${NC}"
+    echo -e "${GREEN}      ✓ MySQL çalışıyor${NC}\n"
 else
-    echo -e "${RED}❌ MySQL başlatılamadı!${NC}"
+    echo -e "${RED}      ✗ MySQL başlatılamadı!${NC}"
     exit 1
 fi
-echo ""
 
-# 3. Backend'i başlat
-echo -e "${YELLOW}⏳ Backend (Spring Boot) başlatılıyor...${NC}"
-cd /home/taha/IdeaProjects/StockManagement
+# 3. Backend başlatma
+echo -e "${YELLOW}[3/4]${NC} Backend başlatılıyor..."
+cd "$PROJECT_DIR"
 ./gradlew bootRun > backend.log 2>&1 &
 BACKEND_PID=$!
-echo -e "${GREEN}✅ Backend başlatıldı (PID: $BACKEND_PID)${NC}"
-echo "   Loglar: backend.log"
-echo ""
 
-# 4. Backend'in hazır olmasını bekle
-echo -e "${YELLOW}⏳ Backend'in hazır olması bekleniyor (20 saniye)...${NC}"
-for i in {20..1}; do
-    echo -ne "\r   $i saniye kaldı..."
+# Backend'in hazır olmasını bekle (max 30 saniye)
+for i in {1..30}; do
+    if curl -s http://localhost:8080/api > /dev/null 2>&1; then
+        echo -e "${GREEN}      ✓ Backend hazır (${i}s)${NC}\n"
+        break
+    fi
+    if [ $i -eq 30 ]; then
+        echo -e "${RED}      ✗ Backend başlatılamadı! (Timeout)${NC}"
+        echo -e "${YELLOW}      Log: tail -f backend.log${NC}"
+        exit 1
+    fi
     sleep 1
 done
-echo -e "\n${GREEN}✅ Backend hazır olmalı${NC}"
-echo ""
 
-# 5. Backend kontrolü
-echo -e "${YELLOW}⏳ Backend kontrol ediliyor...${NC}"
-RESPONSE=$(curl -s http://localhost:8080/api)
-if [ -n "$RESPONSE" ]; then
-    echo -e "${GREEN}✅ Backend çalışıyor!${NC}"
-    echo "   URL: http://localhost:8080"
-else
-    echo -e "${RED}❌ Backend yanıt vermiyor. backend.log dosyasını kontrol edin.${NC}"
-    echo ""
-    echo "Son 10 satır backend log:"
-    tail -10 backend.log
-    exit 1
-fi
-echo ""
-
-# 6. Frontend'i başlat
-echo -e "${YELLOW}⏳ Frontend (React) başlatılıyor...${NC}"
-cd /home/taha/IdeaProjects/StockManagement/frontend
-npm start &
+# 4. Frontend başlatma
+echo -e "${YELLOW}[4/4]${NC} Frontend başlatılıyor..."
+cd "$PROJECT_DIR/frontend"
+npm start > /dev/null 2>&1 &
 FRONTEND_PID=$!
-echo -e "${GREEN}✅ Frontend başlatıldı (PID: $FRONTEND_PID)${NC}"
-echo ""
+sleep 2
+echo -e "${GREEN}      ✓ Frontend başlatıldı${NC}\n"
 
-# Bilgi mesajları
-echo "=================================================="
-echo -e "${GREEN}✅ Sistem başarıyla başlatıldı!${NC}"
+# Başarı mesajı
+echo -e "${GREEN}╔════════════════════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║              ✓ Sistem Başarıyla Başlatıldı!          ║${NC}"
+echo -e "${GREEN}╚════════════════════════════════════════════════════════╝${NC}"
 echo ""
-echo "📌 Erişim Bilgileri:"
-echo "   Backend:  http://localhost:8080"
-echo "   Frontend: http://localhost:3000"
+echo -e "${BLUE}📍 Erişim URL'leri:${NC}"
+echo -e "   Backend  → http://localhost:8080"
+echo -e "   Frontend → http://localhost:3000"
 echo ""
-echo "📌 Test Kullanıcıları:"
-echo "   Admin: admin / admin123"
-echo "   User:  user / user123"
+echo -e "${BLUE}👤 Test Hesapları:${NC}"
+echo -e "   Admin    → admin / admin123"
+echo -e "   User     → user / user123"
 echo ""
-echo "📌 Sistemi Durdurmak İçin:"
-echo "   Ctrl+C veya:"
-echo "   sudo pkill -9 -f 'gradle'"
-echo "   sudo pkill -9 -f 'react-scripts'"
-echo "=================================================="
+echo -e "${YELLOW}💡 Sistem durdurmak için:${NC}"
+echo -e "   ./stop.sh veya Ctrl+C"
+echo ""
 
