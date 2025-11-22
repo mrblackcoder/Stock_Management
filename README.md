@@ -31,11 +31,13 @@
 - Session yönetimi ve token geçerlilik kontrolü
 
 #### 📦 Ürün Yönetimi
-- Ürün ekleme, düzenleme, silme ve listeleme (CRUD)
-- Ürün arama ve filtreleme
+- Ürün ekleme (Tüm kullanıcılar)
+- Ürün düzenleme ve silme (ADMIN veya ürünü oluşturan kullanıcı)
+- Ürün listeleme ve arama
 - SKU (Stock Keeping Unit) bazlı takip
 - Kategori ve tedarikçi ilişkilendirme
 - Stok seviyesi takibi ve düşük stok uyarıları
+- Kullanıcı bazlı ürün sahipliği
 
 #### 📂 Kategori Yönetimi
 - Kategori oluşturma ve düzenleme

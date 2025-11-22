@@ -26,7 +26,6 @@ public class ProductController {
     private final ExternalApiService externalApiService;
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Response> createProduct(@RequestBody ProductDTO productDTO) {
         Response response = productService.createProduct(productDTO);
         return ResponseEntity.status(response.getStatusCode()).body(response);
@@ -67,14 +66,12 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Response> updateProduct(@PathVariable Long id, @RequestBody ProductDTO productDTO) {
         Response response = productService.updateProduct(id, productDTO);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Response> deleteProduct(@PathVariable Long id) {
         Response response = productService.deleteProduct(id);
         return ResponseEntity.status(response.getStatusCode()).body(response);
