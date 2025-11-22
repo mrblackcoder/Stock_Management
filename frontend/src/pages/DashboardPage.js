@@ -142,53 +142,55 @@ function DashboardPage() {
                 <div className="dashboard-section">
                     <h2>📦 Recent Products</h2>
                     {recentProducts.length > 0 ? (
-                        <table className="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Product Name</th>
-                                    <th>SKU</th>
-                                    <th>Category</th>
-                                    <th>Supplier</th>
-                                    <th>Price</th>
-                                    <th>Current Stock</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {recentProducts.map(product => {
-                                    const stock = product.stockQuantity || product.quantity || 0;
-                                    const stockStatus = stock <= 5 ? 'critical' : stock <= 10 ? 'low' : 'good';
-                                    const statusIcon = stock <= 5 ? '🔴' : stock <= 10 ? '🟡' : '🟢';
+                        <div className="table-scroll-wrapper">
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Product Name</th>
+                                        <th>SKU</th>
+                                        <th>Category</th>
+                                        <th>Supplier</th>
+                                        <th>Price</th>
+                                        <th>Current Stock</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {recentProducts.map(product => {
+                                        const stock = product.stockQuantity || product.quantity || 0;
+                                        const stockStatus = stock <= 5 ? 'critical' : stock <= 10 ? 'low' : 'good';
+                                        const statusIcon = stock <= 5 ? '🔴' : stock <= 10 ? '🟡' : '🟢';
 
-                                    return (
-                                        <tr key={product.id}>
-                                            <td><strong>{product.name}</strong></td>
-                                            <td><code>{product.sku}</code></td>
-                                            <td>{product.categoryName || 'N/A'}</td>
-                                            <td>
-                                                <span style={{
-                                                    background: '#e6efff',
-                                                    color: '#667eea',
-                                                    padding: '4px 10px',
-                                                    borderRadius: '6px',
-                                                    fontSize: '13px',
-                                                    fontWeight: '600'
-                                                }}>
-                                                    🚚 {product.supplierName || 'N/A'}
-                                                </span>
-                                            </td>
-                                            <td><strong>₺{product.price?.toFixed(2)}</strong></td>
-                                            <td>
-                                                <span className={`stock-badge ${stockStatus}`}>
-                                                    {stock} units
-                                                </span>
-                                            </td>
-                                            <td>{statusIcon} {stockStatus === 'critical' ? 'Critical' : stockStatus === 'low' ? 'Low' : 'Good'}</td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                                        return (
+                                            <tr key={product.id}>
+                                                <td><strong>{product.name}</strong></td>
+                                                <td><code>{product.sku}</code></td>
+                                                <td>{product.categoryName || 'N/A'}</td>
+                                                <td>
+                                                    <span style={{
+                                                        background: '#e6efff',
+                                                        color: '#667eea',
+                                                        padding: '4px 10px',
+                                                        borderRadius: '6px',
+                                                        fontSize: '13px',
+                                                        fontWeight: '600'
+                                                    }}>
+                                                        🚚 {product.supplierName || 'N/A'}
+                                                    </span>
+                                                </td>
+                                                <td><strong>₺{product.price?.toFixed(2)}</strong></td>
+                                                <td>
+                                                    <span className={`stock-badge ${stockStatus}`}>
+                                                        {stock} units
+                                                    </span>
+                                                </td>
+                                                <td>{statusIcon} {stockStatus === 'critical' ? 'Critical' : stockStatus === 'low' ? 'Low' : 'Good'}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
                     ) : (
                         <p className="no-data">No products yet. Add your first product!</p>
                     )}
@@ -201,104 +203,105 @@ function DashboardPage() {
                         <span className="badge-count">{lowStockItems.length} items</span>
                     </div>
                     {lowStockItems.length > 0 ? (
-                        <table className="data-table alert-table">
-                            <thead>
-                                <tr>
-                                    <th>Priority</th>
-                                    <th>Product Name</th>
-                                    <th>SKU</th>
-                                    <th>Category</th>
-                                    <th>Supplier</th>
-                                    <th>Current Stock</th>
-                                    <th>Price/Unit</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {lowStockItems.map((product, index) => {
-                                    const stock = product.stockQuantity || product.quantity || 0;
-                                    const isCritical = stock <= 5;
-                                    const priorityLevel = isCritical ? 'HIGH' : 'MEDIUM';
-                                    const priorityColor = isCritical ? '#dc2626' : '#f59e0b';
+                        <div className="table-scroll-wrapper">
+                            <table className="data-table alert-table">
+                                <thead>
+                                    <tr>
+                                        <th>Priority</th>
+                                        <th>Product Name</th>
+                                        <th>SKU</th>
+                                        <th>Category</th>
+                                        <th>Supplier</th>
+                                        <th>Current Stock</th>
+                                        <th>Price/Unit</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {lowStockItems.map((product, index) => {
+                                        const stock = product.stockQuantity || product.quantity || 0;
+                                        const isCritical = stock <= 5;
+                                        const priorityLevel = isCritical ? 'HIGH' : 'MEDIUM';
+                                        const priorityColor = isCritical ? '#dc2626' : '#f59e0b';
 
-                                    return (
-                                        <tr key={product.id} className={isCritical ? 'critical-row' : 'warning-row'}>
-                                            <td>
-                                                <span
-                                                    className="priority-badge"
-                                                    style={{
-                                                        background: priorityColor,
-                                                        color: 'white',
-                                                        padding: '4px 8px',
-                                                        borderRadius: '4px',
-                                                        fontSize: '11px',
-                                                        fontWeight: 'bold'
-                                                    }}
-                                                >
-                                                    {priorityLevel}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <strong>{product.name}</strong>
-                                            </td>
-                                            <td>
-                                                <code style={{
-                                                    background: '#f3f4f6',
-                                                    padding: '2px 6px',
-                                                    borderRadius: '3px',
-                                                    fontSize: '12px'
-                                                }}>
-                                                    {product.sku}
-                                                </code>
-                                            </td>
-                                            <td>{product.categoryName || 'N/A'}</td>
-                                            <td>{product.supplierName || 'N/A'}</td>
-                                            <td>
-                                                <span
-                                                    className="stock-indicator"
-                                                    style={{
-                                                        background: isCritical ? '#fee2e2' : '#fef3c7',
+                                        return (
+                                            <tr key={product.id} className={isCritical ? 'critical-row' : 'warning-row'}>
+                                                <td>
+                                                    <span
+                                                        className="priority-badge"
+                                                        style={{
+                                                            background: priorityColor,
+                                                            color: 'white',
+                                                            padding: '4px 8px',
+                                                            borderRadius: '4px',
+                                                            fontSize: '11px',
+                                                            fontWeight: 'bold'
+                                                        }}
+                                                    >
+                                                        {priorityLevel}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <strong>{product.name}</strong>
+                                                </td>
+                                                <td>
+                                                    <code style={{
+                                                        background: '#f3f4f6',
+                                                        padding: '2px 6px',
+                                                        borderRadius: '3px',
+                                                        fontSize: '12px'
+                                                    }}>
+                                                        {product.sku}
+                                                    </code>
+                                                </td>
+                                                <td>{product.categoryName || 'N/A'}</td>
+                                                <td>{product.supplierName || 'N/A'}</td>
+                                                <td>
+                                                    <span
+                                                        className="stock-indicator"
+                                                        style={{
+                                                            background: isCritical ? '#fee2e2' : '#fef3c7',
+                                                            color: isCritical ? '#dc2626' : '#f59e0b',
+                                                            padding: '6px 12px',
+                                                            borderRadius: '6px',
+                                                            fontWeight: 'bold',
+                                                            fontSize: '14px',
+                                                            display: 'inline-block'
+                                                        }}
+                                                    >
+                                                        {isCritical ? '🔴' : '🟡'} {stock} units
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <strong>₺{product.price?.toFixed(2)}</strong>
+                                                </td>
+                                                <td>
+                                                    <span style={{
                                                         color: isCritical ? '#dc2626' : '#f59e0b',
-                                                        padding: '6px 12px',
-                                                        borderRadius: '6px',
-                                                        fontWeight: 'bold',
-                                                        fontSize: '14px',
-                                                        display: 'inline-block'
-                                                    }}
-                                                >
-                                                    {isCritical ? '🔴' : '🟡'} {stock} units
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <strong>₺{product.price?.toFixed(2)}</strong>
-                                            </td>
-                                            <td>
-                                                <span style={{
-                                                    color: isCritical ? '#dc2626' : '#f59e0b',
-                                                    fontWeight: 'bold'
-                                                }}>
-                                                    {isCritical ? '⚠️ CRITICAL' : '⚡ LOW'}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <button
-                                                    className="reorder-btn"
-                                                    onClick={() => navigate('/transactions')}
-                                                    style={{
-                                                        background: '#3b82f6',
-                                                        color: 'white',
-                                                        border: 'none',
-                                                        padding: '6px 12px',
-                                                        borderRadius: '5px',
-                                                        cursor: 'pointer',
-                                                        fontSize: '12px',
                                                         fontWeight: 'bold'
-                                                    }}
-                                                >
-                                                    📦 Reorder
-                                                </button>
-                                            </td>
+                                                    }}>
+                                                        {isCritical ? '⚠️ CRITICAL' : '⚡ LOW'}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <button
+                                                        className="reorder-btn"
+                                                        onClick={() => navigate('/transactions')}
+                                                        style={{
+                                                            background: '#3b82f6',
+                                                            color: 'white',
+                                                            border: 'none',
+                                                            padding: '6px 12px',
+                                                            borderRadius: '5px',
+                                                            cursor: 'pointer',
+                                                            fontSize: '12px',
+                                                            fontWeight: 'bold'
+                                                        }}
+                                                    >
+                                                        📦 Reorder
+                                                    </button>
+                                                </td>
                                         </tr>
                                     );
                                 })}

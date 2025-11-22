@@ -178,11 +178,74 @@
     font-size: 14px;
 }
 
+/* Table Scroll Wrapper - Horizontal Scroll */
+.table-scroll-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: visible;
+    margin-top: 15px;
+    border-radius: 8px;
+    position: relative;
+
+    /* Modern scrollbar tasarımı - Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: #667eea #f1f1f1;
+
+    /* Scroll shadow efekti */
+    box-shadow:
+        inset -10px 0 8px -8px rgba(0, 0, 0, 0.1),
+        inset 10px 0 8px -8px rgba(0, 0, 0, 0.1);
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) için özel scrollbar */
+.table-scroll-wrapper::-webkit-scrollbar {
+    height: 10px;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+    margin: 0 10px;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    transition: background 0.3s;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    cursor: pointer;
+}
+
+/* Scroll indicator (optional) */
+.table-scroll-wrapper::after {
+    content: '← Scroll →';
+    position: absolute;
+    bottom: 12px;
+    right: 20px;
+    background: rgba(102, 126, 234, 0.9);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.table-scroll-wrapper:hover::after {
+    opacity: 1;
+}
+
 /* Data Tables */
 .data-table {
     width: 100%;
+    min-width: 900px; /* Minimum genişlik - horizontal scroll için */
     border-collapse: collapse;
-    margin-top: 15px;
+    margin: 0;
 }
 
 .data-table thead {
