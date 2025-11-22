@@ -193,29 +193,119 @@ Aşağıdaki yazılımların sisteminizde yüklü olması gerekmektedir:
 
 ---
 
-## 🎯 HIZLI BAŞLANGIÇ - SİSTEM ÇALIŞTIRMA
+## 🎯 HIZLI BAŞLANGIÇ - SIFIRDAN SİSTEM KURULUMU
 
-> **ÖNEMLİ:** Uygulamayı çalıştırmadan önce aşağıdaki adımları sırayla takip edin!
+> **ÖNEMLİ:** Bu adımları sırayla takip ederek sistemi sıfırdan kurun ve çalıştırın!
 
-### 🚀 TEK KOMUTLA BAŞLATMA (ÖNERİLEN)
-
-**En hızlı yöntem - Tek terminalde çalıştırın:**
+### 📦 ADIM 1: Projeyi İndirin ve Hazırlayın
 
 ```bash
-# MySQL + Backend + Frontend (Hepsi birlikte)
-cd /home/taha/IdeaProjects/StockManagement && \
-sudo service mysql start && \
-echo "✅ MySQL başlatıldı" && \
-./gradlew bootRun > /dev/null 2>&1 & \
-echo "⏳ Backend başlatılıyor (15 saniye bekleyin)..." && \
-sleep 15 && \
-echo "✅ Backend hazır: http://localhost:8080" && \
-cd frontend && npm start
+# 1. Proje dizinine gidin
+cd /home/taha/IdeaProjects/StockManagement
+
+# 2. Gradle wrapper'a yürütme izni verin (Linux/Mac)
+chmod +x gradlew
+
+# 3. Eski process'leri temizleyin
+sudo lsof -ti:8080 | xargs -r sudo kill -9
+sudo lsof -ti:3000 | xargs -r sudo kill -9
+sudo pkill -9 -f "gradle" 2>/dev/null
+sudo pkill -9 -f "react-scripts" 2>/dev/null
 ```
 
-**Not:** Bu komut MySQL'i başlatır, backend'i arka planda çalıştırır ve frontend'i başlatır.
+---
 
-### 📋 İKİ TERMINAL İLE BAŞLATMA
+### 🗄️ ADIM 2: MySQL Veritabanını Kurun
+
+```bash
+# MySQL'i başlatın
+sudo service mysql start
+
+# MySQL'e giriş yapın
+mysql -u root -p
+
+# Veritabanını oluşturun (MySQL içinde)
+CREATE DATABASE IF NOT EXISTS inventory_management_db 
+CHARACTER SET utf8mb4 
+COLLATE utf8mb4_unicode_ci;
+
+EXIT;
+```
+
+**Veritabanı Ayarlarını Kontrol Edin:**
+`src/main/resources/application.properties` dosyasını açın:
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/inventory_management_db?createDatabaseIfNotExist=true
+spring.datasource.username=root
+spring.datasource.password=root  # Şifrenizi buraya yazın
+```
+
+---
+
+### 🔧 ADIM 3: Backend'i Kurun ve Başlatın
+
+```bash
+# 1. Proje dizinine gidin
+cd /home/taha/IdeaProjects/StockManagement
+
+# 2. Gradle build yapın (ilk kez)
+./gradlew clean build -x test
+
+# 3. Backend'i başlatın
+./gradlew bootRun
+```
+
+**✅ Başarı Mesajları (Backend hazır olduğunda):**
+```
+Started StockManagementApplication in X.XXX seconds
+Tomcat started on port 8080
+```
+
+**🌐 Backend Kontrol:**
+- API Status: http://localhost:8080/api
+- Başarılı yanıt: `{"status":"running","message":"Inventory Management System API is running"}`
+
+> **⚠️ ÖNEMLİ:** Backend tamamen başlayana kadar (15-20 saniye) bekleyin! Terminal'de "Tomcat started on port 8080" mesajını gördüğünüzde devam edin.
+
+---
+
+### 🎨 ADIM 4: Frontend'i Kurun ve Başlatın
+
+**YENİ BİR TERMİNAL AÇIN** ve şu adımları izleyin:
+
+```bash
+# 1. Frontend dizinine gidin
+cd /home/taha/IdeaProjects/StockManagement/frontend
+
+# 2. Eski node_modules'ü temizleyin
+rm -rf node_modules package-lock.json
+npm cache clean --force
+
+# 3. Bağımlılıkları yükleyin (bu 1-2 dakika sürebilir)
+npm install
+
+# 4. Frontend'i başlatın
+npm start
+```
+
+**✅ Başarı Mesajları (Frontend hazır olduğunda):**
+```
+Compiled successfully!
+You can now view frontend in the browser.
+Local: http://localhost:3000
+```
+
+**🌐 Uygulama Erişim:**
+- Ana Sayfa: http://localhost:3000
+- Tarayıcınız otomatik açılacaktır
+
+> **⚠️ NOT:** Tarayıcı açılmazsa manuel olarak http://localhost:3000 adresine gidin.
+
+---
+
+### 🚀 TEK SEFERDE BAŞLATMA (Kurulum sonrası kullanım için)
+
+Sistemi bir kez kurduktan sonra, tekrar başlatmak için:
 
 **Terminal 1 - Backend:**
 ```bash
@@ -224,7 +314,7 @@ sudo service mysql start
 ./gradlew bootRun
 ```
 
-**Terminal 2 - Frontend (15 saniye bekleyin):**
+**Terminal 2 - Frontend (Backend başladıktan 15 saniye sonra):**
 ```bash
 cd /home/taha/IdeaProjects/StockManagement/frontend
 npm start
@@ -232,260 +322,138 @@ npm start
 
 ---
 
-### ⚠️ Çalıştırma Sırası (ÇOK ÖNEMLİ!)
+### 🔄 OTOMATİK BAŞLATMA SCRIPTI (ÖNERİLEN YOL!)
 
-Sistem **mutlaka** aşağıdaki sırada başlatılmalıdır:
+**En kolay yöntem - Tek komutla her şeyi başlat:**
 
-1. **MySQL Veritabanı** (İlk önce)
-2. **Backend API** (İkinci)
-3. **Frontend React App** (En son)
-
----
-
-### 🗄️ ADIM 1: MySQL Veritabanı Kurulumu
-
-#### MySQL Servisini Başlatma
 ```bash
-# Linux/Mac
+# Otomatik başlatma scripti
+cd /home/taha/IdeaProjects/StockManagement
+./start.sh
+```
+
+Bu script otomatik olarak:
+- ✅ Eski process'leri temizler
+- ✅ MySQL'i başlatır
+- ✅ Backend'i başlatır ve hazır olmasını bekler
+- ✅ Frontend'i başlatır
+- ✅ Tüm sistem bilgilerini gösterir
+
+**Veya manuel başlatma:**
+
+```bash
+# Terminal 1 - Backend
+cd /home/taha/IdeaProjects/StockManagement
 sudo service mysql start
-# veya
-sudo systemctl start mysql
-
-# Windows
-net start mysql
-```
-
-#### Veritabanını Oluşturma
-```bash
-# MySQL'e root olarak giriş yapın
-mysql -u root -p
-```
-
-```sql
--- Veritabanını oluştur
-CREATE DATABASE IF NOT EXISTS inventory_management_db 
-CHARACTER SET utf8mb4 
-COLLATE utf8mb4_unicode_ci;
-
--- Çıkış
-EXIT;
-```
-
-#### Veritabanı Ayarlarını Kontrol Etme
-`src/main/resources/application.properties` dosyasını açın ve kontrol edin:
-```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/inventory_management_db?createDatabaseIfNotExist=true
-spring.datasource.username=root
-spring.datasource.password=root
-```
-> **Not:** MySQL şifreniz farklıysa `password` değerini güncelleyin!
-
----
-
-### 🔧 ADIM 2: Backend (Spring Boot) Başlatma
-
-#### İlk Kurulum (Sadece bir kez)
-```bash
-# Proje dizinine gidin
-cd /home/taha/IdeaProjects/StockManagement
-
-# Gradle wrapper'a yürütme izni verin (Linux/Mac)
-chmod +x gradlew
-
-# Build işlemini gerçekleştirin
-./gradlew clean build -x test
-```
-
-#### Backend'i Çalıştırma (ÖNEMLİ!)
-
-**Terminal 1'de aşağıdaki komutu çalıştırın:**
-```bash
-cd /home/taha/IdeaProjects/StockManagement
 ./gradlew bootRun
-```
 
-**✅ Başarı Mesajları:**
-```
-Started StockManagementApplication in X.XXX seconds
-Tomcat started on port 8080
-```
-
-**🌐 Backend Erişim:**
-- API Base URL: http://localhost:8080
-- API Status: http://localhost:8080/api
-- Swagger (eğer aktifse): http://localhost:8080/swagger-ui.html
-
-> **⚠️ DİKKAT:** Backend tamamen başlayana kadar (yaklaşık 15-20 saniye) frontend'i başlatmayın!
-
----
-
-### 🎨 ADIM 3: Frontend (React) Başlatma
-
-#### İlk Kurulum (Sadece bir kez)
-```bash
-# Frontend dizinine gidin
-cd /home/taha/IdeaProjects/StockManagement/frontend
-
-# Node.js bağımlılıklarını yükleyin
-npm install
-```
-
-#### Frontend'i Çalıştırma (ÖNEMLİ!)
-
-**Terminal 2'de aşağıdaki komutu çalıştırın:**
-```bash
+# Terminal 2 - Frontend (15 saniye bekledikten sonra)
 cd /home/taha/IdeaProjects/StockManagement/frontend
 npm start
 ```
 
-**✅ Başarı Mesajları:**
-```
-Compiled successfully!
-You can now view frontend in the browser.
-Local: http://localhost:3000
-```
-
-**🌐 Frontend Erişim:**
-- Ana Sayfa: http://localhost:3000
-- Login Sayfası: http://localhost:3000/login
-- Dashboard: http://localhost:3000/dashboard
-
-> **⚠️ NOT:** Tarayıcı otomatik açılmazsa manuel olarak http://localhost:3000 adresine gidin.
-
 ---
 
-### 🔄 KAPSAMLI ÇALIŞTIRMA KOMUTLARI
+### ✅ Kurulum Doğrulama Testleri
 
-#### Tüm Sistemi Sıfırdan Başlatma (TAM KOMUT)
-
+#### 1️⃣ MySQL Testi
 ```bash
-# 1. MySQL'i başlat
-sudo service mysql start
-
-# 2. Eski process'leri temizle
-cd /home/taha/IdeaProjects/StockManagement
-lsof -ti:8080 | xargs -r kill -9
-lsof -ti:3000 | xargs -r kill -9
-
-# 3. Backend'i başlat (Terminal 1)
-./gradlew bootRun &
-
-# 4. 15 saniye bekle (Backend'in başlaması için)
-sleep 15
-
-# 5. Frontend'i başlat (Terminal 2)
-cd frontend
-npm start
+mysql -u root -p -e "USE inventory_management_db; SHOW TABLES;"
 ```
+**Beklenen çıktı:** 5 tablo (users, products, categories, suppliers, stock_transactions)
 
-#### Hızlı Yeniden Başlatma
+#### 2️⃣ Backend Testi
 ```bash
-# Backend'i durdur ve yeniden başlat
-pkill -9 -f "gradle"
-./gradlew bootRun &
-
-# Frontend'i durdur ve yeniden başlat
-pkill -9 -f "react-scripts"
-cd frontend && npm start
-```
-
----
-
-### ✅ Kurulum Doğrulama
-
-#### 1. Backend Kontrolü
-```bash
-# API status kontrolü
 curl http://localhost:8080/api
-
-# Beklenen çıktı:
-# {"status":"running","message":"Inventory Management System API is running","version":"1.0.0","endpoints":{...}}
 ```
+**Beklenen çıktı:** JSON response `{"status":"running",...}`
 
-#### 2. Frontend Kontrolü
-```bash
-# Frontend erişim kontrolü
-curl -I http://localhost:3000
-
-# Beklenen durum kodu: 200 OK
-```
-
-#### 3. Veritabanı Kontrolü
-```sql
-mysql -u root -p
-USE inventory_management_db;
-SHOW TABLES;
-
--- Beklenen tablolar:
--- users, products, categories, suppliers, stock_transactions
-```
-
-#### 4. Manuel Tarayıcı Testi
-1. http://localhost:3000 adresine gidin
-2. Login sayfası görünmeli
-3. Test kullanıcısı ile giriş yapın:
-   - **Username:** `admin`
-   - **Password:** `admin123`
-4. Dashboard açılmalı
+#### 3️⃣ Frontend Testi
+- http://localhost:3000 adresini tarayıcıda açın
+- Login sayfası görünmeli
+- Test kullanıcısı ile giriş yapın:
+  - **Username:** `admin`
+  - **Password:** `admin123`
 
 ---
 
-### ❌ Sık Karşılaşılan Sorunlar ve Çözümleri
+### ❌ Sık Karşılaşılan Hatalar ve Çözümleri
 
-#### Port Zaten Kullanımda Hatası
+#### ⚠️ Port Kullanımda Hatası
 ```bash
-# Hata: "Address already in use: bind"
-# Çözüm: Port'u kullanan process'i öldürün
-
-# 8080 portunu temizle (Backend)
-lsof -ti:8080 | xargs -r kill -9
-
-# 3000 portunu temizle (Frontend)
-lsof -ti:3000 | xargs -r kill -9
+# Hata: "Address already in use"
+# Çözüm:
+sudo lsof -ti:8080 | xargs -r sudo kill -9  # Backend portu
+sudo lsof -ti:3000 | xargs -r sudo kill -9  # Frontend portu
 ```
 
-#### MySQL Bağlantı Hatası
+#### ⚠️ npm install Hatası
 ```bash
-# Hata: "Access denied for user 'root'@'localhost'"
-# Çözüm: application.properties'deki şifreyi kontrol edin
+# Hata: "npm ERR!" veya "ERESOLVE"
+# Çözüm: Node modüllerini tamamen temizleyin
+cd /home/taha/IdeaProjects/StockManagement/frontend
+rm -rf node_modules package-lock.json
+npm cache clean --force
+npm install --legacy-peer-deps
+```
 
-# MySQL şifrenizi öğrenin/değiştirin
+#### ⚠️ MySQL Bağlantı Hatası
+```bash
+# Hata: "Access denied for user 'root'"
+# Çözüm 1: MySQL şifrenizi kontrol edin
 sudo mysql -u root
-ALTER USER 'root'@'localhost' IDENTIFIED BY 'yeni_sifre';
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'root';
 FLUSH PRIVILEGES;
 EXIT;
+
+# Çözüm 2: application.properties'deki şifreyi güncelleyin
 ```
 
-#### Frontend Backend'e Bağlanamıyor
+#### ⚠️ Gradle Build Hatası
+```bash
+# Hata: "Build failed"
+# Çözüm: Gradle cache'i temizleyin
+cd /home/taha/IdeaProjects/StockManagement
+./gradlew clean
+./gradlew build -x test --refresh-dependencies
+```
+
+#### ⚠️ Frontend Backend'e Bağlanamıyor
 ```bash
 # Hata: "Network Error" veya "CORS Error"
 # Çözüm: Backend'in çalıştığından emin olun
-
-# Backend durumunu kontrol et
 curl http://localhost:8080/api
 
-# Backend yoksa başlat
+# Backend yanıt vermiyorsa yeniden başlatın
+pkill -9 -f "gradle"
 cd /home/taha/IdeaProjects/StockManagement
 ./gradlew bootRun
 ```
 
 ---
 
-### 🛑 Sistemi Durdurma
+### 🛑 Sistemi Güvenle Durdurma
 
-#### Güvenli Durdurma
 ```bash
-# Backend'i durdur (Terminal 1'de Ctrl+C)
-# veya
-pkill -9 -f "gradle"
+# Backend'i durdur (Terminal 1'de Ctrl+C veya)
+sudo pkill -9 -f "gradle"
 
-# Frontend'i durdur (Terminal 2'de Ctrl+C)
-# veya
-pkill -9 -f "react-scripts"
+# Frontend'i durdur (Terminal 2'de Ctrl+C veya)
+sudo pkill -9 -f "react-scripts"
 
 # MySQL'i durdur (opsiyonel)
 sudo service mysql stop
 ```
+
+---
+
+### 📝 İLK KULLANIM İÇİN ÖNEMLİ NOTLAR
+
+1. ✅ **Backend'i her zaman önce başlatın** - Frontend'den önce!
+2. ✅ **Backend başlayana kadar bekleyin** - "Tomcat started" mesajını görene kadar
+3. ✅ **İlk npm install uzun sürebilir** - Sabırlı olun (1-2 dakika)
+4. ✅ **Port'ları temizleyin** - Hata alırsanız yukarıdaki komutları kullanın
+5. ✅ **MySQL şifrenizi kontrol edin** - application.properties'de doğru olmalı
 
 ---
 

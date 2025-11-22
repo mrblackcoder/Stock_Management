@@ -319,19 +319,37 @@
     color: #10b981;
 }
 
-/* Reorder Button */
+/* Reorder Button - Modern Design */
 .reorder-btn {
-    transition: all 0.2s;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .reorder-btn:hover {
-    background: #2563eb !important;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
 
 .reorder-btn:active {
     transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.reorder-btn:focus {
+    outline: 2px solid #93c5fd;
+    outline-offset: 2px;
 }
 
 /* No Data State */
@@ -345,66 +363,32 @@
     margin: 15px 0;
 }
 
+.no-data.success {
+    color: #48bb78;
+    background: #f0fff4;
+    border: 2px dashed #48bb78;
+}
+
 /* Code Styling */
 code {
     font-family: 'Courier New', monospace;
 }
 
-.dashboard-section h2 {
-    margin-top: 0;
-    color: #333;
-    font-size: 1.5rem;
-}
-
-/* Data Tables */
-.data-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-}
-
-.data-table th {
-    background: #f7fafc;
-    padding: 12px;
-    text-align: left;
-    font-weight: 600;
-    color: #4a5568;
-    border-bottom: 2px solid #e2e8f0;
-}
-
-.data-table td {
-    padding: 12px;
-    border-bottom: 1px solid #e2e8f0;
-}
-
-.data-table tbody tr:hover {
-    background: #f7fafc;
-}
-
-.data-table.alert tbody tr.warning {
-    background: #fff5f5;
-}
-
+/* Stock Status Indicators */
 .stock-low {
     color: #c53030;
     font-weight: bold;
 }
 
-.no-data {
-    text-align: center;
-    color: #718096;
-    padding: 40px;
-    font-size: 1.1rem;
-}
-
-.no-data.success {
-    color: #48bb78;
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
+    .dashboard-page {
+        padding: 10px;
+    }
+
     .stats-grid {
         grid-template-columns: 1fr;
+        gap: 15px;
     }
 
     .dashboard-content {
@@ -417,6 +401,26 @@ code {
 
     .action-btn {
         width: 100%;
+    }
+
+    .data-table {
+        min-width: 100%;
+        font-size: 0.85rem;
+    }
+
+    .data-table thead th,
+    .data-table tbody td {
+        padding: 8px;
+    }
+
+    .table-scroll-wrapper::after {
+        display: none;
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
     }
 }
 

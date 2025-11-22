@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import ApiService from '../service/ApiService';
 import './DashboardPage.css';
 
@@ -10,6 +10,7 @@ function TransactionPage() {
     const [error, setError] = useState('');
     const [showForm, setShowForm] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
     const role = ApiService.getRole();
     const isAdmin = role === 'ADMIN';
 
@@ -22,7 +23,18 @@ function TransactionPage() {
 
     useEffect(() => {
         fetchData();
-    }, []);
+
+        // Eğer location.state'ten ürün bilgisi geldiyse, formu otomatik aç ve doldur
+        if (location.state?.productId) {
+            setShowForm(true);
+            setFormData({
+                productId: location.state.productId,
+                transactionType: location.state.action || 'PURCHASE',
+                quantity: '',
+                notes: location.state.productName ? `Reorder for ${location.state.productName}` : ''
+            });
+        }
+    }, [location.state]);
 
     const fetchData = async () => {
         try {

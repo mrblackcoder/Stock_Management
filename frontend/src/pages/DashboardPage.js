@@ -16,8 +16,12 @@ function DashboardPage() {
     const [error, setError] = useState('');
     const [recentProducts, setRecentProducts] = useState([]);
     const [lowStockItems, setLowStockItems] = useState([]);
+    const [userRole, setUserRole] = useState('');
 
     useEffect(() => {
+        // Get user role from localStorage
+        const role = localStorage.getItem('role');
+        setUserRole(role || 'USER');
         fetchDashboardData();
     }, []);
 
@@ -215,7 +219,7 @@ function DashboardPage() {
                                         <th>Current Stock</th>
                                         <th>Price/Unit</th>
                                         <th>Status</th>
-                                        <th>Action</th>
+                                        {userRole === 'ADMIN' && <th>Action</th>}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -284,24 +288,23 @@ function DashboardPage() {
                                                         {isCritical ? '⚠️ CRITICAL' : '⚡ LOW'}
                                                     </span>
                                                 </td>
-                                                <td>
-                                                    <button
-                                                        className="reorder-btn"
-                                                        onClick={() => navigate('/transactions')}
-                                                        style={{
-                                                            background: '#3b82f6',
-                                                            color: 'white',
-                                                            border: 'none',
-                                                            padding: '6px 12px',
-                                                            borderRadius: '5px',
-                                                            cursor: 'pointer',
-                                                            fontSize: '12px',
-                                                            fontWeight: 'bold'
-                                                        }}
-                                                    >
-                                                        📦 Reorder
-                                                    </button>
-                                                </td>
+                                                {userRole === 'ADMIN' && (
+                                                    <td>
+                                                        <button
+                                                            className="reorder-btn"
+                                                            onClick={() => navigate('/transactions', {
+                                                                state: {
+                                                                    productId: product.id,
+                                                                    productName: product.name,
+                                                                    action: 'purchase'
+                                                                }
+                                                            })}
+                                                            title={`Reorder ${product.name}`}
+                                                        >
+                                                            📦 Reorder
+                                                        </button>
+                                                    </td>
+                                                )}
                                         </tr>
                                     );
                                 })}
