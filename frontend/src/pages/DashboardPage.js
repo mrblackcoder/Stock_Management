@@ -305,11 +305,11 @@ function DashboardPage() {
                                                         </button>
                                                     </td>
                                                 )}
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
                         </div>
                     ) : (
                         <div style={{
