@@ -82,6 +82,13 @@ public class SecurityConfig {
                         // Public endpoints - no authentication required
                         .requestMatchers("/api/auth/**", "/api/public/**", "/api").permitAll()
 
+                        // Swagger/OpenAPI endpoints - public access for API documentation
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/api-docs/**").permitAll()
+
+                        // Actuator endpoints - public health checks
+                        .requestMatchers("/actuator/health/**", "/actuator/info", "/actuator/prometheus").permitAll()
+                        .requestMatchers("/actuator/**").authenticated()  // Other actuator endpoints require auth
+
                         // Frontend pages - no authentication required
                         .requestMatchers("/", "/login", "/register", "/dashboard", "/products",
                                 "/categories", "/suppliers", "/transactions", "/profile").permitAll()
