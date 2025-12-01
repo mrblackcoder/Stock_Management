@@ -37,6 +37,47 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+                // Enhanced Security Headers
+                .headers(headers -> headers
+                        // Prevent clickjacking attacks
+                        .frameOptions(frame -> frame.deny())
+
+                        // Prevent MIME type sniffing
+                        .contentTypeOptions(contentType -> contentType.disable())
+
+                        // Enable XSS protection
+                        .xssProtection(xss -> xss
+                                .headerValue("1; mode=block")
+                        )
+
+                        // Force HTTPS (HSTS) - Commented for development
+                        // .httpStrictTransportSecurity(hsts -> hsts
+                        //         .includeSubDomains(true)
+                        //         .maxAgeInSeconds(31536000)
+                        // )
+
+                        // Content Security Policy
+                        .contentSecurityPolicy(csp -> csp
+                                .policyDirectives("default-src 'self'; " +
+                                        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
+                                        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; " +
+                                        "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; " +
+                                        "img-src 'self' data: https:; " +
+                                        "connect-src 'self' http://localhost:* https://api.exchangerate-api.com;")
+                        )
+
+                        // Referrer Policy
+                        .referrerPolicy(referrer -> referrer
+                                .policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
+                        )
+
+                        // Permissions Policy (formerly Feature Policy)
+                        .permissionsPolicy(permissions -> permissions
+                                .policy("geolocation=(), microphone=(), camera=()")
+                        )
+                )
+
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints - no authentication required
                         .requestMatchers("/api/auth/**", "/api/public/**", "/api").permitAll()
