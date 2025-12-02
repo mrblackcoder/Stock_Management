@@ -168,5 +168,3 @@ public class SecurityConfig {
         return hierarchy;
     }
 }
-
-// Security config

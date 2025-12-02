@@ -29,6 +29,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
+    @ExceptionHandler(AccountLockedException.class)
+    public ResponseEntity<Response> handleAccountLockedException(AccountLockedException ex) {
+        Response response = new Response(HttpStatus.LOCKED.value(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.LOCKED).body(response);
+    }
+
     @ExceptionHandler(InsufficientStockException.class)
     public ResponseEntity<Response> handleInsufficientStockException(InsufficientStockException ex) {
         Response response = new Response(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
