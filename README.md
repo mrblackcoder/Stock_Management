@@ -67,9 +67,13 @@ npm run dev
 ```
 
 6. **Access application**
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:8080
-- Default login: `admin` / `admin123`
+- 🎨 **Frontend**: http://localhost:5173
+- 🔌 **Backend API**: http://localhost:8080
+- 📚 **Swagger UI**: http://localhost:8080/swagger-ui.html
+- ❤️ **Health Check**: http://localhost:8080/actuator/health
+- 📊 **Metrics**: http://localhost:8080/actuator/metrics
+- ℹ️ **App Info**: http://localhost:8080/actuator/info
+- 🔑 **Default Login**: `admin` / `admin123`
 
 ## 📚 Full Documentation
 
