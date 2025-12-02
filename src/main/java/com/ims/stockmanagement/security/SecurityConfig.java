@@ -3,6 +3,8 @@ package com.ims.stockmanagement.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -146,6 +148,24 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    /**
+     * Role Hierarchy Configuration
+     * Defines hierarchical role relationships:
+     * - ADMIN inherits all permissions from USER
+     * - This means ADMIN can access endpoints marked with @PreAuthorize("hasRole('USER')")
+     *
+     * Benefits:
+     * - Cleaner code: No need to write @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+     * - Easier maintenance: Add new roles without changing existing security annotations
+     * - Follows principle of least privilege
+     */
+    @Bean
+    public RoleHierarchy roleHierarchy() {
+        RoleHierarchyImpl hierarchy = new RoleHierarchyImpl();
+        hierarchy.setHierarchy("ROLE_ADMIN > ROLE_USER");
+        return hierarchy;
     }
 }
 

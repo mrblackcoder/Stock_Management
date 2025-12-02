@@ -17,6 +17,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -122,8 +123,10 @@ public class ProductService {
 
     /**
      * Yeni ürün oluştur (CREATE - CRUD)
+     * Method Level Security: Authenticated users can create products
      */
     @Transactional
+    @PreAuthorize("isAuthenticated()")
     public Response createProduct(ProductDTO productDTO) {
         // SKU kontrolü
         if (productRepository.existsBySku(productDTO.getSku())) {
@@ -172,8 +175,10 @@ public class ProductService {
 
     /**
      * Ürün güncelle (UPDATE - CRUD)
+     * Method Level Security: Authenticated users can update products
      */
     @Transactional
+    @PreAuthorize("isAuthenticated()")
     public Response updateProduct(Long id, ProductDTO productDTO) {
         Product existingProduct = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + id));
@@ -218,9 +223,14 @@ public class ProductService {
 
     /**
      * Ürün sil (DELETE - CRUD)
-     * Sadece ürünü oluşturan kullanıcı veya ADMIN silebilir
+     * Method Level Security: Only authenticated users can attempt to delete
+     * Business Logic: Only the product creator or ADMIN can actually delete
+     *
+     * Note: This demonstrates both @PreAuthorize (method-level security)
+     * and custom business logic (runtime authorization check)
      */
     @Transactional
+    @PreAuthorize("isAuthenticated()")
     public Response deleteProduct(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + id));
