@@ -122,6 +122,12 @@ public class CategoryService {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Category not found with id: " + id));
 
+        // Check if category has products
+        if (!category.getProducts().isEmpty()) {
+            throw new IllegalStateException("Cannot delete category with existing products. " +
+                    "Category has " + category.getProducts().size() + " product(s).");
+        }
+
         categoryRepository.delete(category);
 
         return Response.builder()

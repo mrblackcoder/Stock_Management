@@ -126,6 +126,12 @@ public class SupplierService {
         Supplier supplier = supplierRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Supplier not found with id: " + id));
 
+        // Check if supplier has products
+        if (!supplier.getProducts().isEmpty()) {
+            throw new IllegalStateException("Cannot delete supplier with existing products. " +
+                    "Supplier has " + supplier.getProducts().size() + " product(s).");
+        }
+
         supplierRepository.delete(supplier);
 
         return Response.builder()

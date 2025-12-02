@@ -34,7 +34,7 @@ public class Supplier {
     @Column(length = 500)
     private String description;
 
-    @OneToMany(mappedBy = "supplier", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "supplier")
     private List<Product> products = new ArrayList<>();
 
     @Column(nullable = false, updatable = false)
