@@ -63,11 +63,11 @@ CREATE DATABASE inventory_management_db;
 ```bash
 cd frontend
 npm install
-npm run dev
+npm start
 ```
 
 6. **Access application**
-- 🎨 **Frontend**: http://localhost:5173
+- 🎨 **Frontend**: http://localhost:3000
 - 🔌 **Backend API**: http://localhost:8080
 - 📚 **Swagger UI**: http://localhost:8080/swagger-ui.html
 - ❤️ **Health Check**: http://localhost:8080/actuator/health

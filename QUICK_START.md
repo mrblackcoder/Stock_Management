@@ -9,16 +9,16 @@ sudo service mysql start
 
 ### 2️⃣ Backend'i Başlat (Terminal 1)
 ```bash
-cd /home/taha/IdeaProjects/StockManagement
+cd Stock_Management
 ./gradlew bootRun
 ```
 
-**Bekleme:** Backend'in tamamen başlamasını bekleyin (15-20 saniye).  
+**Bekleme:** Backend'in tamamen başlamasını bekleyin (15-20 saniye).
 **Başarı mesajı:** `Started StockManagementApplication`
 
 ### 3️⃣ Frontend'i Başlat (Terminal 2)
 ```bash
-cd /home/taha/IdeaProjects/StockManagement/frontend
+cd Stock_Management/frontend
 npm start
 ```
 
@@ -79,6 +79,7 @@ EXIT;
 |--------|-----|-------|
 | **Frontend** | http://localhost:3000 | React UI |
 | **Backend API** | http://localhost:8080/api | REST API |
+| **Swagger UI** | http://localhost:8080/swagger-ui.html | API Docs |
 | **Login** | http://localhost:3000/login | Giriş Sayfası |
 | **Dashboard** | http://localhost:3000/dashboard | Ana Panel |
 

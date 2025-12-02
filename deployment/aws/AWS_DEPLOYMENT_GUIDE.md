@@ -166,7 +166,7 @@ cd frontend
 
 # Update API endpoint
 cat > .env.production << ENV
-VITE_API_URL=https://api.yourdomain.com/api
+REACT_APP_API_URL=https://api.yourdomain.com/api
 ENV
 
 # Build
@@ -188,12 +188,12 @@ aws s3 website s3://$BUCKET_NAME \
     --error-document index.html
 
 # Upload files
-aws s3 sync dist/ s3://$BUCKET_NAME/ \
+aws s3 sync build/ s3://$BUCKET_NAME/ \
     --delete \
     --cache-control "public, max-age=31536000"
 
 # Upload index.html with no-cache
-aws s3 cp dist/index.html s3://$BUCKET_NAME/index.html \
+aws s3 cp build/index.html s3://$BUCKET_NAME/index.html \
     --cache-control "no-cache"
 ```
 

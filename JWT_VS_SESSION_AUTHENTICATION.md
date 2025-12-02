@@ -53,7 +53,7 @@ Browser → Send JWT → Server validates signature → Response
 - **Microservices-ready**: Tokens can be validated by any service
 
 #### 2. **Decoupled Frontend-Backend**
-- React frontend runs on `localhost:5173`
+- React frontend runs on `localhost:3000`
 - Spring Boot backend runs on `localhost:8080`
 - JWT tokens work seamlessly across different domains
 - No CORS issues with session cookies
