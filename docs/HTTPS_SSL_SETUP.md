@@ -61,7 +61,7 @@ curl -k https://localhost:8443/api/auth/login
 
 # Update frontend API URL
 # frontend/.env
-VITE_API_URL=https://localhost:8443/api
+REACT_APP_API_URL=https://localhost:8443/api
 ```
 
 **Note:** Browser will show "Not Secure" warning for self-signed certificates. This is expected in development.
@@ -325,14 +325,14 @@ https://www.ssllabs.com/ssltest/analyze.html?d=yourdomain.com
 
 ```javascript
 // frontend/.env.development
-VITE_API_URL=https://localhost:8443/api
+REACT_APP_API_URL=https://localhost:8443/api
 ```
 
 ### Production
 
 ```javascript
 // frontend/.env.production
-VITE_API_URL=https://api.yourdomain.com/api
+REACT_APP_API_URL=https://api.yourdomain.com/api
 ```
 
 ---

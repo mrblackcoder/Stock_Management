@@ -1,13 +1,15 @@
 package com.ims.stockmanagement.controllers;
 
 import com.ims.stockmanagement.dtos.ExchangeRateDTO;
-import com.ims.stockmanagement.dtos.ResponseDTO;
+import com.ims.stockmanagement.dtos.Response;
 import com.ims.stockmanagement.services.ExchangeRateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,14 +26,22 @@ public class ExchangeRateController {
      * GET /api/exchange/rates
      */
     @GetMapping("/rates")
-    public ResponseEntity<ResponseDTO> getExchangeRates() {
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Response> getExchangeRates() {
         try {
             ExchangeRateDTO rates = exchangeRateService.getExchangeRates();
-            return ResponseEntity.ok(new ResponseDTO(true, "Exchange rates retrieved successfully", rates));
+            return ResponseEntity.ok(Response.builder()
+                    .statusCode(200)
+                    .message("Exchange rates retrieved successfully")
+                    .data(rates)
+                    .timestamp(LocalDateTime.now())
+                    .build());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(
-                new ResponseDTO(false, "Failed to retrieve exchange rates: " + e.getMessage(), null)
-            );
+            return ResponseEntity.status(400).body(Response.builder()
+                    .statusCode(400)
+                    .message("Failed to retrieve exchange rates: " + e.getMessage())
+                    .timestamp(LocalDateTime.now())
+                    .build());
         }
     }
 
@@ -40,7 +50,8 @@ public class ExchangeRateController {
      * GET /api/exchange/convert/usd?amount=15000
      */
     @GetMapping("/convert/usd")
-    public ResponseEntity<ResponseDTO> convertToUSD(@RequestParam BigDecimal amount) {
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Response> convertToUSD(@RequestParam BigDecimal amount) {
         try {
             BigDecimal converted = exchangeRateService.convertTRYtoUSD(amount);
 
@@ -50,11 +61,18 @@ public class ExchangeRateController {
             result.put("convertedAmount", converted);
             result.put("targetCurrency", "USD");
 
-            return ResponseEntity.ok(new ResponseDTO(true, "Successfully converted to USD", result));
+            return ResponseEntity.ok(Response.builder()
+                    .statusCode(200)
+                    .message("Successfully converted to USD")
+                    .data(result)
+                    .timestamp(LocalDateTime.now())
+                    .build());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(
-                new ResponseDTO(false, "Conversion failed: " + e.getMessage(), null)
-            );
+            return ResponseEntity.status(400).body(Response.builder()
+                    .statusCode(400)
+                    .message("Conversion failed: " + e.getMessage())
+                    .timestamp(LocalDateTime.now())
+                    .build());
         }
     }
 
@@ -63,7 +81,8 @@ public class ExchangeRateController {
      * GET /api/exchange/convert/eur?amount=15000
      */
     @GetMapping("/convert/eur")
-    public ResponseEntity<ResponseDTO> convertToEUR(@RequestParam BigDecimal amount) {
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Response> convertToEUR(@RequestParam BigDecimal amount) {
         try {
             BigDecimal converted = exchangeRateService.convertTRYtoEUR(amount);
 
@@ -73,11 +92,18 @@ public class ExchangeRateController {
             result.put("convertedAmount", converted);
             result.put("targetCurrency", "EUR");
 
-            return ResponseEntity.ok(new ResponseDTO(true, "Successfully converted to EUR", result));
+            return ResponseEntity.ok(Response.builder()
+                    .statusCode(200)
+                    .message("Successfully converted to EUR")
+                    .data(result)
+                    .timestamp(LocalDateTime.now())
+                    .build());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(
-                new ResponseDTO(false, "Conversion failed: " + e.getMessage(), null)
-            );
+            return ResponseEntity.status(400).body(Response.builder()
+                    .statusCode(400)
+                    .message("Conversion failed: " + e.getMessage())
+                    .timestamp(LocalDateTime.now())
+                    .build());
         }
     }
 
@@ -86,7 +112,8 @@ public class ExchangeRateController {
      * GET /api/exchange/convert/gbp?amount=15000
      */
     @GetMapping("/convert/gbp")
-    public ResponseEntity<ResponseDTO> convertToGBP(@RequestParam BigDecimal amount) {
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Response> convertToGBP(@RequestParam BigDecimal amount) {
         try {
             BigDecimal converted = exchangeRateService.convertTRYtoGBP(amount);
 
@@ -96,11 +123,18 @@ public class ExchangeRateController {
             result.put("convertedAmount", converted);
             result.put("targetCurrency", "GBP");
 
-            return ResponseEntity.ok(new ResponseDTO(true, "Successfully converted to GBP", result));
+            return ResponseEntity.ok(Response.builder()
+                    .statusCode(200)
+                    .message("Successfully converted to GBP")
+                    .data(result)
+                    .timestamp(LocalDateTime.now())
+                    .build());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(
-                new ResponseDTO(false, "Conversion failed: " + e.getMessage(), null)
-            );
+            return ResponseEntity.status(400).body(Response.builder()
+                    .statusCode(400)
+                    .message("Conversion failed: " + e.getMessage())
+                    .timestamp(LocalDateTime.now())
+                    .build());
         }
     }
 
@@ -109,7 +143,8 @@ public class ExchangeRateController {
      * GET /api/exchange/convert?amount=15000&currency=USD
      */
     @GetMapping("/convert")
-    public ResponseEntity<ResponseDTO> convert(
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Response> convert(
             @RequestParam BigDecimal amount,
             @RequestParam String currency) {
         try {
@@ -121,16 +156,24 @@ public class ExchangeRateController {
             result.put("convertedAmount", converted);
             result.put("targetCurrency", currency.toUpperCase());
 
-            return ResponseEntity.ok(new ResponseDTO(true,
-                "Successfully converted to " + currency.toUpperCase(), result));
+            return ResponseEntity.ok(Response.builder()
+                    .statusCode(200)
+                    .message("Successfully converted to " + currency.toUpperCase())
+                    .data(result)
+                    .timestamp(LocalDateTime.now())
+                    .build());
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                new ResponseDTO(false, e.getMessage(), null)
-            );
+            return ResponseEntity.status(400).body(Response.builder()
+                    .statusCode(400)
+                    .message(e.getMessage())
+                    .timestamp(LocalDateTime.now())
+                    .build());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(
-                new ResponseDTO(false, "Conversion failed: " + e.getMessage(), null)
-            );
+            return ResponseEntity.status(400).body(Response.builder()
+                    .statusCode(400)
+                    .message("Conversion failed: " + e.getMessage())
+                    .timestamp(LocalDateTime.now())
+                    .build());
         }
     }
 }

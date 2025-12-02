@@ -7,7 +7,7 @@
 - ❤️ **Health Check**: http://localhost:8080/actuator/health
 - 📈 **Metrics**: http://localhost:8080/actuator/metrics
 - ℹ️ **App Info**: http://localhost:8080/actuator/info
-- 🎨 **Frontend**: http://localhost:5173
+- 🎨 **Frontend**: http://localhost:3000
 
 ---
 
@@ -23,7 +23,7 @@
 # Terminal 2 - Frontend
 cd frontend
 npm install
-npm run dev
+npm start
 ```
 
 **Option B: Using Docker**
@@ -42,7 +42,7 @@ docker-compose down
 
 | Service | URL | Credentials |
 |---------|-----|-------------|
-| Frontend | http://localhost:5173 | admin / admin123 |
+| Frontend | http://localhost:3000 | admin / admin123 |
 | Swagger UI | http://localhost:8080/swagger-ui.html | - |
 | Backend API | http://localhost:8080/api | JWT Token |
 | Actuator | http://localhost:8080/actuator | - |
@@ -435,10 +435,10 @@ curl -X POST http://localhost:8080/api/auth/login \
 
 # Or update frontend .env
 cd frontend
-echo "VITE_API_URL=http://localhost:8080/api" > .env.development
+echo "REACT_APP_API_URL=http://localhost:8080/api" > .env.development
 
 # Restart frontend
-npm run dev
+npm start
 ```
 
 ---

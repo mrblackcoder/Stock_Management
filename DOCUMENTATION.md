@@ -19,7 +19,7 @@
 │                    CLIENT LAYER (Browser)                       │
 │  ┌───────────────────────┐  ┌──────────────────────────────┐  │
 │  │   React SPA           │  │  Thymeleaf Pages             │  │
-│  │   (Port: 5173)        │  │  (login.html, register.html) │  │
+│  │   (Port: 3000)        │  │  (login.html, register.html) │  │
 │  │                       │  │                              │  │
 │  │  - Dashboard          │  │  - Server-side rendered      │  │
 │  │  - Products           │  │  - Bootstrap UI              │  │
@@ -952,7 +952,7 @@ cd frontend
 
 # Update API endpoint
 # Edit .env.production
-echo "VITE_API_URL=https://api.yourdomain.com/api" > .env.production
+echo "REACT_APP_API_URL=https://api.yourdomain.com/api" > .env.production
 
 # Build
 npm run build
@@ -968,7 +968,7 @@ aws s3 website s3://inventory-management-frontend \
     --error-document index.html
 
 # Upload build files
-aws s3 sync dist/ s3://inventory-management-frontend/
+aws s3 sync build/ s3://inventory-management-frontend/
 ```
 
 3. **Create CloudFront distribution:**
@@ -1078,11 +1078,11 @@ curl -X POST http://localhost:8080/api/products \
 cd frontend
 
 # Run development server
-npm run dev
+npm start
 
 # Test production build locally
 npm run build
-npm run preview
+npx serve -s build
 ```
 
 ---

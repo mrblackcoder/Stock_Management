@@ -1,6 +1,5 @@
 package com.ims.stockmanagement.dtos;
 
-import com.ims.stockmanagement.enums.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,6 +12,6 @@ public class RegisterRequest {
     private String email;
     private String password;
     private String fullName;
-    private UserRole role;
+    // Note: Role is NOT accepted from user input for security reasons
+    // All new users are automatically assigned USER role
 }
-

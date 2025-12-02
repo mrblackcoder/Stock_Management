@@ -18,14 +18,14 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "http://localhost:3000")
 public class UserController {
 
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
 
     @GetMapping("/profile")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getUserProfile() {
         Response response = new Response();
         try {

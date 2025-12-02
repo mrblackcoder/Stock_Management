@@ -5,14 +5,17 @@ import com.ims.stockmanagement.dtos.RegisterRequest;
 import com.ims.stockmanagement.dtos.Response;
 import com.ims.stockmanagement.dtos.UserDTO;
 import com.ims.stockmanagement.enums.UserRole;
+import com.ims.stockmanagement.exceptions.AccountLockedException;
 import com.ims.stockmanagement.exceptions.AlreadyExistsException;
 import com.ims.stockmanagement.exceptions.InvalidCredentialsException;
 import com.ims.stockmanagement.models.User;
 import com.ims.stockmanagement.repositories.UserRepository;
 import com.ims.stockmanagement.security.JwtService;
+import com.ims.stockmanagement.security.LoginAttemptService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -28,6 +31,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final ModelMapper modelMapper;
+    private final LoginAttemptService loginAttemptService;
 
     /**
      * Yeni kullanıcı kaydı
@@ -70,10 +74,20 @@ public class AuthService {
 
     /**
      * Kullanıcı girişi
+     * Brute Force Protection: Max 5 attempts, 15 minutes lockout
      */
     public Response login(LoginRequest request) {
+        // 1. Check if user is blocked due to too many failed attempts
+        if (loginAttemptService.isBlocked(request.getUsername())) {
+            long unlockMinutes = loginAttemptService.getUnlockTimeMinutes(request.getUsername());
+            throw new AccountLockedException(
+                "Account temporarily locked due to too many failed login attempts. " +
+                "Please try again in " + unlockMinutes + " minute(s)."
+            );
+        }
+
         try {
-            // Kimlik doğrulama
+            // 2. Attempt authentication
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.getUsername(),
@@ -81,11 +95,14 @@ public class AuthService {
                     )
             );
 
-            // Kullanıcıyı bul
+            // 3. Authentication successful - reset failed attempts
+            loginAttemptService.loginSucceeded(request.getUsername());
+
+            // 4. Fetch user details
             User user = userRepository.findByUsername(request.getUsername())
                     .orElseThrow(() -> new InvalidCredentialsException("Invalid username or password"));
 
-            // JWT token oluştur
+            // 5. Generate JWT token
             String token = jwtService.generateToken(user);
 
             UserDTO userDTO = modelMapper.map(user, UserDTO.class);
@@ -98,8 +115,29 @@ public class AuthService {
                     .timestamp(LocalDateTime.now())
                     .build();
 
+        } catch (BadCredentialsException e) {
+            // 6. Authentication failed - record failed attempt
+            loginAttemptService.loginFailed(request.getUsername());
+
+            int remainingAttempts = loginAttemptService.getRemainingAttempts(request.getUsername());
+
+            if (remainingAttempts > 0) {
+                throw new InvalidCredentialsException(
+                    "Invalid username or password. " +
+                    remainingAttempts + " attempt(s) remaining before account lockout."
+                );
+            } else {
+                throw new AccountLockedException(
+                    "Account locked due to too many failed login attempts. " +
+                    "Please try again in 15 minutes."
+                );
+            }
+        } catch (AccountLockedException e) {
+            // Re-throw account locked exception
+            throw e;
         } catch (Exception e) {
-            throw new InvalidCredentialsException("Invalid username or password");
+            // Handle other exceptions
+            throw new InvalidCredentialsException("An error occurred during login. Please try again.");
         }
     }
 

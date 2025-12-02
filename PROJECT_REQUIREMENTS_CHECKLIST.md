@@ -408,8 +408,8 @@ java -jar build/libs/StockManagement-0.0.1-SNAPSHOT.jar
 ```bash
 cd frontend
 npm install
-npm run dev
-# Access: http://localhost:5173
+npm start
+# Access: http://localhost:3000
 ```
 
 ---

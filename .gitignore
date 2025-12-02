@@ -77,3 +77,16 @@ node_modules/
 # Database files
 *.db
 *.sqlite
+
+# Environment variables and secrets (CRITICAL: Never commit!)
+.env
+.env.local
+.env.production
+.env.*.local
+application-local.properties
+application-secrets.properties
+
+# SSL/TLS certificates (if self-signed for development)
+*.p12
+*.jks
+keystore.*
