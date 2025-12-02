@@ -25,7 +25,7 @@ public class UserController {
     private final ModelMapper modelMapper;
 
     @GetMapping("/profile")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getUserProfile() {
         Response response = new Response();
         try {

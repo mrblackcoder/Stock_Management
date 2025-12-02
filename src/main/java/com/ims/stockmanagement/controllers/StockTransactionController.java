@@ -20,7 +20,7 @@ public class StockTransactionController {
     private final StockTransactionService transactionService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> createTransaction(@RequestBody TransactionRequest request) {
         Response response;
         // TransactionType'a göre uygun metodu çağır
@@ -51,14 +51,14 @@ public class StockTransactionController {
     }
 
     @PostMapping("/purchase")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> purchaseProduct(@RequestBody TransactionRequest request) {
         Response response = transactionService.purchaseProduct(request);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
     @PostMapping("/sale")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> saleProduct(@RequestBody TransactionRequest request) {
         Response response = transactionService.saleProduct(request);
         return ResponseEntity.status(response.getStatusCode()).body(response);
@@ -102,7 +102,7 @@ public class StockTransactionController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> deleteTransaction(@PathVariable Long id) {
         Response response = transactionService.deleteTransaction(id);
         return ResponseEntity.status(response.getStatusCode()).body(response);

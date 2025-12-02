@@ -26,12 +26,14 @@ public class ProductController {
     private final ExternalApiService externalApiService;
 
     @PostMapping
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> createProduct(@RequestBody ProductDTO productDTO) {
         Response response = productService.createProduct(productDTO);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getAllProducts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -42,36 +44,42 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getProductById(@PathVariable Long id) {
         Response response = productService.getProductById(id);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
     @GetMapping("/search")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> searchProducts(@RequestParam String keyword) {
         Response response = productService.searchProducts(keyword);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
     @GetMapping("/category/{categoryId}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getProductsByCategory(@PathVariable Long categoryId) {
         Response response = productService.getProductsByCategory(categoryId);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
     @GetMapping("/low-stock")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getLowStockProducts() {
         Response response = productService.getLowStockProducts();
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> updateProduct(@PathVariable Long id, @RequestBody ProductDTO productDTO) {
         Response response = productService.updateProduct(id, productDTO);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> deleteProduct(@PathVariable Long id) {
         Response response = productService.deleteProduct(id);
         return ResponseEntity.status(response.getStatusCode()).body(response);
@@ -85,6 +93,7 @@ public class ProductController {
      * @return Dönüştürülmüş fiyat bilgisi
      */
     @GetMapping("/{id}/price/{currency}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getProductPriceInCurrency(
             @PathVariable Long id,
             @PathVariable String currency) {
@@ -138,6 +147,7 @@ public class ProductController {
      * @return Para birimi listesi
      */
     @GetMapping("/currencies")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getSupportedCurrencies() {
         try {
             Map<String, Object> currencies = externalApiService.getSupportedCurrencies();
@@ -166,6 +176,7 @@ public class ProductController {
      * @return Döviz kurları
      */
     @GetMapping("/exchange-rates")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getExchangeRates(
             @RequestParam(defaultValue = "USD") String base) {
         try {
