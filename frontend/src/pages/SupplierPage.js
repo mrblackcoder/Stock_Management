@@ -96,7 +96,7 @@ function SupplierPage() {
             <div className="dashboard-container">
                 <div className="quick-actions">
                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                        <h2>🏢 Tedarikçiler</h2>
+                        <h2>Tedarikçiler</h2>
                         {isAdmin && (
                             <button onClick={() => { setShowForm(!showForm); setFormData({ name: '', email: '', phone: '', address: '', description: '' }); }}
                                     className="action-btn">
@@ -193,7 +193,7 @@ function SupplierPage() {
                                                             {products.length > 0 ? (
                                                                 <div>
                                                                     <h4 style={{margin: '0 0 10px 0', color: '#667eea'}}>
-                                                                        📦 {sup.name} Tedarikçisine Ait Ürünler
+                                                                        {sup.name} Tedarikçisine Ait Ürünler
                                                                     </h4>
                                                                     <table style={{width: '100%', borderCollapse: 'collapse', background: 'white', borderRadius: '8px', overflow: 'hidden'}}>
                                                                         <thead>
@@ -208,7 +208,7 @@ function SupplierPage() {
                                                                         <tbody>
                                                                             {products.map((product, idx) => {
                                                                                 const stock = product.quantity || product.stockQuantity || 0;
-                                                                                const stockStatus = stock <= 5 ? '🔴' : stock <= 10 ? '🟡' : '🟢';
+                                                                                const stockStatus = stock <= 5 ? 'CRIT' : stock <= 10 ? 'LOW' : 'OK';
 
                                                                                 return (
                                                                                     <tr key={product.id} style={{borderBottom: idx < products.length - 1 ? '1px solid #e6efff' : 'none'}}>
@@ -254,7 +254,7 @@ function SupplierPage() {
                                                                     border: '1px solid #ffc107'
                                                                 }}>
                                                                     <p style={{margin: 0, color: '#856404'}}>
-                                                                        ⚠️ Bu tedarikçiye henüz ürün atanmamış
+                                                                        Bu tedarikçiye henüz ürün atanmamış
                                                                     </p>
                                                                 </div>
                                                             )}

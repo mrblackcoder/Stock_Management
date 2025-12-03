@@ -92,14 +92,14 @@ function DashboardPage() {
     return (
         <div className="dashboard-page">
             <div className="dashboard-header">
-                <h1>📊 Dashboard</h1>
+                <h1>Dashboard</h1>
                 <p>Welcome to your Inventory Management System</p>
             </div>
 
             {/* Statistics Cards */}
             <div className="stats-grid">
                 <div className="stat-card blue">
-                    <div className="stat-icon">📦</div>
+                    <div className="stat-icon">P</div>
                     <div className="stat-info">
                         <h3>{stats.totalProducts}</h3>
                         <p>Total Products</p>
@@ -107,7 +107,7 @@ function DashboardPage() {
                 </div>
 
                 <div className="stat-card green">
-                    <div className="stat-icon">🏷️</div>
+                    <div className="stat-icon">C</div>
                     <div className="stat-info">
                         <h3>{stats.totalCategories}</h3>
                         <p>Categories</p>
@@ -115,7 +115,7 @@ function DashboardPage() {
                 </div>
 
                 <div className="stat-card orange">
-                    <div className="stat-icon">🚚</div>
+                    <div className="stat-icon">S</div>
                     <div className="stat-info">
                         <h3>{stats.totalSuppliers}</h3>
                         <p>Suppliers</p>
@@ -123,7 +123,7 @@ function DashboardPage() {
                 </div>
 
                 <div className="stat-card red">
-                    <div className="stat-icon">⚠️</div>
+                    <div className="stat-icon">!</div>
                     <div className="stat-info">
                         <h3>{stats.lowStockProducts}</h3>
                         <p>Low Stock Alert</p>
@@ -131,7 +131,7 @@ function DashboardPage() {
                 </div>
 
                 <div className="stat-card purple">
-                    <div className="stat-icon">🔄</div>
+                    <div className="stat-icon">T</div>
                     <div className="stat-info">
                         <h3>{stats.totalTransactions}</h3>
                         <p>Transactions</p>
@@ -144,7 +144,7 @@ function DashboardPage() {
             <div className="dashboard-content">
                 {/* Recent Products */}
                 <div className="dashboard-section">
-                    <h2>📦 Recent Products</h2>
+                    <h2>Recent Products</h2>
                     {recentProducts.length > 0 ? (
                         <div className="table-scroll-wrapper">
                             <table className="data-table">
@@ -163,7 +163,7 @@ function DashboardPage() {
                                     {recentProducts.map(product => {
                                         const stock = product.stockQuantity || product.quantity || 0;
                                         const stockStatus = stock <= 5 ? 'critical' : stock <= 10 ? 'low' : 'good';
-                                        const statusIcon = stock <= 5 ? '🔴' : stock <= 10 ? '🟡' : '🟢';
+                                        const statusIcon = stock <= 5 ? 'CRITICAL' : stock <= 10 ? 'LOW' : 'GOOD';
 
                                         return (
                                             <tr key={product.id}>
@@ -179,7 +179,7 @@ function DashboardPage() {
                                                         fontSize: '13px',
                                                         fontWeight: '600'
                                                     }}>
-                                                        🚚 {product.supplierName || 'N/A'}
+                                                        {product.supplierName || 'N/A'}
                                                     </span>
                                                 </td>
                                                 <td><strong>₺{product.price?.toFixed(2)}</strong></td>
@@ -203,7 +203,7 @@ function DashboardPage() {
                 {/* Low Stock Alert - Enhanced */}
                 <div className="dashboard-section low-stock-section">
                     <div className="section-header">
-                        <h2>⚠️ Low Stock Alert</h2>
+                        <h2>Low Stock Alert</h2>
                         <span className="badge-count">{lowStockItems.length} items</span>
                     </div>
                     {lowStockItems.length > 0 ? (
@@ -274,7 +274,7 @@ function DashboardPage() {
                                                             display: 'inline-block'
                                                         }}
                                                     >
-                                                        {isCritical ? '🔴' : '🟡'} {stock} units
+                                                        {stock} units
                                                     </span>
                                                 </td>
                                                 <td>
@@ -285,7 +285,7 @@ function DashboardPage() {
                                                         color: isCritical ? '#dc2626' : '#f59e0b',
                                                         fontWeight: 'bold'
                                                     }}>
-                                                        {isCritical ? '⚠️ CRITICAL' : '⚡ LOW'}
+                                                        {isCritical ? 'CRITICAL' : 'LOW'}
                                                     </span>
                                                 </td>
                                                 {userRole === 'ADMIN' && (
@@ -301,7 +301,7 @@ function DashboardPage() {
                                                             })}
                                                             title={`Reorder ${product.name}`}
                                                         >
-                                                            📦 Reorder
+                                                            Reorder
                                                         </button>
                                                     </td>
                                                 )}
@@ -319,7 +319,7 @@ function DashboardPage() {
                             padding: '30px',
                             textAlign: 'center'
                         }}>
-                            <div style={{ fontSize: '48px', marginBottom: '10px' }}>✅</div>
+                            <div style={{ fontSize: '48px', marginBottom: '10px' }}>&#10003;</div>
                             <p style={{
                                 color: '#10b981',
                                 fontSize: '18px',

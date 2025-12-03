@@ -81,10 +81,10 @@ function TransactionPage() {
 
     const getTransactionIcon = (type) => {
         switch(type) {
-            case 'PURCHASE': return '📥';
-            case 'SALE': return '📤';
-            case 'ADJUSTMENT': return '🔧';
-            default: return '🔄';
+            case 'PURCHASE': return 'IN';
+            case 'SALE': return 'OUT';
+            case 'ADJUSTMENT': return 'ADJ';
+            default: return 'TXN';
         }
     };
 
@@ -97,7 +97,7 @@ function TransactionPage() {
             <div className="dashboard-container">
                 <div className="quick-actions">
                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                        <h2>🔄 Stock Transactions</h2>
+                        <h2>Stock Transactions</h2>
                         {isAdmin && (
                             <button onClick={() => {
                                 setShowForm(!showForm);
@@ -140,9 +140,9 @@ function TransactionPage() {
                                         required
                                         style={{width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ddd'}}
                                     >
-                                        <option value="PURCHASE">📥 Alış (Purchase)</option>
-                                        <option value="SALE">📤 Satış (Sale)</option>
-                                        <option value="ADJUSTMENT">🔧 Düzeltme (Adjustment)</option>
+                                        <option value="PURCHASE">Alış (Purchase)</option>
+                                        <option value="SALE">Satış (Sale)</option>
+                                        <option value="ADJUSTMENT">Düzeltme (Adjustment)</option>
                                     </select>
                                 </div>
                                 <div>
@@ -167,14 +167,14 @@ function TransactionPage() {
                                     style={{width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ddd'}}
                                 />
                             </div>
-                            <button type="submit" className="action-btn" style={{marginTop: '15px'}}>💾 Kaydet</button>
+                            <button type="submit" className="action-btn" style={{marginTop: '15px'}}>Kaydet</button>
                         </form>
                     )}
 
                     <div style={{marginTop: '30px', overflowX: 'auto'}}>
                         {transactions.length === 0 ? (
                             <div style={{textAlign: 'center', padding: '40px', background: '#f9f9f9', borderRadius: '10px'}}>
-                                <h3>📭 Henüz transaction kaydı yok</h3>
+                                <h3>Henüz transaction kaydı yok</h3>
                                 <p>Yeni bir transaction eklemek için yukarıdaki butona tıklayın.</p>
                             </div>
                         ) : (
@@ -238,7 +238,7 @@ function TransactionPage() {
                                                             fontWeight: 'bold'
                                                         }}
                                                     >
-                                                        🗑️ Sil
+                                                        Sil
                                                     </button>
                                                 </td>
                                             </tr>

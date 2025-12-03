@@ -10,9 +10,10 @@ import java.util.Map;
 public class HomeController {
 
     /**
-     * Root endpoint - API status check
+     * API status check endpoint
+     * Note: Root "/" is handled by WebController for Thymeleaf pages
      */
-    @GetMapping({"/", "/api"})
+    @GetMapping("/api")
     public Map<String, Object> home() {
         Map<String, Object> response = new HashMap<>();
         response.put("status", "running");

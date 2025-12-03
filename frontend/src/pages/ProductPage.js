@@ -103,14 +103,14 @@ function ProductPage() {
             <div className="dashboard-container">
                 <div className="quick-actions">
                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px'}}>
-                        <h2>📦 Ürünler</h2>
+                        <h2>Products</h2>
                         <div>
                             <button
                                 onClick={() => setShowPricesInUSD(!showPricesInUSD)}
                                 className="action-btn"
                                 style={{marginRight: '10px', background: showPricesInUSD ? '#48bb78' : '#667eea'}}
                             >
-                                {showPricesInUSD ? '💵 USD (External API)' : '💰 TRY'}
+                                {showPricesInUSD ? 'USD (External API)' : 'TRY'}
                             </button>
                             <button
                                 onClick={() => {
@@ -135,7 +135,7 @@ function ProductPage() {
 
                     {exchangeRates.usd > 0 && (
                         <div style={{padding: '10px', background: '#e6f7ff', borderRadius: '5px', marginBottom: '15px', fontSize: '14px'}}>
-                            📊 <strong>Güncel Döviz Kurları (External API - ExchangeRate-API):</strong> 1 TRY = ${exchangeRates.usd.toFixed(4)} USD | €{exchangeRates.eur.toFixed(4)} EUR
+                            <strong>Güncel Döviz Kurları (External API - ExchangeRate-API):</strong> 1 TRY = ${exchangeRates.usd.toFixed(4)} USD | €{exchangeRates.eur.toFixed(4)} EUR
                         </div>
                     )}
 
@@ -232,11 +232,11 @@ function ProductPage() {
                                                                 fontWeight: 'bold'
                                                             }}
                                                         >
-                                                            🗑️ Sil
+                                                            Sil
                                                         </button>
                                                     ) : (
                                                         <span style={{color: '#a0aec0', fontSize: '13px'}}>
-                                                            🔒 Yetkisiz
+                                                            Yetkisiz
                                                         </span>
                                                     )}
                                                     {prod.createdByUsername && (
