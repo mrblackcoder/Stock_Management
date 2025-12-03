@@ -1,20 +1,72 @@
 import axios from "axios";
 import CryptoJS from "crypto-js";
 
-// Axios interceptor - 401 hatalarında otomatik logout
+// Flag to prevent multiple refresh attempts
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+    failedQueue.forEach(prom => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+    failedQueue = [];
+};
+
+// Axios interceptor - 401 hatalarında refresh token dene
 axios.interceptors.response.use(
     response => response,
-    error => {
-        if (error.response?.status === 401) {
-            // Token geçersiz veya expired
-            localStorage.removeItem("token");
-            localStorage.removeItem("role");
-            localStorage.removeItem("username");
-            localStorage.removeItem("user");
+    async error => {
+        const originalRequest = error.config;
+        
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            if (isRefreshing) {
+                return new Promise((resolve, reject) => {
+                    failedQueue.push({ resolve, reject });
+                }).then(token => {
+                    originalRequest.headers['Authorization'] = 'Bearer ' + token;
+                    return axios(originalRequest);
+                }).catch(err => {
+                    return Promise.reject(err);
+                });
+            }
+
+            originalRequest._retry = true;
+            isRefreshing = true;
+
+            const refreshToken = ApiService.getRefreshToken();
             
-            // Login sayfasında değilsek yönlendir
-            if (!window.location.pathname.includes('/login')) {
-                window.location.href = '/login';
+            if (refreshToken) {
+                try {
+                    const response = await axios.post(`${ApiService.BASE_URL}/auth/refresh-token`, {
+                        refreshToken: refreshToken
+                    });
+                    
+                    const { token: newToken } = response.data;
+                    ApiService.saveToken(newToken);
+                    
+                    processQueue(null, newToken);
+                    originalRequest.headers['Authorization'] = 'Bearer ' + newToken;
+                    return axios(originalRequest);
+                } catch (refreshError) {
+                    processQueue(refreshError, null);
+                    ApiService.clearAuth();
+                    if (!window.location.pathname.includes('/login')) {
+                        window.location.href = '/login';
+                    }
+                    return Promise.reject(refreshError);
+                } finally {
+                    isRefreshing = false;
+                }
+            } else {
+                // No refresh token, clear and redirect
+                ApiService.clearAuth();
+                if (!window.location.pathname.includes('/login')) {
+                    window.location.href = '/login';
+                }
             }
         }
         return Promise.reject(error);
@@ -80,6 +132,19 @@ export default class ApiService {
         if (!encryptedToken) return null;
         return this.decrypt(encryptedToken);
     }
+    
+    // Save refresh token
+    static saveRefreshToken(refreshToken) {
+        const encryptedToken = this.encrypt(refreshToken);
+        localStorage.setItem("refreshToken", encryptedToken);
+    }
+    
+    // Get refresh token
+    static getRefreshToken() {
+        const encryptedToken = localStorage.getItem("refreshToken");
+        if (!encryptedToken) return null;
+        return this.decrypt(encryptedToken);
+    }
 
     // Save role with encryption
     static saveRole(role) {
@@ -126,6 +191,7 @@ export default class ApiService {
 
     static clearAuth() {
         localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
         localStorage.removeItem("role");
         localStorage.removeItem("username");
         localStorage.removeItem("user");
@@ -151,8 +217,26 @@ export default class ApiService {
         return response.data;
     }
 
-    static logout() {
+    static async logout() {
+        try {
+            await axios.post(`${this.BASE_URL}/auth/logout`, {}, {
+                headers: this.getHeader()
+            });
+        } catch (e) {
+            // Ignore errors during logout
+        }
         this.clearAuth();
+    }
+    
+    static async refreshToken() {
+        const refreshToken = this.getRefreshToken();
+        if (!refreshToken) {
+            throw new Error("No refresh token available");
+        }
+        const response = await axios.post(`${this.BASE_URL}/auth/refresh-token`, {
+            refreshToken: refreshToken
+        });
+        return response.data;
     }
 
     /** GENERIC HTTP METHODS */

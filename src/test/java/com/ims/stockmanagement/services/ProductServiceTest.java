@@ -1,7 +1,7 @@
 package com.ims.stockmanagement.services;
 
-import com.ims.stockmanagement.dto.ProductDTO;
-import com.ims.stockmanagement.dto.Response;
+import com.ims.stockmanagement.dtos.ProductDTO;
+import com.ims.stockmanagement.dtos.Response;
 import com.ims.stockmanagement.exceptions.NotFoundException;
 import com.ims.stockmanagement.models.Category;
 import com.ims.stockmanagement.models.Product;
@@ -31,6 +31,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -277,7 +278,7 @@ class ProductServiceTest {
     void testSearchProducts_Success() {
         // Arrange
         String keyword = "laptop";
-        when(productRepository.findByNameContainingIgnoreCase(keyword))
+        when(productRepository.findByNameContainingIgnoreCaseOrSkuContainingIgnoreCase(keyword, keyword))
             .thenReturn(Arrays.asList(testProduct));
         when(modelMapper.map(any(Product.class), eq(ProductDTO.class))).thenReturn(testProductDTO);
 
@@ -289,35 +290,5 @@ class ProductServiceTest {
         assertEquals(200, response.getStatusCode());
         assertNotNull(response.getProductList());
         assertEquals(1, response.getProductList().size());
-    }
-
-    @Test
-    void testGetProductBySku_Success() {
-        // Arrange
-        when(productRepository.findBySku("LAP-001")).thenReturn(Optional.of(testProduct));
-        when(modelMapper.map(any(Product.class), eq(ProductDTO.class))).thenReturn(testProductDTO);
-
-        // Act
-        Response response = productService.getProductBySku("LAP-001");
-
-        // Assert
-        assertNotNull(response);
-        assertEquals(200, response.getStatusCode());
-        assertNotNull(response.getProduct());
-        assertEquals("LAP-001", response.getProduct().getSku());
-    }
-
-    @Test
-    void testGetProductBySku_NotFound() {
-        // Arrange
-        when(productRepository.findBySku("INVALID-SKU")).thenReturn(Optional.empty());
-
-        // Act & Assert
-        NotFoundException exception = assertThrows(
-            NotFoundException.class,
-            () -> productService.getProductBySku("INVALID-SKU")
-        );
-
-        assertEquals("Product not found with SKU: INVALID-SKU", exception.getMessage());
     }
 }

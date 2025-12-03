@@ -8,6 +8,7 @@ import com.ims.stockmanagement.enums.UserRole;
 import com.ims.stockmanagement.exceptions.AccountLockedException;
 import com.ims.stockmanagement.exceptions.AlreadyExistsException;
 import com.ims.stockmanagement.exceptions.InvalidCredentialsException;
+import com.ims.stockmanagement.models.RefreshToken;
 import com.ims.stockmanagement.models.User;
 import com.ims.stockmanagement.repositories.UserRepository;
 import com.ims.stockmanagement.security.JwtService;
@@ -32,6 +33,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final ModelMapper modelMapper;
     private final LoginAttemptService loginAttemptService;
+    private final RefreshTokenService refreshTokenService;
 
     /**
      * Yeni kullanıcı kaydı
@@ -104,6 +106,9 @@ public class AuthService {
 
             // 5. Generate JWT token
             String token = jwtService.generateToken(user);
+            
+            // 6. Generate Refresh Token
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getUsername());
 
             UserDTO userDTO = modelMapper.map(user, UserDTO.class);
 
@@ -111,6 +116,7 @@ public class AuthService {
                     .statusCode(200)
                     .message("Login successful")
                     .token(token)
+                    .refreshToken(refreshToken.getToken())
                     .user(userDTO)
                     .timestamp(LocalDateTime.now())
                     .build();
@@ -154,6 +160,42 @@ public class AuthService {
                 .statusCode(200)
                 .message("User info retrieved successfully")
                 .user(userDTO)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+    
+    /**
+     * Refresh token ile yeni access token al
+     */
+    public Response refreshToken(String refreshTokenStr) {
+        return refreshTokenService.findByToken(refreshTokenStr)
+                .map(refreshTokenService::verifyExpiration)
+                .map(RefreshToken::getUser)
+                .map(user -> {
+                    String newAccessToken = jwtService.generateToken(user);
+                    UserDTO userDTO = modelMapper.map(user, UserDTO.class);
+                    
+                    return Response.builder()
+                            .statusCode(200)
+                            .message("Token refreshed successfully")
+                            .token(newAccessToken)
+                            .refreshToken(refreshTokenStr)
+                            .user(userDTO)
+                            .timestamp(LocalDateTime.now())
+                            .build();
+                })
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid refresh token"));
+    }
+    
+    /**
+     * Logout - Tüm refresh tokenları iptal et
+     */
+    public Response logout(String username) {
+        refreshTokenService.revokeAllUserTokens(username);
+        
+        return Response.builder()
+                .statusCode(200)
+                .message("Logged out successfully")
                 .timestamp(LocalDateTime.now())
                 .build();
     }

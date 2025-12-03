@@ -31,6 +31,12 @@ function LoginPage() {
             if (response.statusCode === 200) {
                 // Save authentication data
                 ApiService.saveToken(response.token);
+                
+                // Save refresh token if available
+                if (response.refreshToken) {
+                    ApiService.saveRefreshToken(response.refreshToken);
+                }
+                
                 ApiService.saveRole(response.user?.role || 'USER');
                 ApiService.saveUsername(response.user?.username || formData.username);
 

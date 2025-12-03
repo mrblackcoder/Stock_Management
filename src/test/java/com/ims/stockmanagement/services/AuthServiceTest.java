@@ -1,8 +1,8 @@
 package com.ims.stockmanagement.services;
 
-import com.ims.stockmanagement.dto.LoginRequest;
-import com.ims.stockmanagement.dto.RegisterRequest;
-import com.ims.stockmanagement.dto.Response;
+import com.ims.stockmanagement.dtos.LoginRequest;
+import com.ims.stockmanagement.dtos.RegisterRequest;
+import com.ims.stockmanagement.dtos.Response;
 import com.ims.stockmanagement.enums.UserRole;
 import com.ims.stockmanagement.models.User;
 import com.ims.stockmanagement.repositories.UserRepository;
