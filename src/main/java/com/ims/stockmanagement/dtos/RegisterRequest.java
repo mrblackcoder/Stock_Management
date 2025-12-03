@@ -27,7 +27,4 @@ public class RegisterRequest {
     
     @Size(max = 100, message = "Full name cannot exceed 100 characters")
     private String fullName;
-    
-    // Note: Role is NOT accepted from user input for security reasons
-    // All new users are automatically assigned USER role
 }

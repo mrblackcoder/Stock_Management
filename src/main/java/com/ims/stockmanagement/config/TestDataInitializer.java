@@ -145,13 +145,13 @@ public class TestDataInitializer {
             dellMonitor.setStockQuantity(7);
             dellMonitor.setReorderLevel(5);
             dellMonitor.setCategory(electronics);
-            dellMonitor.setSupplier(dell); // DELL
+            dellMonitor.setSupplier(dell);
             productRepository.save(dellMonitor);
 
-            System.out.println("✅ Test data initialized successfully!");
+            System.out.println("Test data initialized successfully!");
             System.out.println("   - 3 Categories created");
-            System.out.println("   - 4 Suppliers created (Dell, HP, Logitech, Samsung)");
-            System.out.println("   - 6 Products created with DIFFERENT suppliers");
+            System.out.println("   - 4 Suppliers created");
+            System.out.println("   - 6 Products created");
         };
     }
 }

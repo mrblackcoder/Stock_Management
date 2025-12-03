@@ -1,13 +1,13 @@
-# 🚀 Hızlı Başlangıç Kılavuzu
+# Hızlı Başlangıç Kılavuzu
 
-## ⚡ Tek Komut ile Başlatma
+## Tek Komut ile Başlatma
 
-### 1️⃣ MySQL'i Başlat
+### 1. MySQL'i Başlat
 ```bash
 sudo service mysql start
 ```
 
-### 2️⃣ Backend'i Başlat (Terminal 1)
+### 2. Backend'i Başlat (Terminal 1)
 ```bash
 cd Stock_Management
 ./gradlew bootRun
@@ -16,7 +16,7 @@ cd Stock_Management
 **Bekleme:** Backend'in tamamen başlamasını bekleyin (15-20 saniye).
 **Başarı mesajı:** `Started StockManagementApplication`
 
-### 3️⃣ Frontend'i Başlat (Terminal 2)
+### 3. Frontend'i Başlat (Terminal 2)
 ```bash
 cd Stock_Management/frontend
 npm start
@@ -26,7 +26,7 @@ npm start
 
 ---
 
-## 📋 Test Kullanıcıları
+## Test Kullanıcıları
 
 ### Admin Kullanıcı (Tam Yetki)
 - **Kullanıcı Adı:** admin
@@ -42,7 +42,7 @@ npm start
 
 ---
 
-## 🔄 Sorun Giderme
+## Sorun Giderme
 
 ### Port 8080 veya 3000 kullanımda hatası
 ```bash
@@ -85,7 +85,7 @@ EXIT;
 
 ---
 
-## 📊 API Endpoints
+## API Endpoints
 
 ```bash
 # API durumu kontrol
@@ -103,7 +103,7 @@ curl http://localhost:8080/api/products \
 
 ---
 
-## ✅ Sistem Kontrol
+## Sistem Kontrol
 
 ```bash
 # Servislerin durumunu kontrol et
@@ -116,23 +116,23 @@ tail -f /tmp/frontend.log
 
 ---
 
-## 🎯 Özellikler
+## Özellikler
 
-✅ JWT Authentication  
-✅ Role-based Access Control (ADMIN/USER)  
-✅ Product Management (CRUD)  
-✅ Category Management  
-✅ Supplier Management  
-✅ Stock Transactions  
-✅ Low Stock Alerts  
-✅ Real-time Dashboard  
-✅ External API Integration (Currency Conversion)  
-✅ Responsive UI Design  
-✅ **Admin Strategy Pattern** - Extensible admin operations (Bulk Delete, Price Update, Reports)  
+- JWT Authentication  
+- Role-based Access Control (ADMIN/USER)  
+- Product Management (CRUD)  
+- Category Management  
+- Supplier Management  
+- Stock Transactions  
+- Low Stock Alerts  
+- Real-time Dashboard  
+- External API Integration (Currency Conversion)  
+- Responsive UI Design  
+- **Admin Strategy Pattern** - Extensible admin operations (Bulk Delete, Price Update, Reports)  
 
 ---
 
-## 🏗️ Mimari Özellikler
+## Mimari Özellikler
 
 ### Strategy Pattern Implementation
 Proje, admin işlemleri için **Strategy Pattern** kullanır:

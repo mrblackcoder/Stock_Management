@@ -51,12 +51,12 @@ public class OpenAPIConfig {
                         A comprehensive enterprise-grade API for managing inventory, products, categories, suppliers, and stock transactions.
 
                         ### Features:
-                        - 🔐 JWT Authentication & Authorization
-                        - 👥 Role-based Access Control (ADMIN/USER)
-                        - 📦 Complete Product Management
-                        - 📊 Stock Transaction Tracking
-                        - ⚠️ Low Stock Alerts
-                        - 🔄 CRUD Operations for all entities
+                        - JWT Authentication & Authorization
+                        - Role-based Access Control (ADMIN/USER)
+                        - Complete Product Management
+                        - Stock Transaction Tracking
+                        - Low Stock Alerts
+                        - CRUD Operations for all entities
 
                         ### Authentication:
                         1. Register a new account via `/api/auth/register`
