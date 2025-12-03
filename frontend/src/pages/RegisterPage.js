@@ -50,6 +50,7 @@ function RegisterPage() {
             score += 5;
         }
 
+        // eslint-disable-next-line no-useless-escape
         if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
             errors.push('One special character');
         } else {
