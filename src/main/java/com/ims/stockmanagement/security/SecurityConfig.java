@@ -45,12 +45,12 @@ public class SecurityConfig {
                         // Prevent clickjacking attacks
                         .frameOptions(frame -> frame.deny())
 
-                        // Prevent MIME type sniffing
-                        .contentTypeOptions(contentType -> contentType.disable())
+                        // Prevent MIME type sniffing - X-Content-Type-Options: nosniff
+                        .contentTypeOptions(contentType -> {})
 
                         // Enable XSS protection
                         .xssProtection(xss -> xss
-                                .headerValue("1; mode=block")
+                                .headerValue(org.springframework.security.web.header.writers.XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK)
                         )
 
                         // Force HTTPS (HSTS) - Commented for development

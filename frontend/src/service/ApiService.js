@@ -1,10 +1,31 @@
 import axios from "axios";
 import CryptoJS from "crypto-js";
 
+// Axios interceptor - 401 hatalarında otomatik logout
+axios.interceptors.response.use(
+    response => response,
+    error => {
+        if (error.response?.status === 401) {
+            // Token geçersiz veya expired
+            localStorage.removeItem("token");
+            localStorage.removeItem("role");
+            localStorage.removeItem("username");
+            localStorage.removeItem("user");
+            
+            // Login sayfasında değilsek yönlendir
+            if (!window.location.pathname.includes('/login')) {
+                window.location.href = '/login';
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
 export default class ApiService {
 
     static BASE_URL = "http://localhost:8080/api";
-    static ENCRYPTION_KEY = "ims-inventory-management";
+    // Encryption key - environment variable'dan alınabilir
+    static ENCRYPTION_KEY = process.env.REACT_APP_ENCRYPTION_KEY || "ims-secure-key-2024-stock-mgmt";
 
     // Encrypt data using CryptoJS
     static encrypt(data) {
@@ -13,8 +34,25 @@ export default class ApiService {
 
     // Decrypt data using CryptoJS
     static decrypt(data) {
-        const bytes = CryptoJS.AES.decrypt(data, this.ENCRYPTION_KEY);
-        return bytes.toString(CryptoJS.enc.Utf8);
+        try {
+            const bytes = CryptoJS.AES.decrypt(data, this.ENCRYPTION_KEY);
+            return bytes.toString(CryptoJS.enc.Utf8);
+        } catch (e) {
+            console.error("Decryption failed");
+            return null;
+        }
+    }
+
+    // Check if JWT token is expired
+    static isTokenExpired(token) {
+        if (!token) return true;
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            // Token expiry time'ı kontrol et (5 dakika buffer)
+            return (payload.exp * 1000) < (Date.now() + 5 * 60 * 1000);
+        } catch (e) {
+            return true;
+        }
     }
 
     // Save token with encryption
@@ -23,8 +61,21 @@ export default class ApiService {
         localStorage.setItem("token", encryptedToken);
     }
 
-    // Retrieve the token
+    // Retrieve the token (returns null if expired)
     static getToken() {
+        const encryptedToken = localStorage.getItem("token");
+        if (!encryptedToken) return null;
+        
+        const token = this.decrypt(encryptedToken);
+        if (!token || this.isTokenExpired(token)) {
+            this.clearAuth(); // Token expired, clear all auth data
+            return null;
+        }
+        return token;
+    }
+    
+    // Get token without expiry check (for specific cases)
+    static getRawToken() {
         const encryptedToken = localStorage.getItem("token");
         if (!encryptedToken) return null;
         return this.decrypt(encryptedToken);
@@ -272,9 +323,12 @@ export default class ApiService {
 
     static async createTransaction(transactionData) {
         const user = this.getUser();
+        if (!user || !user.id) {
+            throw new Error("User not authenticated. Please login again.");
+        }
         const dataWithUserId = {
             ...transactionData,
-            userId: user?.id || 1 // Fallback to 1 if user not found
+            userId: user.id
         };
         const response = await axios.post(`${this.BASE_URL}/transactions`, dataWithUserId, {
             headers: this.getHeader()

@@ -3,9 +3,11 @@ import { Navigate } from 'react-router-dom';
 import ApiService from './ApiService';
 
 export const ProtectedRoute = ({ children }) => {
-    const token = ApiService.getToken();
+    const token = ApiService.getToken(); // Bu artık expire kontrolü de yapıyor
 
     if (!token) {
+        // Token yok veya expired
+        ApiService.clearAuth();
         return <Navigate to="/login" replace />;
     }
 
@@ -17,6 +19,7 @@ export const AdminRoute = ({ children }) => {
     const role = ApiService.getRole();
 
     if (!token) {
+        ApiService.clearAuth();
         return <Navigate to="/login" replace />;
     }
 

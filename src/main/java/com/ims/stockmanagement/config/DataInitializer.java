@@ -17,16 +17,23 @@ public class DataInitializer {
     CommandLineRunner init(UserRepository userRepository) {
         return args -> {
             // Eğer hiç kullanıcı yoksa yeni admin oluştur
+            // Admin şifresi environment variable'dan alınır, yoksa güçlü default kullanılır
+            String adminPassword = System.getenv("ADMIN_PASSWORD");
+            if (adminPassword == null || adminPassword.isEmpty()) {
+                adminPassword = "Admin@123!Secure"; // Güçlü default şifre
+            }
+            
             if (userRepository.count() == 0) {
                 User admin = new User();
                 admin.setUsername("admin");
                 admin.setEmail("admin@local");
                 admin.setFullName("System Admin");
-                admin.setPassword(new BCryptPasswordEncoder().encode("admin123"));
+                admin.setPassword(new BCryptPasswordEncoder().encode(adminPassword));
                 admin.setRole(UserRole.ADMIN);
                 admin.setEnabled(true);
                 userRepository.save(admin);
-                System.out.println("Created default admin: admin/admin123");
+                // Güvenlik için şifreyi loglama
+                System.out.println("Created default admin user. Please change the password after first login.");
                 return;
             }
 

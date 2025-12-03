@@ -5,8 +5,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -51,6 +57,24 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Response> handleAccessDeniedException(AccessDeniedException ex) {
         Response response = new Response(HttpStatus.FORBIDDEN.value(), "Access denied");
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+
+    // Validation hatalarını yakala (@Valid annotation hataları)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Response> handleValidationException(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach(error -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        
+        String errorMessage = errors.entrySet().stream()
+            .map(entry -> entry.getKey() + ": " + entry.getValue())
+            .collect(Collectors.joining("; "));
+        
+        Response response = new Response(HttpStatus.BAD_REQUEST.value(), "Validation failed: " + errorMessage);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     @ExceptionHandler(Exception.class)
