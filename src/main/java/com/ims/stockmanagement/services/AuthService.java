@@ -13,6 +13,7 @@ import com.ims.stockmanagement.models.User;
 import com.ims.stockmanagement.repositories.UserRepository;
 import com.ims.stockmanagement.security.JwtService;
 import com.ims.stockmanagement.security.LoginAttemptService;
+import com.ims.stockmanagement.security.PasswordValidator;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -34,11 +36,18 @@ public class AuthService {
     private final ModelMapper modelMapper;
     private final LoginAttemptService loginAttemptService;
     private final RefreshTokenService refreshTokenService;
+    private final PasswordValidator passwordValidator;
 
     /**
      * Yeni kullanıcı kaydı
      */
     public Response register(RegisterRequest request) {
+        // Password strength validation
+        List<String> passwordErrors = passwordValidator.validate(request.getPassword());
+        if (!passwordErrors.isEmpty()) {
+            throw new IllegalArgumentException("Password validation failed: " + String.join("; ", passwordErrors));
+        }
+        
         // Kullanıcı adı kontrolü
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new AlreadyExistsException("Username already exists: " + request.getUsername());

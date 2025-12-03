@@ -12,14 +12,85 @@ function RegisterPage() {
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [passwordStrength, setPasswordStrength] = useState({ score: 0, label: '', errors: [] });
     const navigate = useNavigate();
 
+    // Password strength calculator
+    const calculatePasswordStrength = (password) => {
+        if (!password) {
+            return { score: 0, label: '', errors: [] };
+        }
+
+        let score = 0;
+        let errors = [];
+
+        // Length check
+        if (password.length < 8) {
+            errors.push('At least 8 characters');
+        } else {
+            score += Math.min(password.length * 2, 25);
+        }
+
+        // Character variety
+        if (!/[a-z]/.test(password)) {
+            errors.push('One lowercase letter');
+        } else {
+            score += 5;
+        }
+
+        if (!/[A-Z]/.test(password)) {
+            errors.push('One uppercase letter');
+        } else {
+            score += 5;
+        }
+
+        if (!/[0-9]/.test(password)) {
+            errors.push('One digit');
+        } else {
+            score += 5;
+        }
+
+        if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+            errors.push('One special character');
+        } else {
+            score += 10;
+        }
+
+        // Bonus for length > 12
+        if (password.length > 12) {
+            score += Math.min((password.length - 12) * 2, 20);
+        }
+
+        // Common password check
+        const commonPasswords = ['password', '123456', 'qwerty', 'admin', 'letmein', 'welcome'];
+        if (commonPasswords.some(p => password.toLowerCase().includes(p))) {
+            score -= 30;
+            errors.push('Avoid common passwords');
+        }
+
+        score = Math.max(0, Math.min(100, score));
+
+        let label = 'Very Weak';
+        if (score >= 80) label = 'Very Strong';
+        else if (score >= 60) label = 'Strong';
+        else if (score >= 40) label = 'Fair';
+        else if (score >= 20) label = 'Weak';
+
+        return { score, label, errors };
+    };
+
     const handleChange = (e) => {
+        const { name, value } = e.target;
         setFormData({
             ...formData,
-            [e.target.name]: e.target.value
+            [name]: value
         });
         setError('');
+
+        // Update password strength when password changes
+        if (name === 'password') {
+            setPasswordStrength(calculatePasswordStrength(value));
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -27,10 +98,17 @@ function RegisterPage() {
         setLoading(true);
         setError('');
 
+        // Client-side validation
+        if (passwordStrength.score < 40) {
+            setError('Please choose a stronger password');
+            setLoading(false);
+            return;
+        }
+
         try {
             const response = await ApiService.registerUser(formData);
 
-            if (response.statusCode === 200) {
+            if (response.statusCode === 200 || response.statusCode === 201) {
                 navigate('/login');
             } else {
                 setError(response.message || 'Registration failed');
@@ -40,6 +118,14 @@ function RegisterPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const getStrengthColor = () => {
+        if (passwordStrength.score >= 80) return '#28a745';
+        if (passwordStrength.score >= 60) return '#5cb85c';
+        if (passwordStrength.score >= 40) return '#f0ad4e';
+        if (passwordStrength.score >= 20) return '#ff9800';
+        return '#dc3545';
     };
 
     return (
@@ -114,8 +200,31 @@ function RegisterPage() {
                             value={formData.password}
                             onChange={handleChange}
                             required
-                            placeholder="Choose a password"
+                            placeholder="Choose a strong password"
                         />
+                        {formData.password && (
+                            <div className="password-strength">
+                                <div className="strength-bar">
+                                    <div 
+                                        className="strength-fill" 
+                                        style={{ 
+                                            width: `${passwordStrength.score}%`,
+                                            backgroundColor: getStrengthColor()
+                                        }}
+                                    ></div>
+                                </div>
+                                <span className="strength-label" style={{ color: getStrengthColor() }}>
+                                    {passwordStrength.label}
+                                </span>
+                                {passwordStrength.errors.length > 0 && (
+                                    <ul className="password-requirements">
+                                        {passwordStrength.errors.map((err, idx) => (
+                                            <li key={idx}><i className="fas fa-times"></i> {err}</li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     <button type="submit" className="btn-login" disabled={loading}>
