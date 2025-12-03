@@ -44,4 +44,13 @@ public class WebController {
     public String home() {
         return "redirect:/login";
     }
+
+    /**
+     * All other routes redirect to React SPA
+     * This prevents 404 errors for routes that don't have Thymeleaf templates
+     */
+    @GetMapping({"/products", "/categories", "/suppliers", "/transactions", "/profile", "/users"})
+    public String redirectToReact() {
+        return "redirect:http://localhost:3000" + "?message=Please use React SPA for full features";
+    }
 }

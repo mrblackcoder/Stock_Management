@@ -163,7 +163,7 @@ function DashboardPage() {
                                     {recentProducts.map(product => {
                                         const stock = product.stockQuantity || product.quantity || 0;
                                         const stockStatus = stock <= 5 ? 'critical' : stock <= 10 ? 'low' : 'good';
-                                        const statusIcon = stock <= 5 ? 'CRITICAL' : stock <= 10 ? 'LOW' : 'GOOD';
+                                        const statusLabel = stock <= 5 ? 'Critical' : stock <= 10 ? 'Low' : 'Good';
 
                                         return (
                                             <tr key={product.id}>
@@ -188,7 +188,7 @@ function DashboardPage() {
                                                         {stock} units
                                                     </span>
                                                 </td>
-                                                <td>{statusIcon} {stockStatus === 'critical' ? 'Critical' : stockStatus === 'low' ? 'Low' : 'Good'}</td>
+                                                <td><strong>{statusLabel}</strong></td>
                                             </tr>
                                         );
                                     })}
