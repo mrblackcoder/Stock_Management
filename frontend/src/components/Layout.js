@@ -19,18 +19,18 @@ function Layout({ children }) {
             {/* Sidebar */}
             <aside className="sidebar">
                 <div className="sidebar-header">
-                    <h2>📦 IMS</h2>
+                    <h2>IMS</h2>
                     <p>Inventory Management</p>
                 </div>
 
                 <nav className="sidebar-nav">
                     <NavLink to="/dashboard" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-                        <span className="nav-icon">📊</span>
+                        <span className="nav-icon">■</span>
                         <span className="nav-text">Dashboard</span>
                     </NavLink>
 
                     <NavLink to="/products" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-                        <span className="nav-icon">📦</span>
+                        <span className="nav-icon">▪</span>
                         <span className="nav-text">Products</span>
                     </NavLink>
 
@@ -38,31 +38,31 @@ function Layout({ children }) {
                     {isAdmin && (
                         <>
                             <NavLink to="/categories" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-                                <span className="nav-icon">🏷️</span>
+                                <span className="nav-icon">●</span>
                                 <span className="nav-text">Categories</span>
                             </NavLink>
 
                             <NavLink to="/suppliers" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-                                <span className="nav-icon">🚚</span>
+                                <span className="nav-icon">◆</span>
                                 <span className="nav-text">Suppliers</span>
                             </NavLink>
 
                             <NavLink to="/transactions" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-                                <span className="nav-icon">🔄</span>
+                                <span className="nav-icon">↻</span>
                                 <span className="nav-text">Transactions</span>
                             </NavLink>
                         </>
                     )}
 
                     <NavLink to="/profile" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-                        <span className="nav-icon">👤</span>
+                        <span className="nav-icon">⚙</span>
                         <span className="nav-text">Profile</span>
                     </NavLink>
                 </nav>
 
                 <div className="sidebar-footer">
                     <button className="logout-btn" onClick={handleLogout}>
-                        🚪 Logout
+                        ← Logout
                     </button>
                 </div>
             </aside>
@@ -72,7 +72,7 @@ function Layout({ children }) {
                 {/* Top Header Bar */}
                 <header className="top-header">
                     <div className="header-left">
-                        <h1 className="page-title">📦 Inventory Management System</h1>
+                        <h1 className="page-title">Inventory Management System</h1>
                     </div>
                     <div className="header-right">
                         <div className="user-profile">
