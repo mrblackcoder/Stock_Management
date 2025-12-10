@@ -29,6 +29,9 @@ public class UserController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getUserProfile() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new SecurityException("No authenticated user found");
+        }
         String username = authentication.getName();
 
         User user = userRepository.findByUsername(username)

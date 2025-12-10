@@ -40,6 +40,15 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Response> logout() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            // Already logged out or no authentication
+            Response response = Response.builder()
+                    .statusCode(200)
+                    .message("Already logged out")
+                    .timestamp(java.time.LocalDateTime.now())
+                    .build();
+            return ResponseEntity.ok(response);
+        }
         String username = authentication.getName();
         Response response = authService.logout(username);
         return ResponseEntity.status(response.getStatusCode()).body(response);
