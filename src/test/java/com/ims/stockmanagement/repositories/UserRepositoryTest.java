@@ -10,9 +10,12 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
 import java.util.Optional;
 
+import org.springframework.test.context.ActiveProfiles;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
+@ActiveProfiles("test")
 class UserRepositoryTest {
 
     @Autowired

@@ -13,25 +13,11 @@ on:
 
 jobs:
   # ===========================================================================
-  # Backend Tests (Gradle)
+  # Backend Tests (Gradle with H2 in-memory database)
   # ===========================================================================
   backend:
     name: Backend Tests
     runs-on: ubuntu-latest
-
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: inventory_management_db
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
 
     steps:
       - name: Checkout code
@@ -50,10 +36,7 @@ jobs:
       - name: Build and Test
         run: ./gradlew build --no-daemon
         env:
-          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/inventory_management_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
-          SPRING_DATASOURCE_USERNAME: root
-          SPRING_DATASOURCE_PASSWORD: root
-          JWT_SECRET: ci-test-secret-key-minimum-256-bits-for-jwt-token-signing-in-continuous-integration-pipeline
+          SPRING_PROFILES_ACTIVE: test
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
