@@ -4,6 +4,8 @@ import com.ims.stockmanagement.dtos.ProductDTO;
 import com.ims.stockmanagement.dtos.Response;
 import com.ims.stockmanagement.services.ExternalApiService;
 import com.ims.stockmanagement.services.ProductService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -14,20 +16,25 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
 public class ProductController {
 
     private final ProductService productService;
     private final ExternalApiService externalApiService;
 
+    // Allowed sort fields whitelist
+    private static final List<String> ALLOWED_SORT_FIELDS = List.of(
+            "id", "name", "sku", "price", "stockQuantity", "createdAt"
+    );
+
     @PostMapping
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Response> createProduct(@RequestBody ProductDTO productDTO) {
+    public ResponseEntity<Response> createProduct(@Valid @RequestBody ProductDTO productDTO) {
         Response response = productService.createProduct(productDTO);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
@@ -38,7 +45,11 @@ public class ProductController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, sortBy));
+
+        // Validate sortBy field to prevent injection
+        String safeSortBy = ALLOWED_SORT_FIELDS.contains(sortBy) ? sortBy : "createdAt";
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, safeSortBy));
         Response response = productService.getAllProducts(pageable);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
@@ -52,8 +63,16 @@ public class ProductController {
 
     @GetMapping("/search")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Response> searchProducts(@RequestParam String keyword) {
-        Response response = productService.searchProducts(keyword);
+    public ResponseEntity<Response> searchProducts(
+            @RequestParam @Pattern(regexp = "^[a-zA-Z0-9\\s\\-_]+$", message = "Invalid search keyword") String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Response.builder()
+                    .statusCode(400)
+                    .message("Search keyword cannot be empty")
+                    .timestamp(LocalDateTime.now())
+                    .build());
+        }
+        Response response = productService.searchProducts(keyword.trim());
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
@@ -73,7 +92,7 @@ public class ProductController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Response> updateProduct(@PathVariable Long id, @RequestBody ProductDTO productDTO) {
+    public ResponseEntity<Response> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductDTO productDTO) {
         Response response = productService.updateProduct(id, productDTO);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
@@ -85,18 +104,11 @@ public class ProductController {
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
-    /**
-     * Ürün fiyatını farklı para biriminde gösterir (Harici API Entegrasyonu)
-     *
-     * @param id Ürün ID
-     * @param currency Hedef para birimi (USD, EUR, GBP, vb.)
-     * @return Dönüştürülmüş fiyat bilgisi
-     */
     @GetMapping("/{id}/price/{currency}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getProductPriceInCurrency(
             @PathVariable Long id,
-            @PathVariable String currency) {
+            @PathVariable @Pattern(regexp = "^[A-Za-z]{3}$", message = "Invalid currency code") String currency) {
 
         Response productResponse = productService.getProductById(id);
         ProductDTO product = productResponse.getProduct();
@@ -113,7 +125,7 @@ public class ProductController {
             BigDecimal originalPrice = product.getPrice();
             BigDecimal convertedPrice = externalApiService.convertPrice(
                     originalPrice,
-                    "TRY",  // Varsayılan kaynak para birimi
+                    "TRY",
                     currency.toUpperCase()
             );
 
@@ -141,11 +153,6 @@ public class ProductController {
         }
     }
 
-    /**
-     * Desteklenen para birimlerini listeler
-     *
-     * @return Para birimi listesi
-     */
     @GetMapping("/currencies")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getSupportedCurrencies() {
@@ -169,16 +176,10 @@ public class ProductController {
         }
     }
 
-    /**
-     * Güncel döviz kurlarını getirir
-     *
-     * @param base Ana para birimi (opsiyonel, varsayılan: USD)
-     * @return Döviz kurları
-     */
     @GetMapping("/exchange-rates")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getExchangeRates(
-            @RequestParam(defaultValue = "USD") String base) {
+            @RequestParam(defaultValue = "USD") @Pattern(regexp = "^[A-Za-z]{3}$", message = "Invalid currency code") String base) {
         try {
             Map<String, Object> rates = externalApiService.getExchangeRates(base.toUpperCase());
 

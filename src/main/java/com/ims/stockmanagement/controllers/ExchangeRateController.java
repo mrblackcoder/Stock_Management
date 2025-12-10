@@ -3,9 +3,13 @@ package com.ims.stockmanagement.controllers;
 import com.ims.stockmanagement.dtos.ExchangeRateDTO;
 import com.ims.stockmanagement.dtos.Response;
 import com.ims.stockmanagement.services.ExchangeRateService;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -15,16 +19,12 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/exchange")
-@CrossOrigin(origins = "http://localhost:3000")
+@RequiredArgsConstructor
+@Validated
 public class ExchangeRateController {
 
-    @Autowired
-    private ExchangeRateService exchangeRateService;
+    private final ExchangeRateService exchangeRateService;
 
-    /**
-     * Tüm döviz kurlarını getirir
-     * GET /api/exchange/rates
-     */
     @GetMapping("/rates")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getExchangeRates() {
@@ -37,21 +37,18 @@ public class ExchangeRateController {
                     .timestamp(LocalDateTime.now())
                     .build());
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(Response.builder()
-                    .statusCode(400)
+            return ResponseEntity.status(500).body(Response.builder()
+                    .statusCode(500)
                     .message("Failed to retrieve exchange rates: " + e.getMessage())
                     .timestamp(LocalDateTime.now())
                     .build());
         }
     }
 
-    /**
-     * TRY'yi USD'ye çevirir
-     * GET /api/exchange/convert/usd?amount=15000
-     */
     @GetMapping("/convert/usd")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Response> convertToUSD(@RequestParam BigDecimal amount) {
+    public ResponseEntity<Response> convertToUSD(
+            @RequestParam @NotNull(message = "Amount is required") @DecimalMin(value = "0.01", message = "Amount must be greater than 0") BigDecimal amount) {
         try {
             BigDecimal converted = exchangeRateService.convertTRYtoUSD(amount);
 
@@ -76,13 +73,10 @@ public class ExchangeRateController {
         }
     }
 
-    /**
-     * TRY'yi EUR'ya çevirir
-     * GET /api/exchange/convert/eur?amount=15000
-     */
     @GetMapping("/convert/eur")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Response> convertToEUR(@RequestParam BigDecimal amount) {
+    public ResponseEntity<Response> convertToEUR(
+            @RequestParam @NotNull(message = "Amount is required") @DecimalMin(value = "0.01", message = "Amount must be greater than 0") BigDecimal amount) {
         try {
             BigDecimal converted = exchangeRateService.convertTRYtoEUR(amount);
 
@@ -107,13 +101,10 @@ public class ExchangeRateController {
         }
     }
 
-    /**
-     * TRY'yi GBP'ye çevirir
-     * GET /api/exchange/convert/gbp?amount=15000
-     */
     @GetMapping("/convert/gbp")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Response> convertToGBP(@RequestParam BigDecimal amount) {
+    public ResponseEntity<Response> convertToGBP(
+            @RequestParam @NotNull(message = "Amount is required") @DecimalMin(value = "0.01", message = "Amount must be greater than 0") BigDecimal amount) {
         try {
             BigDecimal converted = exchangeRateService.convertTRYtoGBP(amount);
 
@@ -138,15 +129,11 @@ public class ExchangeRateController {
         }
     }
 
-    /**
-     * TRY'yi belirtilen para birimine çevirir
-     * GET /api/exchange/convert?amount=15000&currency=USD
-     */
     @GetMapping("/convert")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> convert(
-            @RequestParam BigDecimal amount,
-            @RequestParam String currency) {
+            @RequestParam @NotNull(message = "Amount is required") @DecimalMin(value = "0.01", message = "Amount must be greater than 0") BigDecimal amount,
+            @RequestParam @Pattern(regexp = "^[A-Za-z]{3}$", message = "Invalid currency code") String currency) {
         try {
             BigDecimal converted = exchangeRateService.convertTRY(amount, currency);
 
@@ -177,4 +164,3 @@ public class ExchangeRateController {
         }
     }
 }
-

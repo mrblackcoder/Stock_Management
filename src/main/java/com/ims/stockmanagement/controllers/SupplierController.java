@@ -3,6 +3,7 @@ package com.ims.stockmanagement.controllers;
 import com.ims.stockmanagement.dtos.Response;
 import com.ims.stockmanagement.dtos.SupplierDTO;
 import com.ims.stockmanagement.services.SupplierService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -11,14 +12,13 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/suppliers")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
 public class SupplierController {
 
     private final SupplierService supplierService;
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Response> createSupplier(@RequestBody SupplierDTO supplierDTO) {
+    public ResponseEntity<Response> createSupplier(@Valid @RequestBody SupplierDTO supplierDTO) {
         Response response = supplierService.createSupplier(supplierDTO);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
@@ -37,7 +37,7 @@ public class SupplierController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Response> updateSupplier(@PathVariable Long id, @RequestBody SupplierDTO supplierDTO) {
+    public ResponseEntity<Response> updateSupplier(@PathVariable Long id, @Valid @RequestBody SupplierDTO supplierDTO) {
         Response response = supplierService.updateSupplier(id, supplierDTO);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
@@ -49,4 +49,3 @@ public class SupplierController {
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 }
-

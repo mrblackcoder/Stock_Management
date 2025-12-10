@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
 public class AuthController {
 
     private final AuthService authService;
@@ -31,13 +30,13 @@ public class AuthController {
         Response response = authService.login(request);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
-    
+
     @PostMapping("/refresh-token")
     public ResponseEntity<Response> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
         Response response = authService.refreshToken(request.getRefreshToken());
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
-    
+
     @PostMapping("/logout")
     public ResponseEntity<Response> logout() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -46,4 +45,3 @@ public class AuthController {
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 }
-
