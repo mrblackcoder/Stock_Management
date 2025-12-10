@@ -43,9 +43,7 @@ public class ExchangeRateService {
      * @return BigDecimal - USD cinsinden tutar
      */
     public BigDecimal convertTRYtoUSD(BigDecimal amountInTRY) {
-        ExchangeRateDTO rates = getExchangeRates();
-        BigDecimal usdRate = rates.getRates().get("USD");
-        return amountInTRY.multiply(usdRate).setScale(2, RoundingMode.HALF_UP);
+        return convertTRY(amountInTRY, "USD");
     }
 
     /**
@@ -54,9 +52,7 @@ public class ExchangeRateService {
      * @return BigDecimal - EUR cinsinden tutar
      */
     public BigDecimal convertTRYtoEUR(BigDecimal amountInTRY) {
-        ExchangeRateDTO rates = getExchangeRates();
-        BigDecimal eurRate = rates.getRates().get("EUR");
-        return amountInTRY.multiply(eurRate).setScale(2, RoundingMode.HALF_UP);
+        return convertTRY(amountInTRY, "EUR");
     }
 
     /**
@@ -65,9 +61,7 @@ public class ExchangeRateService {
      * @return BigDecimal - GBP cinsinden tutar
      */
     public BigDecimal convertTRYtoGBP(BigDecimal amountInTRY) {
-        ExchangeRateDTO rates = getExchangeRates();
-        BigDecimal gbpRate = rates.getRates().get("GBP");
-        return amountInTRY.multiply(gbpRate).setScale(2, RoundingMode.HALF_UP);
+        return convertTRY(amountInTRY, "GBP");
     }
 
     /**
@@ -77,8 +71,15 @@ public class ExchangeRateService {
      * @return BigDecimal - Hedef para biriminde tutar
      */
     public BigDecimal convertTRY(BigDecimal amountInTRY, String targetCurrency) {
+        if (amountInTRY == null) {
+            throw new IllegalArgumentException("Amount cannot be null");
+        }
+        if (targetCurrency == null || targetCurrency.trim().isEmpty()) {
+            throw new IllegalArgumentException("Target currency cannot be null or empty");
+        }
+
         ExchangeRateDTO rates = getExchangeRates();
-        BigDecimal rate = rates.getRates().get(targetCurrency.toUpperCase());
+        BigDecimal rate = rates.getRates().get(targetCurrency.toUpperCase().trim());
 
         if (rate == null) {
             throw new IllegalArgumentException("Unsupported currency: " + targetCurrency);

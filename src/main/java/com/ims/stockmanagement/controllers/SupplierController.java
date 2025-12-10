@@ -24,12 +24,14 @@ public class SupplierController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getAllSuppliers() {
         Response response = supplierService.getAllSuppliers();
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getSupplierById(@PathVariable Long id) {
         Response response = supplierService.getSupplierById(id);
         return ResponseEntity.status(response.getStatusCode()).body(response);

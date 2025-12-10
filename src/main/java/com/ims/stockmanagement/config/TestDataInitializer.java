@@ -7,12 +7,14 @@ import com.ims.stockmanagement.repositories.CategoryRepository;
 import com.ims.stockmanagement.repositories.ProductRepository;
 import com.ims.stockmanagement.repositories.SupplierRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.math.BigDecimal;
 
+@Slf4j
 @Configuration
 @RequiredArgsConstructor
 public class TestDataInitializer {
@@ -26,11 +28,11 @@ public class TestDataInitializer {
         return args -> {
             // Eğer zaten veri varsa atla
             if (productRepository.count() > 0) {
-                System.out.println("Test data already exists, skipping initialization.");
+                log.debug("Test data already exists, skipping initialization.");
                 return;
             }
 
-            System.out.println("Initializing test data...");
+            log.info("Initializing test data...");
 
             // Create Categories
             Category electronics = new Category();
@@ -148,10 +150,7 @@ public class TestDataInitializer {
             dellMonitor.setSupplier(dell);
             productRepository.save(dellMonitor);
 
-            System.out.println("Test data initialized successfully!");
-            System.out.println("   - 3 Categories created");
-            System.out.println("   - 4 Suppliers created");
-            System.out.println("   - 6 Products created");
+            log.info("Test data initialized successfully! Created: 3 Categories, 4 Suppliers, 6 Products");
         };
     }
 }

@@ -164,8 +164,12 @@ public class StockTransactionService {
                     .orElseThrow(() -> new NotFoundException("User not found with id: " + request.getUserId()));
         } else {
             // Spring Security context'inden authenticated user'ı al
-            String username = org.springframework.security.core.context.SecurityContextHolder
-                    .getContext().getAuthentication().getName();
+            org.springframework.security.core.Authentication authentication =
+                    org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated()) {
+                throw new SecurityException("No authenticated user found. Please login first.");
+            }
+            String username = authentication.getName();
             user = userRepository.findByUsername(username)
                     .orElseThrow(() -> new NotFoundException("User not found with username: " + username));
         }

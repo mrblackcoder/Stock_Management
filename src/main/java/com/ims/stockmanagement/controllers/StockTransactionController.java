@@ -5,6 +5,8 @@ import com.ims.stockmanagement.dtos.TransactionRequest;
 import com.ims.stockmanagement.enums.TransactionStatus;
 import com.ims.stockmanagement.services.StockTransactionService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -12,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -20,6 +23,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/transactions")
 @RequiredArgsConstructor
+@Validated
 public class StockTransactionController {
 
     private final StockTransactionService transactionService;
@@ -76,9 +80,10 @@ public class StockTransactionController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getAllTransactions(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(defaultValue = "transactionDate") String sortBy) {
 
         // Validate sortBy field to prevent injection
@@ -90,18 +95,21 @@ public class StockTransactionController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getTransactionById(@PathVariable Long id) {
         Response response = transactionService.getTransactionById(id);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
     @GetMapping("/product/{productId}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getTransactionsByProduct(@PathVariable Long productId) {
         Response response = transactionService.getTransactionsByProduct(productId);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
     @GetMapping("/user/{userId}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getTransactionsByUser(@PathVariable Long userId) {
         Response response = transactionService.getTransactionsByUser(userId);
         return ResponseEntity.status(response.getStatusCode()).body(response);

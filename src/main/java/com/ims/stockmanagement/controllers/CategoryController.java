@@ -24,12 +24,14 @@ public class CategoryController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getAllCategories() {
         Response response = categoryService.getAllCategories();
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getCategoryById(@PathVariable Long id) {
         Response response = categoryService.getCategoryById(id);
         return ResponseEntity.status(response.getStatusCode()).body(response);
