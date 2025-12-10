@@ -3,6 +3,7 @@ package com.ims.stockmanagement.controllers;
 import com.ims.stockmanagement.dtos.Response;
 import com.ims.stockmanagement.dtos.TransactionRequest;
 import com.ims.stockmanagement.enums.TransactionStatus;
+import com.ims.stockmanagement.enums.TransactionType;
 import com.ims.stockmanagement.services.StockTransactionService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -112,6 +113,33 @@ public class StockTransactionController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getTransactionsByUser(@PathVariable Long userId) {
         Response response = transactionService.getTransactionsByUser(userId);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
+    }
+
+    @GetMapping("/by-type/{type}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Response> getTransactionsByType(
+            @PathVariable @Pattern(regexp = "^(PURCHASE|SALE|ADJUSTMENT)$", message = "Invalid type. Must be PURCHASE, SALE, or ADJUSTMENT") String type) {
+        try {
+            TransactionType transactionType = TransactionType.valueOf(type.toUpperCase());
+            Response response = transactionService.getTransactionsByType(transactionType);
+            return ResponseEntity.status(response.getStatusCode()).body(response);
+        } catch (IllegalArgumentException e) {
+            Response response = Response.builder()
+                    .statusCode(400)
+                    .message("Invalid transaction type: " + type)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Response> updateTransaction(
+            @PathVariable Long id,
+            @Valid @RequestBody TransactionRequest request) {
+        Response response = transactionService.updateTransaction(id, request);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 

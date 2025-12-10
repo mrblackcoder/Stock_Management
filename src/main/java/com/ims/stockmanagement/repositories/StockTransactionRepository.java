@@ -41,6 +41,10 @@ public interface StockTransactionRepository extends JpaRepository<StockTransacti
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
 
+    // Find by transaction type with relations (N+1 optimized)
+    @Query("SELECT t FROM StockTransaction t LEFT JOIN FETCH t.product LEFT JOIN FETCH t.user WHERE t.transactionType = :type")
+    List<StockTransaction> findByTransactionTypeWithRelations(@Param("type") TransactionType type);
+
     // Legacy methods (kept for backward compatibility)
     List<StockTransaction> findByProduct(Product product);
 

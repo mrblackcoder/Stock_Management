@@ -306,6 +306,49 @@ public class StockTransactionService {
     }
 
     /**
+     * İşlem tipine göre işlemleri getir
+     * N+1 optimized: Uses FETCH JOIN to load product and user in single query
+     */
+    public Response getTransactionsByType(TransactionType type) {
+        List<StockTransaction> transactions = transactionRepository.findByTransactionTypeWithRelations(type);
+        List<TransactionDTO> transactionDTOs = transactions.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return Response.builder()
+                .statusCode(200)
+                .message("Transactions found: " + transactionDTOs.size())
+                .transactionList(transactionDTOs)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    /**
+     * İşlem güncelle (UPDATE - CRUD)
+     * Not: Sadece notes ve status güncellenebilir, stok değişikliği için yeni işlem oluşturulmalı
+     */
+    @Transactional
+    public Response updateTransaction(Long id, TransactionRequest request) {
+        StockTransaction transaction = transactionRepository.findByIdWithProductAndUser(id)
+                .orElseThrow(() -> new NotFoundException("Transaction not found with id: " + id));
+
+        // Sadece notes güncellenebilir (stok tutarlılığı için diğer alanlar değiştirilemez)
+        if (request.getNotes() != null) {
+            transaction.setNotes(request.getNotes());
+        }
+
+        StockTransaction updatedTransaction = transactionRepository.save(transaction);
+        TransactionDTO transactionDTO = convertToDTO(updatedTransaction);
+
+        return Response.builder()
+                .statusCode(200)
+                .message("Transaction updated successfully")
+                .transaction(transactionDTO)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    /**
      * Ürün stok güncellemesi
      */
     private void updateProductStock(Product product, TransactionType type, Integer quantity) {
@@ -328,10 +371,19 @@ public class StockTransactionService {
      */
     private TransactionDTO convertToDTO(StockTransaction transaction) {
         TransactionDTO dto = modelMapper.map(transaction, TransactionDTO.class);
-        dto.setProductId(transaction.getProduct().getId());
-        dto.setProductName(transaction.getProduct().getName());
-        dto.setUserId(transaction.getUser().getId());
-        dto.setUsername(transaction.getUser().getUsername());
+
+        // Null safety for product
+        if (transaction.getProduct() != null) {
+            dto.setProductId(transaction.getProduct().getId());
+            dto.setProductName(transaction.getProduct().getName());
+        }
+
+        // Null safety for user
+        if (transaction.getUser() != null) {
+            dto.setUserId(transaction.getUser().getId());
+            dto.setUsername(transaction.getUser().getUsername());
+        }
+
         return dto;
     }
 }
