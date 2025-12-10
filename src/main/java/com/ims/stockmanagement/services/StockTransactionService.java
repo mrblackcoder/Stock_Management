@@ -313,6 +313,8 @@ public class StockTransactionService {
             case SALE:
                 product.setStockQuantity(product.getStockQuantity() - quantity);
                 break;
+            default:
+                throw new IllegalArgumentException("Unknown transaction type: " + type);
         }
         productRepository.save(product);
     }
