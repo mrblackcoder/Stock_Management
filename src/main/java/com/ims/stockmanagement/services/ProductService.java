@@ -89,9 +89,10 @@ public class ProductService {
 
     /**
      * Ürün arama metodu
+     * N+1 optimized: Uses FETCH JOIN to load all relations in single query
      */
     public Response searchProducts(String keyword) {
-        List<Product> products = productRepository.findByNameContainingIgnoreCaseOrSkuContainingIgnoreCase(keyword, keyword);
+        List<Product> products = productRepository.findByNameOrSkuContainingWithRelations(keyword);
         List<ProductDTO> productDTOs = products.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -106,9 +107,10 @@ public class ProductService {
 
     /**
      * ID'ye göre ürün getir (READ - CRUD)
+     * N+1 optimized: Uses FETCH JOIN to load all relations in single query
      */
     public Response getProductById(Long id) {
-        Product product = productRepository.findById(id)
+        Product product = productRepository.findByIdWithRelations(id)
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + id));
 
         ProductDTO productDTO = convertToDTO(product);
@@ -263,9 +265,10 @@ public class ProductService {
 
     /**
      * İsme göre ürün ara
+     * N+1 optimized: Uses FETCH JOIN to load all relations in single query
      */
     public Response searchProductsByName(String name) {
-        List<Product> products = productRepository.findByNameContainingIgnoreCase(name);
+        List<Product> products = productRepository.findByNameContainingIgnoreCaseWithRelations(name);
         List<ProductDTO> productDTOs = products.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -280,12 +283,13 @@ public class ProductService {
 
     /**
      * Kategoriye göre ürünleri getir
+     * N+1 optimized: Uses FETCH JOIN to load all relations in single query
      */
     public Response getProductsByCategory(Long categoryId) {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new NotFoundException("Category not found with id: " + categoryId));
 
-        List<Product> products = productRepository.findByCategory(category);
+        List<Product> products = productRepository.findByCategoryWithRelations(category);
         List<ProductDTO> productDTOs = products.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());

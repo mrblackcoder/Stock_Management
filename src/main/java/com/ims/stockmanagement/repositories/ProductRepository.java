@@ -14,6 +14,23 @@ import java.util.Optional;
 public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findBySku(String sku);
 
+    // N+1 optimized: Find by ID with all relations
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.supplier LEFT JOIN FETCH p.category LEFT JOIN FETCH p.createdBy WHERE p.id = :id")
+    Optional<Product> findByIdWithRelations(@Param("id") Long id);
+
+    // N+1 optimized: Search by name with relations
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.supplier LEFT JOIN FETCH p.category LEFT JOIN FETCH p.createdBy WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%'))")
+    List<Product> findByNameContainingIgnoreCaseWithRelations(@Param("name") String name);
+
+    // N+1 optimized: Search by name or SKU with relations
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.supplier LEFT JOIN FETCH p.category LEFT JOIN FETCH p.createdBy WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(p.sku) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    List<Product> findByNameOrSkuContainingWithRelations(@Param("keyword") String keyword);
+
+    // N+1 optimized: Find by category with relations
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.supplier LEFT JOIN FETCH p.category LEFT JOIN FETCH p.createdBy WHERE p.category = :category")
+    List<Product> findByCategoryWithRelations(@Param("category") Category category);
+
+    // Legacy methods (kept for backward compatibility)
     List<Product> findByNameContainingIgnoreCase(String name);
 
     List<Product> findByNameContainingIgnoreCaseOrSkuContainingIgnoreCase(String name, String sku);
