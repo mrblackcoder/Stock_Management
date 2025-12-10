@@ -1,14 +1,18 @@
 package com.ims.stockmanagement.security;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Service to track and limit login attempts to prevent brute force attacks.
  */
+@Slf4j
 @Service
 public class LoginAttemptService {
 
@@ -17,6 +21,29 @@ public class LoginAttemptService {
 
     // Store: username -> LoginAttempt
     private final Map<String, LoginAttempt> attemptsCache = new ConcurrentHashMap<>();
+
+    /**
+     * Scheduled cleanup of expired login attempts to prevent memory leaks.
+     * Runs every 30 minutes.
+     */
+    @Scheduled(fixedRate = 1800000) // 30 minutes
+    public void cleanupExpiredAttempts() {
+        LocalDateTime now = LocalDateTime.now();
+        int removedCount = 0;
+
+        Iterator<Map.Entry<String, LoginAttempt>> iterator = attemptsCache.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, LoginAttempt> entry = iterator.next();
+            if (entry.getValue().getLastAttemptTime().plusMinutes(LOCK_TIME_MINUTES).isBefore(now)) {
+                iterator.remove();
+                removedCount++;
+            }
+        }
+
+        if (removedCount > 0) {
+            log.debug("Cleaned up {} expired login attempt records", removedCount);
+        }
+    }
 
     /**
      * Record a failed login attempt.

@@ -1,0 +1,69 @@
+# =============================================================================
+# Stock Management System - Terraform Variables Example
+# Copy this file to terraform.tfvars and fill in the values
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# General Configuration
+# -----------------------------------------------------------------------------
+aws_region   = "us-east-1"
+project_name = "stock-management"
+environment  = "prod"
+
+# -----------------------------------------------------------------------------
+# VPC Configuration
+# -----------------------------------------------------------------------------
+vpc_cidr             = "10.0.0.0/16"
+public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24"]
+private_subnet_cidrs = ["10.0.10.0/24", "10.0.20.0/24"]
+enable_nat_gateway   = true
+
+# -----------------------------------------------------------------------------
+# RDS Configuration
+# -----------------------------------------------------------------------------
+db_instance_class          = "db.t3.micro"    # Use db.t3.small for prod
+db_allocated_storage       = 20
+db_name                    = "inventory_management_db"
+db_username                = "admin"
+db_password                = "CHANGE_ME_SECURE_PASSWORD_123!"  # Use secrets!
+db_multi_az                = false  # true for production
+db_backup_retention_period = 7
+
+# -----------------------------------------------------------------------------
+# ECS Configuration
+# -----------------------------------------------------------------------------
+container_port    = 8080
+ecs_task_cpu      = 512   # 0.5 vCPU
+ecs_task_memory   = 1024  # 1 GB
+ecs_desired_count = 2
+ecs_min_capacity  = 1
+ecs_max_capacity  = 4
+
+# -----------------------------------------------------------------------------
+# Application Secrets (Use Secrets Manager in production!)
+# -----------------------------------------------------------------------------
+jwt_secret     = "CHANGE_ME_MINIMUM_256_CHARACTERS_LONG_SUPER_SECRET_KEY_FOR_JWT_TOKEN_SIGNING_PLEASE_GENERATE_A_SECURE_ONE_USING_OPENSSL_RAND_BASE64_64"
+admin_password = "Admin@123!Secure"
+
+# -----------------------------------------------------------------------------
+# CORS Configuration (comma-separated)
+# -----------------------------------------------------------------------------
+cors_allowed_origins = "https://yourdomain.com,https://www.yourdomain.com"
+
+# -----------------------------------------------------------------------------
+# Domain Configuration (Optional)
+# -----------------------------------------------------------------------------
+domain_name        = ""  # "yourdomain.com"
+create_dns_records = false
+
+# -----------------------------------------------------------------------------
+# S3/CloudFront Configuration
+# -----------------------------------------------------------------------------
+frontend_bucket_name = ""  # Leave empty for auto-generated name
+enable_cloudfront    = true
+
+# -----------------------------------------------------------------------------
+# Monitoring Configuration
+# -----------------------------------------------------------------------------
+enable_container_insights = true
+log_retention_days        = 30

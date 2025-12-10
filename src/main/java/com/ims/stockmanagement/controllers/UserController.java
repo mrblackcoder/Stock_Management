@@ -2,6 +2,7 @@ package com.ims.stockmanagement.controllers;
 
 import com.ims.stockmanagement.dtos.Response;
 import com.ims.stockmanagement.dtos.UserDTO;
+import com.ims.stockmanagement.exceptions.NotFoundException;
 import com.ims.stockmanagement.models.User;
 import com.ims.stockmanagement.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,13 +13,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
 public class UserController {
 
     private final UserRepository userRepository;
@@ -27,79 +28,78 @@ public class UserController {
     @GetMapping("/profile")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getUserProfile() {
-        Response response = new Response();
-        try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            String username = authentication.getName();
-
-            User user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-
-            UserDTO userDTO = modelMapper.map(user, UserDTO.class);
-
-            response.setStatusCode(200);
-            response.setMessage("User profile retrieved successfully");
-            response.setUser(userDTO);
-        } catch (Exception e) {
-            response.setStatusCode(500);
-            response.setMessage("Error: " + e.getMessage());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new SecurityException("No authenticated user found");
         }
-        return ResponseEntity.status(response.getStatusCode()).body(response);
+        String username = authentication.getName();
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new NotFoundException("User not found: " + username));
+
+        UserDTO userDTO = modelMapper.map(user, UserDTO.class);
+
+        Response response = Response.builder()
+                .statusCode(200)
+                .message("User profile retrieved successfully")
+                .user(userDTO)
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Response> getAllUsers() {
-        Response response = new Response();
-        try {
-            List<User> users = userRepository.findAll();
-            List<UserDTO> userDTOs = users.stream()
-                    .map(user -> modelMapper.map(user, UserDTO.class))
-                    .collect(Collectors.toList());
+        List<User> users = userRepository.findAll();
+        List<UserDTO> userDTOs = users.stream()
+                .map(user -> modelMapper.map(user, UserDTO.class))
+                .collect(Collectors.toList());
 
-            response.setStatusCode(200);
-            response.setMessage("Users retrieved successfully");
-            response.setUserList(userDTOs);
-        } catch (Exception e) {
-            response.setStatusCode(500);
-            response.setMessage("Error: " + e.getMessage());
-        }
-        return ResponseEntity.status(response.getStatusCode()).body(response);
+        Response response = Response.builder()
+                .statusCode(200)
+                .message("Users retrieved successfully")
+                .userList(userDTOs)
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Response> getUserById(@PathVariable Long id) {
-        Response response = new Response();
-        try {
-            User user = userRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("User not found with id: " + id));
 
-            UserDTO userDTO = modelMapper.map(user, UserDTO.class);
+        UserDTO userDTO = modelMapper.map(user, UserDTO.class);
 
-            response.setStatusCode(200);
-            response.setMessage("User retrieved successfully");
-            response.setUser(userDTO);
-        } catch (Exception e) {
-            response.setStatusCode(404);
-            response.setMessage("Error: " + e.getMessage());
-        }
-        return ResponseEntity.status(response.getStatusCode()).body(response);
+        Response response = Response.builder()
+                .statusCode(200)
+                .message("User retrieved successfully")
+                .user(userDTO)
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Response> deleteUser(@PathVariable Long id) {
-        Response response = new Response();
-        try {
-            userRepository.deleteById(id);
-            response.setStatusCode(200);
-            response.setMessage("User deleted successfully");
-        } catch (Exception e) {
-            response.setStatusCode(500);
-            response.setMessage("Error: " + e.getMessage());
+        if (!userRepository.existsById(id)) {
+            throw new NotFoundException("User not found with id: " + id);
         }
-        return ResponseEntity.status(response.getStatusCode()).body(response);
+
+        userRepository.deleteById(id);
+
+        Response response = Response.builder()
+                .statusCode(200)
+                .message("User deleted successfully")
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 }
-

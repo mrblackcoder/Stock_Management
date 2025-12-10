@@ -1,8 +1,11 @@
 package com.ims.stockmanagement.security;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -23,7 +26,9 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -33,63 +38,80 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserDetailsService userDetailsService;
+    private final Environment environment;
+
+    // CORS allowed origins from environment variable (comma-separated)
+    @Value("${cors.allowed.origins:http://localhost:3000,http://localhost:80,http://127.0.0.1:3000}")
+    private String corsAllowedOrigins;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        boolean isProduction = Arrays.asList(environment.getActiveProfiles()).contains("prod");
+
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
                 // Enhanced Security Headers
-                .headers(headers -> headers
-                        // Prevent clickjacking attacks
-                        .frameOptions(frame -> frame.deny())
+                .headers(headers -> {
+                    // Prevent clickjacking attacks
+                    headers.frameOptions(frame -> frame.deny());
 
-                        // Prevent MIME type sniffing - X-Content-Type-Options: nosniff
-                        .contentTypeOptions(contentType -> {})
+                    // Prevent MIME type sniffing - X-Content-Type-Options: nosniff
+                    headers.contentTypeOptions(contentType -> {});
 
-                        // Enable XSS protection
-                        .xssProtection(xss -> xss
-                                .headerValue(org.springframework.security.web.header.writers.XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK)
-                        )
+                    // Enable XSS protection
+                    headers.xssProtection(xss -> xss
+                            .headerValue(org.springframework.security.web.header.writers.XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK)
+                    );
 
-                        // Force HTTPS (HSTS) - Commented for development
-                        // .httpStrictTransportSecurity(hsts -> hsts
-                        //         .includeSubDomains(true)
-                        //         .maxAgeInSeconds(31536000)
-                        // )
+                    // Force HTTPS (HSTS) - Enable in production
+                    if (isProduction) {
+                        headers.httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true)
+                                .maxAgeInSeconds(31536000)
+                                .preload(true)
+                        );
+                    }
 
-                        // Content Security Policy
-                        .contentSecurityPolicy(csp -> csp
-                                .policyDirectives("default-src 'self'; " +
-                                        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
-                                        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; " +
-                                        "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; " +
-                                        "img-src 'self' data: https:; " +
-                                        "connect-src 'self' http://localhost:* https://api.exchangerate-api.com;")
-                        )
+                    // Content Security Policy
+                    String connectSrc = isProduction
+                            ? "'self' https://*.amazonaws.com https://*.execute-api.*.amazonaws.com https://api.exchangerate-api.com"
+                            : "'self' http://localhost:* https://api.exchangerate-api.com";
 
-                        // Referrer Policy
-                        .referrerPolicy(referrer -> referrer
-                                .policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
-                        )
+                    headers.contentSecurityPolicy(csp -> csp
+                            .policyDirectives("default-src 'self'; " +
+                                    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
+                                    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; " +
+                                    "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; " +
+                                    "img-src 'self' data: https:; " +
+                                    "connect-src " + connectSrc + ";")
+                    );
 
-                        // Permissions Policy (formerly Feature Policy)
-                        .permissionsPolicy(permissions -> permissions
-                                .policy("geolocation=(), microphone=(), camera=()")
-                        )
-                )
+                    // Referrer Policy
+                    headers.referrerPolicy(referrer -> referrer
+                            .policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
+                    );
+
+                    // Permissions Policy (formerly Feature Policy)
+                    headers.permissionsPolicy(permissions -> permissions
+                            .policy("geolocation=(), microphone=(), camera=()")
+                    );
+                })
 
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints - no authentication required
                         .requestMatchers("/api/auth/**", "/api/public/**", "/api").permitAll()
 
-                        // Swagger/OpenAPI endpoints - public access for API documentation
-                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/api-docs/**").permitAll()
+                        // Swagger/OpenAPI endpoints - conditionally accessible
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/api-docs/**")
+                            .access((authentication, context) ->
+                                new org.springframework.security.authorization.AuthorizationDecision(!isProduction ||
+                                    (authentication.get() != null && authentication.get().isAuthenticated())))
 
                         // Actuator endpoints - public health checks
                         .requestMatchers("/actuator/health/**", "/actuator/info", "/actuator/prometheus").permitAll()
-                        .requestMatchers("/actuator/**").authenticated()  // Other actuator endpoints require auth
+                        .requestMatchers("/actuator/**").authenticated()
 
                         // Frontend pages - no authentication required
                         .requestMatchers("/", "/login", "/register", "/dashboard", "/products",
@@ -104,6 +126,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/suppliers/**").authenticated()
                         .requestMatchers("/api/transactions/**").authenticated()
                         .requestMatchers("/api/users/**").authenticated()
+                        .requestMatchers("/api/exchange-rates/**").authenticated()
 
                         // Default: require authentication
                         .anyRequest().authenticated()
@@ -138,10 +161,39 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:*", "http://127.0.0.1:*"));
+
+        // Parse allowed origins from environment variable
+        List<String> allowedOrigins = new ArrayList<>();
+        if (corsAllowedOrigins != null && !corsAllowedOrigins.isEmpty()) {
+            String[] origins = corsAllowedOrigins.split(",");
+            for (String origin : origins) {
+                String trimmed = origin.trim();
+                if (!trimmed.isEmpty()) {
+                    allowedOrigins.add(trimmed);
+                }
+            }
+        }
+
+        // Add localhost patterns for development
+        boolean isProduction = Arrays.asList(environment.getActiveProfiles()).contains("prod");
+        if (!isProduction) {
+            allowedOrigins.add("http://localhost:3000");
+            allowedOrigins.add("http://localhost:80");
+            allowedOrigins.add("http://127.0.0.1:3000");
+        }
+
+        configuration.setAllowedOriginPatterns(allowedOrigins);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        configuration.setAllowedHeaders(Arrays.asList(
+            "Authorization",
+            "Content-Type",
+            "Accept",
+            "Origin",
+            "X-Requested-With",
+            "Access-Control-Request-Method",
+            "Access-Control-Request-Headers"
+        ));
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Total-Count"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 

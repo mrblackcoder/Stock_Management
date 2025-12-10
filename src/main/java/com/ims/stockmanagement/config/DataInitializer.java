@@ -3,6 +3,8 @@ package com.ims.stockmanagement.config;
 import com.ims.stockmanagement.enums.UserRole;
 import com.ims.stockmanagement.models.User;
 import com.ims.stockmanagement.repositories.UserRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,20 +12,22 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.List;
 
+@Slf4j
 @Configuration
 public class DataInitializer {
+
+    @Value("${admin.default.password:#{null}}")
+    private String adminPassword;
 
     @Bean
     CommandLineRunner init(UserRepository userRepository) {
         return args -> {
-            // Eğer hiç kullanıcı yoksa yeni admin oluştur
-            // Admin şifresi environment variable'dan alınır, yoksa güçlü default kullanılır
-            String adminPassword = System.getenv("ADMIN_PASSWORD");
-            if (adminPassword == null || adminPassword.isEmpty()) {
-                adminPassword = "Admin@123!Secure"; // Güçlü default şifre
-            }
-            
             if (userRepository.count() == 0) {
+                if (adminPassword == null || adminPassword.isEmpty()) {
+                    log.warn("ADMIN_PASSWORD not set. Using default password. Please set ADMIN_PASSWORD environment variable in production!");
+                    adminPassword = "Admin@123!Secure";
+                }
+
                 User admin = new User();
                 admin.setUsername("admin");
                 admin.setEmail("admin@local");
@@ -32,19 +36,18 @@ public class DataInitializer {
                 admin.setRole(UserRole.ADMIN);
                 admin.setEnabled(true);
                 userRepository.save(admin);
-                // Güvenlik için şifreyi loglama
-                System.out.println("Created default admin user. Please change the password after first login.");
+                log.info("Default admin user initialized. Please change the password after first login.");
                 return;
             }
 
-            // Eğer ADMIN rolünde kullanıcı yoksa ilk kullanıcıyı admin yap
+            // If no ADMIN role exists, promote the first user
             List<User> users = userRepository.findAll();
             boolean hasAdmin = users.stream().anyMatch(u -> u.getRole() == UserRole.ADMIN);
-            if (!hasAdmin) {
+            if (!hasAdmin && !users.isEmpty()) {
                 User first = users.get(0);
                 first.setRole(UserRole.ADMIN);
                 userRepository.save(first);
-                System.out.println("Promoted existing user to ADMIN: " + first.getUsername());
+                log.info("Existing user promoted to ADMIN role");
             }
         };
     }

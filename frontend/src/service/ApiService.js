@@ -75,8 +75,9 @@ axios.interceptors.response.use(
 
 export default class ApiService {
 
-    static BASE_URL = "http://localhost:8080/api";
-    // Encryption key - environment variable'dan alınabilir
+    // API URL from environment variable with fallback for development
+    static BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8080/api";
+    // Encryption key from environment variable
     static ENCRYPTION_KEY = process.env.REACT_APP_ENCRYPTION_KEY || "ims-secure-key-2024-stock-mgmt";
 
     // Encrypt data using CryptoJS

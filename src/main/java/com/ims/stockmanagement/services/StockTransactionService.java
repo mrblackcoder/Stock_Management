@@ -36,9 +36,10 @@ public class StockTransactionService {
 
     /**
      * Tüm işlemleri listele (READ - CRUD)
+     * N+1 optimized: Uses FETCH JOIN to load product and user in single query
      */
     public Response getAllTransactions() {
-        List<StockTransaction> transactions = transactionRepository.findAll();
+        List<StockTransaction> transactions = transactionRepository.findAllWithProductAndUser();
         List<TransactionDTO> transactionDTOs = transactions.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -53,9 +54,10 @@ public class StockTransactionService {
 
     /**
      * Tüm işlemleri sayfalı listele
+     * N+1 optimized: Uses FETCH JOIN to load product and user in single query
      */
     public Response getAllTransactions(Pageable pageable) {
-        Page<StockTransaction> transactionPage = transactionRepository.findAll(pageable);
+        Page<StockTransaction> transactionPage = transactionRepository.findAllWithProductAndUser(pageable);
         List<TransactionDTO> transactionDTOs = transactionPage.getContent().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -127,9 +129,10 @@ public class StockTransactionService {
 
     /**
      * ID'ye göre işlem getir (READ - CRUD)
+     * N+1 optimized: Uses FETCH JOIN to load product and user in single query
      */
     public Response getTransactionById(Long id) {
-        StockTransaction transaction = transactionRepository.findById(id)
+        StockTransaction transaction = transactionRepository.findByIdWithProductAndUser(id)
                 .orElseThrow(() -> new NotFoundException("Transaction not found with id: " + id));
 
         TransactionDTO transactionDTO = convertToDTO(transaction);
@@ -161,8 +164,12 @@ public class StockTransactionService {
                     .orElseThrow(() -> new NotFoundException("User not found with id: " + request.getUserId()));
         } else {
             // Spring Security context'inden authenticated user'ı al
-            String username = org.springframework.security.core.context.SecurityContextHolder
-                    .getContext().getAuthentication().getName();
+            org.springframework.security.core.Authentication authentication =
+                    org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated()) {
+                throw new SecurityException("No authenticated user found. Please login first.");
+            }
+            String username = authentication.getName();
             user = userRepository.findByUsername(username)
                     .orElseThrow(() -> new NotFoundException("User not found with username: " + username));
         }
@@ -240,12 +247,13 @@ public class StockTransactionService {
 
     /**
      * Ürüne göre işlemleri getir
+     * N+1 optimized: Uses FETCH JOIN to load product and user in single query
      */
     public Response getTransactionsByProduct(Long productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + productId));
 
-        List<StockTransaction> transactions = transactionRepository.findByProduct(product);
+        List<StockTransaction> transactions = transactionRepository.findByProductWithRelations(product);
         List<TransactionDTO> transactionDTOs = transactions.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -260,12 +268,13 @@ public class StockTransactionService {
 
     /**
      * Kullanıcıya göre işlemleri getir
+     * N+1 optimized: Uses FETCH JOIN to load product and user in single query
      */
     public Response getTransactionsByUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
 
-        List<StockTransaction> transactions = transactionRepository.findByUser(user);
+        List<StockTransaction> transactions = transactionRepository.findByUserWithRelations(user);
         List<TransactionDTO> transactionDTOs = transactions.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -280,9 +289,10 @@ public class StockTransactionService {
 
     /**
      * Tarih aralığına göre işlemleri getir
+     * N+1 optimized: Uses FETCH JOIN to load product and user in single query
      */
     public Response getTransactionsByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
-        List<StockTransaction> transactions = transactionRepository.findByTransactionDateBetween(startDate, endDate);
+        List<StockTransaction> transactions = transactionRepository.findByTransactionDateBetweenWithRelations(startDate, endDate);
         List<TransactionDTO> transactionDTOs = transactions.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -307,6 +317,8 @@ public class StockTransactionService {
             case SALE:
                 product.setStockQuantity(product.getStockQuantity() - quantity);
                 break;
+            default:
+                throw new IllegalArgumentException("Unknown transaction type: " + type);
         }
         productRepository.save(product);
     }
