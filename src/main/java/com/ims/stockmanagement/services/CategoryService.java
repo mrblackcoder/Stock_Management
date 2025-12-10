@@ -8,7 +8,6 @@ import com.ims.stockmanagement.models.Category;
 import com.ims.stockmanagement.repositories.CategoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,10 +58,9 @@ public class CategoryService {
 
     /**
      * Yeni kategori oluştur (CREATE - CRUD)
-     * Method Level Security: Authenticated users can create categories
+     * Security: Controlled at controller level (ADMIN only)
      */
     @Transactional
-    @PreAuthorize("isAuthenticated()")
     public Response createCategory(CategoryDTO categoryDTO) {
         // Aynı isimde kategori var mı kontrol et
         if (categoryRepository.existsByName(categoryDTO.getName())) {
@@ -83,10 +81,9 @@ public class CategoryService {
 
     /**
      * Kategori güncelle (UPDATE - CRUD)
-     * Method Level Security: Authenticated users can update categories
+     * Security: Controlled at controller level (ADMIN only)
      */
     @Transactional
-    @PreAuthorize("isAuthenticated()")
     public Response updateCategory(Long id, CategoryDTO categoryDTO) {
         Category existingCategory = categoryRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Category not found with id: " + id));
@@ -113,11 +110,10 @@ public class CategoryService {
 
     /**
      * Kategori sil (DELETE - CRUD)
-     * Method Level Security: Only ADMIN can delete categories
+     * Security: Controlled at controller level (ADMIN only)
      * This prevents accidental deletion of categories that have products
      */
     @Transactional
-    @PreAuthorize("hasRole('ADMIN')")
     public Response deleteCategory(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Category not found with id: " + id));

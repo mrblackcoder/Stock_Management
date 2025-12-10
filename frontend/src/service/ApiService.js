@@ -252,7 +252,7 @@ export default class ApiService {
     /** USER API */
 
     static async getAllUsers() {
-        const response = await axios.get(`${this.BASE_URL}/users/all`, {
+        const response = await axios.get(`${this.BASE_URL}/users`, {
             headers: this.getHeader()
         });
         return response.data;

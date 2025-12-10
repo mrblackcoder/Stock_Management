@@ -8,7 +8,6 @@ import com.ims.stockmanagement.models.Supplier;
 import com.ims.stockmanagement.repositories.SupplierRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,10 +58,9 @@ public class SupplierService {
 
     /**
      * Yeni tedarikçi oluştur (CREATE - CRUD)
-     * Method Level Security: Authenticated users can create suppliers
+     * Security: Controlled at controller level (ADMIN only)
      */
     @Transactional
-    @PreAuthorize("isAuthenticated()")
     public Response createSupplier(SupplierDTO supplierDTO) {
         // Email kontrolü
         if (supplierDTO.getEmail() != null && supplierRepository.existsByEmail(supplierDTO.getEmail())) {
@@ -83,10 +81,9 @@ public class SupplierService {
 
     /**
      * Tedarikçi güncelle (UPDATE - CRUD)
-     * Method Level Security: Authenticated users can update suppliers
+     * Security: Controlled at controller level (ADMIN only)
      */
     @Transactional
-    @PreAuthorize("isAuthenticated()")
     public Response updateSupplier(Long id, SupplierDTO supplierDTO) {
         Supplier existingSupplier = supplierRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Supplier not found with id: " + id));
@@ -117,11 +114,10 @@ public class SupplierService {
 
     /**
      * Tedarikçi sil (DELETE - CRUD)
-     * Method Level Security: Only ADMIN can delete suppliers
+     * Security: Controlled at controller level (ADMIN only)
      * This prevents accidental deletion of suppliers that have products
      */
     @Transactional
-    @PreAuthorize("hasRole('ADMIN')")
     public Response deleteSupplier(Long id) {
         Supplier supplier = supplierRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Supplier not found with id: " + id));
