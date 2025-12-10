@@ -5,6 +5,8 @@ import com.ims.stockmanagement.dtos.Response;
 import com.ims.stockmanagement.services.ExternalApiService;
 import com.ims.stockmanagement.services.ProductService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -22,6 +24,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
+@org.springframework.validation.annotation.Validated
 public class ProductController {
 
     private final ProductService productService;
@@ -42,8 +45,8 @@ public class ProductController {
     @GetMapping
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Response> getAllProducts(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(defaultValue = "createdAt") String sortBy) {
 
         // Validate sortBy field to prevent injection

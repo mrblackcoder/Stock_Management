@@ -1,21 +1,21 @@
 package com.ims.stockmanagement.services;
 
 import com.ims.stockmanagement.dtos.ExchangeRateDTO;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class ExchangeRateService {
 
     private static final String API_URL = "https://api.exchangerate-api.com/v4/latest/TRY";
     private final RestTemplate restTemplate;
-
-    public ExchangeRateService() {
-        this.restTemplate = new RestTemplate();
-    }
 
     /**
      * Dış API'den güncel döviz kurlarını çeker
@@ -23,9 +23,17 @@ public class ExchangeRateService {
      */
     public ExchangeRateDTO getExchangeRates() {
         try {
-            return restTemplate.getForObject(API_URL, ExchangeRateDTO.class);
+            ExchangeRateDTO rates = restTemplate.getForObject(API_URL, ExchangeRateDTO.class);
+            if (rates == null || rates.getRates() == null) {
+                throw new IllegalStateException("Invalid response from exchange rate API");
+            }
+            return rates;
+        } catch (org.springframework.web.client.ResourceAccessException e) {
+            log.error("Exchange rate API connection failed: {}", e.getMessage());
+            throw new IllegalStateException("Exchange rate service is unavailable. Please try again later.");
         } catch (Exception e) {
-            throw new RuntimeException("Failed to fetch exchange rates: " + e.getMessage());
+            log.error("Failed to fetch exchange rates: {}", e.getMessage());
+            throw new IllegalStateException("Failed to fetch exchange rates: " + e.getMessage());
         }
     }
 
