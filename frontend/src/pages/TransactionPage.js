@@ -221,7 +221,7 @@ function TransactionPage() {
                                                 <td style={{padding: '12px', textAlign: 'center', fontWeight: 'bold'}}>
                                                     {currentStock}
                                                 </td>
-                                                <td style={{padding: '12px'}}>{trans.userName || 'N/A'}</td>
+                                                <td style={{padding: '12px'}}>{trans.username || 'N/A'}</td>
                                                 <td style={{padding: '12px', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis'}} title={trans.notes}>
                                                     {trans.notes || '-'}
                                                 </td>
