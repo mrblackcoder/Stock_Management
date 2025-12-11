@@ -35,8 +35,7 @@ function ProductPage() {
                 eur: data.rates.EUR || 0.030
             });
         } catch (err) {
-            console.error('Döviz kuru alınamadı:', err);
-            // Fallback rates
+            // Fallback rates if API fails
             setExchangeRates({ usd: 0.033, eur: 0.030 });
         }
     };

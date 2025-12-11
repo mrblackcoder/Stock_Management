@@ -376,6 +376,7 @@ public class StockTransactionService {
         if (transaction.getProduct() != null) {
             dto.setProductId(transaction.getProduct().getId());
             dto.setProductName(transaction.getProduct().getName());
+            dto.setProductSku(transaction.getProduct().getSku());
         }
 
         // Null safety for user

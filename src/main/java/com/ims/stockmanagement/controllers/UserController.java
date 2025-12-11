@@ -49,6 +49,46 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/profile")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Response> updateUserProfile(@RequestBody UserDTO userDTO) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new SecurityException("No authenticated user found");
+        }
+        String username = authentication.getName();
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new NotFoundException("User not found: " + username));
+
+        // Only allow updating email and fullName (not username, role, or password)
+        if (userDTO.getEmail() != null && !userDTO.getEmail().isBlank()) {
+            // Check if email is already used by another user
+            userRepository.findByEmail(userDTO.getEmail())
+                    .filter(existingUser -> !existingUser.getId().equals(user.getId()))
+                    .ifPresent(existingUser -> {
+                        throw new IllegalArgumentException("Email already in use: " + userDTO.getEmail());
+                    });
+            user.setEmail(userDTO.getEmail());
+        }
+
+        if (userDTO.getFullName() != null && !userDTO.getFullName().isBlank()) {
+            user.setFullName(userDTO.getFullName());
+        }
+
+        User updatedUser = userRepository.save(user);
+        UserDTO updatedUserDTO = modelMapper.map(updatedUser, UserDTO.class);
+
+        Response response = Response.builder()
+                .statusCode(200)
+                .message("User profile updated successfully")
+                .user(updatedUserDTO)
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Response> getAllUsers() {

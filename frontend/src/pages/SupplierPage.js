@@ -45,7 +45,7 @@ function SupplierPage() {
             const response = await ApiService.getAllProducts();
             setAllProducts(response.productList || []);
         } catch (err) {
-            console.error('Ürünler yüklenemedi:', err);
+            // Silently fail - products list is optional for supplier page
         }
     };
 
