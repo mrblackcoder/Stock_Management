@@ -19,8 +19,8 @@ function DashboardPage() {
     const [userRole, setUserRole] = useState('');
 
     useEffect(() => {
-        // Get user role from localStorage
-        const role = localStorage.getItem('role');
+        // Get user role using ApiService (handles decryption)
+        const role = ApiService.getRole();
         setUserRole(role || 'USER');
         fetchDashboardData();
     }, []);
@@ -51,20 +51,11 @@ function DashboardPage() {
 
             // Son 5 ürünü al (en yeni önce) - Supplier bilgileriyle birlikte
             const recentProductsList = productsRes.productList?.slice(0, 5) || [];
-            console.log('Recent Products with Suppliers:', recentProductsList.map(p => ({
-                id: p.id,
-                name: p.name,
-                supplier: p.supplierName,
-                supplierId: p.supplierId,
-                category: p.categoryName
-            })));
-
             setRecentProducts(recentProductsList);
             setLowStockItems(lowStockRes.productList?.slice(0, 5) || []);
 
             setLoading(false);
         } catch (err) {
-            console.error('Error fetching dashboard data:', err);
             setError('Failed to load dashboard data. Please try again.');
             setLoading(false);
         }

@@ -88,11 +88,14 @@ public class SupplierService {
         Supplier existingSupplier = supplierRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Supplier not found with id: " + id));
 
-        // Email değiştiyse ve başka biri kullanıyorsa hata ver
-        if (supplierDTO.getEmail() != null &&
-                !existingSupplier.getEmail().equals(supplierDTO.getEmail()) &&
-                supplierRepository.existsByEmail(supplierDTO.getEmail())) {
-            throw new AlreadyExistsException("Supplier already exists with email: " + supplierDTO.getEmail());
+        // Email değiştiyse ve başka biri kullanıyorsa hata ver (null-safe check)
+        String existingEmail = existingSupplier.getEmail();
+        String newEmail = supplierDTO.getEmail();
+        boolean emailChanged = (newEmail != null && !newEmail.equals(existingEmail)) ||
+                               (newEmail == null && existingEmail != null);
+
+        if (newEmail != null && emailChanged && supplierRepository.existsByEmail(newEmail)) {
+            throw new AlreadyExistsException("Supplier already exists with email: " + newEmail);
         }
 
         existingSupplier.setName(supplierDTO.getName());

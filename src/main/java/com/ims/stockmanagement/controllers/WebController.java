@@ -1,5 +1,6 @@
 package com.ims.stockmanagement.controllers;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
@@ -9,6 +10,9 @@ import org.springframework.web.bind.annotation.GetMapping;
  */
 @Controller
 public class WebController {
+
+    @Value("${frontend.url:http://localhost:3000}")
+    private String frontendUrl;
 
     /**
      * Serves the embedded login page (Thymeleaf)
@@ -46,11 +50,11 @@ public class WebController {
     }
 
     /**
-     * All other routes redirect to React SPA
-     * This prevents 404 errors for routes that don't have Thymeleaf templates
+     * Other routes redirect to React SPA using configurable URL
+     * In production, set FRONTEND_URL environment variable
      */
     @GetMapping({"/products", "/categories", "/suppliers", "/transactions", "/profile", "/users"})
     public String redirectToReact() {
-        return "redirect:http://localhost:3000" + "?message=Please use React SPA for full features";
+        return "redirect:" + frontendUrl;
     }
 }
