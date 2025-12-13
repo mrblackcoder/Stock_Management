@@ -498,6 +498,224 @@ java -Xmx1024m -jar StockManagement.jar
 
 ---
 
+## 🎯 AWS DEPLOYMENT PLAN - YAPILACAKLAR LİSTESİ
+
+> **Proje Durumu:** Backend ve Frontend tamam. AWS'e bağlanıp çalıştırma kaldı.
+> 
+> **Hazırlanan Dosyalar:** ✅ Dockerfile, ✅ docker-compose.yml, ✅ application-production.properties, ✅ deploy.sh
+
+---
+
+### 📋 ADIM ADIM AWS DEPLOYMENT PLANI
+
+#### ✅ TAMAMLANAN ADIMLAR
+
+| # | Görev | Durum | Notlar |
+|---|-------|-------|--------|
+| 1 | Backend geliştirme (Spring Boot) | ✅ Tamamlandı | Java 21, JWT Auth |
+| 2 | Frontend geliştirme (React) | ✅ Tamamlandı | React 19, Bootstrap |
+| 3 | Docker yapılandırması | ✅ Tamamlandı | Multi-stage build |
+| 4 | docker-compose.yml | ✅ Tamamlandı | MySQL + Backend |
+| 5 | Production properties | ✅ Tamamlandı | Environment variables |
+| 6 | AWS Deployment script | ✅ Tamamlandı | deploy.sh |
+| 7 | AWS Deployment Guide | ✅ Tamamlandı | AWS_DEPLOYMENT_GUIDE.md |
+
+---
+
+#### 🔲 YAPILACAK ADIMLAR - AWS DEPLOYMENT
+
+##### 📌 AŞAMA 1: AWS Hesabı ve CLI Kurulumu (Öncelik: YÜKSEK)
+
+| # | Görev | Durum | Komut/Açıklama |
+|---|-------|-------|----------------|
+| 1.1 | AWS hesabı oluştur/giriş yap | 🔲 | [AWS Console](https://aws.amazon.com/console/) |
+| 1.2 | IAM kullanıcısı oluştur | 🔲 | AdministratorAccess politikası |
+| 1.3 | Access Key oluştur | 🔲 | IAM → Security Credentials |
+| 1.4 | AWS CLI kur | 🔲 | `curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && unzip awscliv2.zip && sudo ./aws/install` |
+| 1.5 | AWS CLI yapılandır | 🔲 | `aws configure` |
+| 1.6 | EB CLI kur | 🔲 | `pip install awsebcli` |
+
+**Doğrulama Komutu:**
+```bash
+aws sts get-caller-identity
+```
+
+---
+
+##### 📌 AŞAMA 2: RDS MySQL Veritabanı (Öncelik: YÜKSEK)
+
+| # | Görev | Durum | Komut/Açıklama |
+|---|-------|-------|----------------|
+| 2.1 | RDS MySQL instance oluştur | 🔲 | `db.t3.micro` (Free tier) |
+| 2.2 | Security Group yapılandır | 🔲 | Port 3306 aç |
+| 2.3 | RDS endpoint'i al | 🔲 | `aws rds describe-db-instances` |
+| 2.4 | Bağlantıyı test et | 🔲 | `mysql -h <endpoint> -u admin -p` |
+
+**Komutlar:**
+```bash
+# RDS oluştur
+aws rds create-db-instance \
+    --db-instance-identifier inventory-db \
+    --db-instance-class db.t3.micro \
+    --engine mysql \
+    --engine-version 8.0.35 \
+    --master-username admin \
+    --master-user-password <GÜÇLÜ_ŞİFRE> \
+    --allocated-storage 20 \
+    --db-name inventory_management_db \
+    --publicly-accessible \
+    --region us-east-1
+
+# Bekle ve endpoint al
+aws rds wait db-instance-available --db-instance-identifier inventory-db
+aws rds describe-db-instances --db-instance-identifier inventory-db \
+    --query "DBInstances[0].Endpoint.Address" --output text
+```
+
+---
+
+##### 📌 AŞAMA 3: Backend Deployment - Elastic Beanstalk (Öncelik: YÜKSEK)
+
+| # | Görev | Durum | Komut/Açıklama |
+|---|-------|-------|----------------|
+| 3.1 | JAR dosyası oluştur | 🔲 | `./gradlew clean build -x test` |
+| 3.2 | EB initialize et | 🔲 | `eb init` |
+| 3.3 | EB environment oluştur | 🔲 | `eb create inventory-api-prod` |
+| 3.4 | Environment variables ayarla | 🔲 | `eb setenv ...` |
+| 3.5 | Deploy et | 🔲 | `eb deploy` |
+| 3.6 | Health check doğrula | 🔲 | `curl <EB_URL>/actuator/health` |
+
+**Komutlar:**
+```bash
+# Build
+./gradlew clean build -x test
+
+# EB başlat
+eb init -p "Corretto 21 running on 64bit Amazon Linux 2023" inventory-management-api --region us-east-1
+
+# Environment oluştur
+eb create inventory-api-prod --instance-type t2.small
+
+# Environment variables
+eb setenv \
+    SPRING_PROFILES_ACTIVE=production \
+    SPRING_DATASOURCE_URL="jdbc:mysql://<RDS_ENDPOINT>:3306/inventory_management_db" \
+    SPRING_DATASOURCE_USERNAME=admin \
+    SPRING_DATASOURCE_PASSWORD=<RDS_PASSWORD> \
+    JWT_SECRET="<256-bit-guclu-jwt-secret-key>" \
+    JWT_EXPIRATION=86400000
+
+# Deploy
+eb deploy inventory-api-prod
+```
+
+---
+
+##### 📌 AŞAMA 4: Frontend Deployment - S3 + CloudFront (Öncelik: ORTA)
+
+| # | Görev | Durum | Komut/Açıklama |
+|---|-------|-------|----------------|
+| 4.1 | .env.production güncelle | 🔲 | API URL'i ekle |
+| 4.2 | React build al | 🔲 | `npm run build` |
+| 4.3 | S3 bucket oluştur | 🔲 | `aws s3 mb s3://...` |
+| 4.4 | Static website hosting aç | 🔲 | `aws s3 website ...` |
+| 4.5 | Build dosyalarını yükle | 🔲 | `aws s3 sync ...` |
+| 4.6 | CloudFront distribution oluştur | 🔲 | CDN için |
+
+**Komutlar:**
+```bash
+cd frontend
+
+# API URL güncelle
+echo "REACT_APP_API_URL=http://<EB_URL>/api" > .env.production
+
+# Build
+npm install
+npm run build
+
+# S3 yükle
+BUCKET_NAME="stock-management-frontend-$(date +%s)"
+aws s3 mb s3://$BUCKET_NAME --region us-east-1
+aws s3 website s3://$BUCKET_NAME --index-document index.html --error-document index.html
+aws s3 sync build/ s3://$BUCKET_NAME/ --acl public-read
+
+echo "Frontend URL: http://$BUCKET_NAME.s3-website-us-east-1.amazonaws.com"
+```
+
+---
+
+##### 📌 AŞAMA 5: SSL/HTTPS ve Domain (Öncelik: DÜŞÜK - Opsiyonel)
+
+| # | Görev | Durum | Komut/Açıklama |
+|---|-------|-------|----------------|
+| 5.1 | Domain satın al (opsiyonel) | 🔲 | Route 53 veya harici |
+| 5.2 | ACM sertifikası iste | 🔲 | `aws acm request-certificate` |
+| 5.3 | Domain doğrula | 🔲 | DNS CNAME kaydı |
+| 5.4 | CloudFront'a HTTPS ekle | 🔲 | SSL sertifikası bağla |
+| 5.5 | EB'ye HTTPS ekle | 🔲 | Load Balancer ayarları |
+
+---
+
+### 🚀 HIZLI BAŞLANGIÇ (EN KISA YOL)
+
+AWS'e en hızlı şekilde deploy etmek için:
+
+```bash
+# 1. AWS CLI yapılandır
+aws configure
+# Access Key ID, Secret Access Key, Region (us-east-1), Output (json) gir
+
+# 2. deploy.sh scriptini çalıştır
+cd deployment/aws
+chmod +x deploy.sh
+./deploy.sh
+```
+
+---
+
+### 💰 TAHMİNİ AWS MALİYETLERİ (AYLIK)
+
+| Servis | Tip | Tahmini Maliyet |
+|--------|-----|-----------------|
+| RDS MySQL | db.t3.micro | **$0** (Free tier 12 ay) |
+| Elastic Beanstalk | t2.micro | **$0** (Free tier 12 ay) |
+| S3 | Static hosting | **~$0.50** |
+| CloudFront | CDN | **~$1-2** (düşük trafik) |
+| **TOPLAM** | | **~$2-3/ay** (Free tier sonrası ~$20-30) |
+
+---
+
+### ⚠️ ÖNEMLİ NOTLAR
+
+1. **Güvenlik:**
+   - Production'da güçlü şifreler kullan
+   - JWT_SECRET en az 256-bit olmalı
+   - RDS şifresini environment variable olarak sakla
+
+2. **Free Tier Limitleri:**
+   - t2.micro: 750 saat/ay (12 ay)
+   - RDS db.t3.micro: 750 saat/ay (12 ay)
+   - S3: 5GB depolama
+
+3. **Bölge Seçimi:**
+   - Türkiye'ye yakınlık için `eu-central-1` (Frankfurt) tercih edilebilir
+   - Script'ler `us-east-1` için ayarlı
+
+---
+
+### 📊 DEPLOYMENT KONTROL LİSTESİ
+
+Deploy sonrası kontrol edilecekler:
+
+- [ ] Backend health check: `curl <EB_URL>/actuator/health`
+- [ ] Login API çalışıyor: `curl -X POST <EB_URL>/api/auth/login -d '{"username":"admin","password":"admin123"}'`
+- [ ] Frontend yükleniyor: Browser'da S3 URL aç
+- [ ] Frontend → Backend bağlantısı çalışıyor
+- [ ] Admin login yapılabiliyor
+- [ ] Ürün ekleme/silme çalışıyor
+
+---
+
 ## 📞 Support
 
 - **GitHub Issues**: https://github.com/mrblackcoder/Stock_Management/issues

@@ -46,7 +46,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        boolean isProduction = Arrays.asList(environment.getActiveProfiles()).contains("prod");
+        List<String> activeProfiles = Arrays.asList(environment.getActiveProfiles());
+        boolean isProduction = activeProfiles.contains("prod") || activeProfiles.contains("production");
 
         http
                 .csrf(AbstractHttpConfigurer::disable)
@@ -175,7 +176,8 @@ public class SecurityConfig {
         }
 
         // Add localhost patterns for development
-        boolean isProduction = Arrays.asList(environment.getActiveProfiles()).contains("prod");
+        List<String> activeProfiles = Arrays.asList(environment.getActiveProfiles());
+        boolean isProduction = activeProfiles.contains("prod") || activeProfiles.contains("production");
         if (!isProduction) {
             allowedOrigins.add("http://localhost:3000");
             allowedOrigins.add("http://localhost:80");
