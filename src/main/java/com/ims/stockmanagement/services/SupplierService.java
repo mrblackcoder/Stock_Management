@@ -122,7 +122,7 @@ public class SupplierService {
      */
     @Transactional
     public Response deleteSupplier(Long id) {
-        Supplier supplier = supplierRepository.findById(id)
+        Supplier supplier = supplierRepository.findByIdWithProducts(id)
                 .orElseThrow(() -> new NotFoundException("Supplier not found with id: " + id));
 
         // Check if supplier has products

@@ -37,26 +37,26 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     List<Product> findByCategory(Category category);
 
-    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.supplier LEFT JOIN FETCH p.category WHERE p.stockQuantity <= p.reorderLevel")
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.supplier LEFT JOIN FETCH p.category LEFT JOIN FETCH p.createdBy WHERE p.stockQuantity <= p.reorderLevel")
     List<Product> findLowStockProducts();
 
     boolean existsBySku(String sku);
 
     // Son eklenen ürünleri getir (createdAt'e göre azalan sıralı)
     // FETCH JOIN ile Supplier ve Category bilgilerini de yükle
-    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.supplier LEFT JOIN FETCH p.category ORDER BY p.createdAt DESC")
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.supplier LEFT JOIN FETCH p.category LEFT JOIN FETCH p.createdBy ORDER BY p.createdAt DESC")
     List<Product> findAllByOrderByCreatedAtDesc();
 
     // Pageable ile limitli sorgulama için
-    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.supplier LEFT JOIN FETCH p.category ORDER BY p.createdAt DESC")
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.supplier LEFT JOIN FETCH p.category LEFT JOIN FETCH p.createdBy ORDER BY p.createdAt DESC")
     List<Product> findRecentProducts(Pageable pageable);
 
     // Tüm ürünleri supplier ve category bilgileriyle birlikte getir
-    @Query("SELECT DISTINCT p FROM Product p LEFT JOIN FETCH p.supplier LEFT JOIN FETCH p.category")
+    @Query("SELECT DISTINCT p FROM Product p LEFT JOIN FETCH p.supplier LEFT JOIN FETCH p.category LEFT JOIN FETCH p.createdBy")
     List<Product> findAllWithSupplierAndCategory();
 
     // Pageable sorgularda da FETCH JOIN kullan
-    @Query(value = "SELECT DISTINCT p FROM Product p LEFT JOIN FETCH p.supplier LEFT JOIN FETCH p.category",
+    @Query(value = "SELECT DISTINCT p FROM Product p LEFT JOIN FETCH p.supplier LEFT JOIN FETCH p.category LEFT JOIN FETCH p.createdBy",
            countQuery = "SELECT COUNT(p) FROM Product p")
     Page<Product> findAllWithRelations(Pageable pageable);
 }

@@ -115,7 +115,7 @@ public class CategoryService {
      */
     @Transactional
     public Response deleteCategory(Long id) {
-        Category category = categoryRepository.findById(id)
+        Category category = categoryRepository.findByIdWithProducts(id)
                 .orElseThrow(() -> new NotFoundException("Category not found with id: " + id));
 
         // Check if category has products

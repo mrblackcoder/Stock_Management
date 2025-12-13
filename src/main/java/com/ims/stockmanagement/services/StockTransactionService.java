@@ -103,7 +103,7 @@ public class StockTransactionService {
      */
     @Transactional
     public Response updateTransactionStatus(Long id, String statusStr) {
-        StockTransaction transaction = transactionRepository.findById(id)
+        StockTransaction transaction = transactionRepository.findByIdWithProductAndUser(id)
                 .orElseThrow(() -> new NotFoundException("Transaction not found with id: " + id));
 
         try {
@@ -216,7 +216,7 @@ public class StockTransactionService {
      */
     @Transactional
     public Response deleteTransaction(Long id) {
-        StockTransaction transaction = transactionRepository.findById(id)
+        StockTransaction transaction = transactionRepository.findByIdWithProductAndUser(id)
                 .orElseThrow(() -> new NotFoundException("Transaction not found with id: " + id));
 
         // Stoku geri al (reverse operation)

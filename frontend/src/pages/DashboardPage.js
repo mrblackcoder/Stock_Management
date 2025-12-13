@@ -30,9 +30,9 @@ function DashboardPage() {
             setLoading(true);
 
             // Fetch all data with correct API methods
-            // Dashboard için tüm ürünleri getir (büyük size ile) - supplier bilgileri dahil
+            // Dashboard için ürünleri getir - supplier bilgileri dahil
             const [productsRes, categoriesRes, suppliersRes, transactionsRes] = await Promise.all([
-                ApiService.getAllProducts(0, 1000, "createdAt"), // Büyük size ve createdAt sıralaması
+                ApiService.getAllProducts(0, 100, "createdAt"), // Optimized size
                 ApiService.getAllCategories(),
                 ApiService.getAllSuppliers(),
                 ApiService.getAllTransactions()

@@ -73,7 +73,18 @@ function ProductPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await ApiService.createProduct(formData);
+            // Convert form data to proper types
+            const dataToSend = {
+                name: formData.name,
+                sku: formData.sku,
+                description: formData.description || null,
+                price: formData.price ? parseFloat(formData.price) : 0,
+                stockQuantity: formData.stockQuantity ? parseInt(formData.stockQuantity) : 0,
+                reorderLevel: formData.reorderLevel ? parseInt(formData.reorderLevel) : 10,
+                categoryId: formData.categoryId ? parseInt(formData.categoryId) : null,
+                supplierId: formData.supplierId ? parseInt(formData.supplierId) : null
+            };
+            await ApiService.createProduct(dataToSend);
             setShowForm(false);
             setFormData({ name: '', sku: '', description: '', price: '', stockQuantity: '', reorderLevel: '10', categoryId: '', supplierId: '' });
             fetchData();

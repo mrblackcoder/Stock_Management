@@ -185,7 +185,7 @@ public class ProductService {
     @Transactional
     @PreAuthorize("isAuthenticated()")
     public Response updateProduct(Long id, ProductDTO productDTO) {
-        Product existingProduct = productRepository.findById(id)
+        Product existingProduct = productRepository.findByIdWithRelations(id)
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + id));
 
         // SKU değiştiyse ve başka biri kullanıyorsa hata ver
@@ -237,7 +237,7 @@ public class ProductService {
     @Transactional
     @PreAuthorize("isAuthenticated()")
     public Response deleteProduct(Long id) {
-        Product product = productRepository.findById(id)
+        Product product = productRepository.findByIdWithRelations(id)
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + id));
 
         // Mevcut kullanıcıyı al
