@@ -90,3 +90,8 @@ application-secrets.properties
 *.p12
 *.jks
 keystore.*
+*.log
+.env
+# Terraform state
+*.tfstate*
+.terraform/
