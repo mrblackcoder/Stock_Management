@@ -75,9 +75,8 @@ axios.interceptors.response.use(
 
 export default class ApiService {
 
-    // API URL from environment variable with fallback for development
     static BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8080/api";
-    // Encryption key from environment variable
+    // Encryption key - environment variable'dan alınabilir
     static ENCRYPTION_KEY = process.env.REACT_APP_ENCRYPTION_KEY || "ims-secure-key-2024-stock-mgmt";
 
     // Encrypt data using CryptoJS
@@ -91,6 +90,7 @@ export default class ApiService {
             const bytes = CryptoJS.AES.decrypt(data, this.ENCRYPTION_KEY);
             return bytes.toString(CryptoJS.enc.Utf8);
         } catch (e) {
+            console.error("Decryption failed");
             return null;
         }
     }
@@ -251,7 +251,7 @@ export default class ApiService {
     /** USER API */
 
     static async getAllUsers() {
-        const response = await axios.get(`${this.BASE_URL}/users`, {
+        const response = await axios.get(`${this.BASE_URL}/users/all`, {
             headers: this.getHeader()
         });
         return response.data;
