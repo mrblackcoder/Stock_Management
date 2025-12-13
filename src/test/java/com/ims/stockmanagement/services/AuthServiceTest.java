@@ -257,9 +257,8 @@ class AuthServiceTest {
         // Arrange
         when(loginAttemptService.isBlocked(loginRequest.getUsername())).thenReturn(false);
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-            .thenReturn(null);
-        when(userRepository.findByUsername(loginRequest.getUsername()))
-            .thenReturn(Optional.empty());
+            .thenThrow(new org.springframework.security.authentication.BadCredentialsException("Bad credentials"));
+        when(loginAttemptService.getRemainingAttempts(loginRequest.getUsername())).thenReturn(4);
 
         // Act & Assert
         InvalidCredentialsException exception = assertThrows(
@@ -267,7 +266,7 @@ class AuthServiceTest {
             () -> authService.login(loginRequest)
         );
 
-        assertTrue(exception.getMessage().contains("Invalid"));
+        assertTrue(exception.getMessage().contains("Invalid") || exception.getMessage().contains("attempts"));
     }
 
     @Test

@@ -33,7 +33,7 @@ public class RefreshTokenService {
                 .orElseThrow(() -> new InvalidCredentialsException("User not found: " + username));
         
         // Mevcut tokenları iptal et
-        refreshTokenRepository.revokeAllUserTokens(user);
+        refreshTokenRepository.deleteAllUserTokens(user);
         
         RefreshToken refreshToken = RefreshToken.builder()
                 .user(user)
@@ -76,7 +76,7 @@ public class RefreshTokenService {
     public void revokeAllUserTokens(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new InvalidCredentialsException("User not found: " + username));
-        refreshTokenRepository.revokeAllUserTokens(user);
+        refreshTokenRepository.deleteAllUserTokens(user);
     }
     
     /**

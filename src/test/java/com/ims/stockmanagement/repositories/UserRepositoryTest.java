@@ -134,6 +134,7 @@ class UserRepositoryTest {
         duplicateUser.setUsername("testuser"); // Duplicate
         duplicateUser.setEmail("different@example.com");
         duplicateUser.setPassword("password");
+        duplicateUser.setFullName("Duplicate User");
         duplicateUser.setRole(UserRole.USER);
 
         // Act & Assert
@@ -151,6 +152,7 @@ class UserRepositoryTest {
         duplicateUser.setUsername("differentuser");
         duplicateUser.setEmail("test@example.com"); // Duplicate
         duplicateUser.setPassword("password");
+        duplicateUser.setFullName("Duplicate User");
         duplicateUser.setRole(UserRole.USER);
 
         // Act & Assert

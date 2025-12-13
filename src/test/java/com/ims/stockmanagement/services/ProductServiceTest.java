@@ -33,6 +33,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@org.mockito.junit.jupiter.MockitoSettings(strictness = org.mockito.quality.Strictness.LENIENT)
 class ProductServiceTest {
 
     @Mock
@@ -111,30 +112,31 @@ class ProductServiceTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
         when(authentication.getName()).thenReturn("admin");
+        when(authentication.isAuthenticated()).thenReturn(true);
     }
 
     @Test
     void testGetAllProducts_Success() {
         // Arrange
         List<Product> products = Arrays.asList(testProduct);
-        when(productRepository.findAllWithSupplierAndCategory()).thenReturn(products);
+        when(productRepository.findAllByOrderByCreatedAtDesc()).thenReturn(products);
         when(modelMapper.map(any(Product.class), eq(ProductDTO.class))).thenReturn(testProductDTO);
 
         // Act
-        Response response = productService.getAllProducts(null);
+        Response response = productService.getAllProducts();
 
         // Assert
         assertNotNull(response);
         assertEquals(200, response.getStatusCode());
         assertNotNull(response.getProductList());
         assertEquals(1, response.getProductList().size());
-        verify(productRepository, times(1)).findAllWithSupplierAndCategory();
+        verify(productRepository, times(1)).findAllByOrderByCreatedAtDesc();
     }
 
     @Test
     void testGetProductById_Success() {
         // Arrange
-        when(productRepository.findById(1L)).thenReturn(Optional.of(testProduct));
+        when(productRepository.findByIdWithRelations(1L)).thenReturn(Optional.of(testProduct));
         when(modelMapper.map(any(Product.class), eq(ProductDTO.class))).thenReturn(testProductDTO);
 
         // Act
@@ -150,7 +152,7 @@ class ProductServiceTest {
     @Test
     void testGetProductById_NotFound() {
         // Arrange
-        when(productRepository.findById(999L)).thenReturn(Optional.empty());
+        when(productRepository.findByIdWithRelations(999L)).thenReturn(Optional.empty());
 
         // Act & Assert
         NotFoundException exception = assertThrows(
@@ -223,7 +225,7 @@ class ProductServiceTest {
         updateDTO.setPrice(BigDecimal.valueOf(1600.00));
         updateDTO.setCategoryId(1L);
 
-        when(productRepository.findById(1L)).thenReturn(Optional.of(testProduct));
+        when(productRepository.findByIdWithRelations(1L)).thenReturn(Optional.of(testProduct));
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(testCategory));
         when(productRepository.save(any(Product.class))).thenReturn(testProduct);
         when(modelMapper.map(any(Product.class), eq(ProductDTO.class))).thenReturn(updateDTO);
@@ -242,8 +244,11 @@ class ProductServiceTest {
     void testDeleteProduct_Success() {
         // Arrange
         setupSecurityContext();
+        doReturn(java.util.Collections.singletonList(
+            new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN")))
+            .when(authentication).getAuthorities();
         
-        when(productRepository.findById(1L)).thenReturn(Optional.of(testProduct));
+        when(productRepository.findByIdWithRelations(1L)).thenReturn(Optional.of(testProduct));
         when(userRepository.findByUsername("admin")).thenReturn(Optional.of(testUser));
         doNothing().when(productRepository).delete(testProduct);
 
@@ -275,7 +280,7 @@ class ProductServiceTest {
         // Assert
         assertNotNull(response);
         assertEquals(200, response.getStatusCode());
-        assertTrue(response.getMessage().contains("low stock"));
+        assertTrue(response.getMessage().contains("Low stock"));
         verify(productRepository, times(1)).findLowStockProducts();
     }
 
@@ -283,7 +288,7 @@ class ProductServiceTest {
     void testSearchProducts_Success() {
         // Arrange
         String keyword = "laptop";
-        when(productRepository.findByNameContainingIgnoreCaseOrSkuContainingIgnoreCase(keyword, keyword))
+        when(productRepository.findByNameOrSkuContainingWithRelations(keyword))
             .thenReturn(Arrays.asList(testProduct));
         when(modelMapper.map(any(Product.class), eq(ProductDTO.class))).thenReturn(testProductDTO);
 

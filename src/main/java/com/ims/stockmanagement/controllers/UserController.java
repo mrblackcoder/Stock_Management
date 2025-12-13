@@ -128,8 +128,15 @@ public class UserController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Response> deleteUser(@PathVariable Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new NotFoundException("User not found with id: " + id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("User not found with id: " + id));
+
+        // Prevent deleting the last admin
+        if (user.getRole() == com.ims.stockmanagement.enums.UserRole.ADMIN) {
+            long adminCount = userRepository.countByRole(com.ims.stockmanagement.enums.UserRole.ADMIN);
+            if (adminCount <= 1) {
+                throw new IllegalStateException("Cannot delete the last admin user");
+            }
         }
 
         userRepository.deleteById(id);

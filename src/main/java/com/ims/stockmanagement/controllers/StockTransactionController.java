@@ -153,7 +153,7 @@ public class StockTransactionController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Response> deleteTransaction(@PathVariable Long id) {
         Response response = transactionService.deleteTransaction(id);
         return ResponseEntity.status(response.getStatusCode()).body(response);
