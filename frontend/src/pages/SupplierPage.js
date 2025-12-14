@@ -83,11 +83,6 @@ function SupplierPage() {
         }
     };
 
-    const handleLogout = () => {
-        ApiService.logout();
-        navigate('/login');
-    };
-
     if (loading) return <div className="dashboard-page"><div className="dashboard-container">Yükleniyor...</div></div>;
 
     return (

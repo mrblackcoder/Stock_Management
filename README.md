@@ -73,7 +73,7 @@ npm start
 - **Health Check**: http://localhost:8080/actuator/health
 - **Metrics**: http://localhost:8080/actuator/metrics
 - **App Info**: http://localhost:8080/actuator/info
-- **Default Login**: `admin` / `admin123`
+- **Default Login**: `admin` / `Admin@123!Secure`
 
 ## Full Documentation
 
