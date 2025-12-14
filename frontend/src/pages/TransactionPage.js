@@ -60,7 +60,13 @@ function TransactionPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await ApiService.createTransaction(formData);
+            // Backend Integer/Long bekliyor, String'den dönüştür
+            const transactionData = {
+                ...formData,
+                productId: parseInt(formData.productId, 10),
+                quantity: parseInt(formData.quantity, 10)
+            };
+            await ApiService.createTransaction(transactionData);
             setShowForm(false);
             setFormData({ productId: '', transactionType: 'PURCHASE', quantity: '', notes: '' });
             fetchData();
