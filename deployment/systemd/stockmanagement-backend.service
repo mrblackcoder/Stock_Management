@@ -1,0 +1,33 @@
+[Unit]
+Description=Stock Management Backend (Spring Boot)
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+
+# Environment variables
+EnvironmentFile=/opt/stockmanagement/.env
+
+# Java options
+Environment="JAVA_OPTS=-Xms256m -Xmx512m -XX:+UseG1GC"
+
+# Application
+ExecStart=/usr/bin/java $JAVA_OPTS -jar /opt/stockmanagement/app.jar --spring.profiles.active=production
+ExecStop=/bin/kill -SIGTERM $MAINPID
+
+# Restart policy
+Restart=on-failure
+RestartSec=10
+
+# Logging
+StandardOutput=append:/var/log/stockmanagement/backend.log
+StandardError=append:/var/log/stockmanagement/backend-error.log
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
