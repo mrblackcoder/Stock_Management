@@ -11,7 +11,7 @@ A comprehensive, enterprise-grade web-based inventory management system built wi
 ## Project Overview
 
 **Student Name:** Mehmet Taha Boynikoğlu  
-**Student ID:** 212 125 10 34  
+**Student ID:** 2121251034  
 **Course:** Web Design and Programming  
 **University:** Fatih Sultan Mehmet Vakıf Üniversitesi
 
@@ -137,11 +137,11 @@ Please see the [Complete Documentation](./DOCUMENTATION.md)
 ## Contact
 
 **Mehmet Taha Boynikoğlu**  
-Student ID: 212 125 10 34  
+Student ID: 2121251034  
 Fatih Sultan Mehmet Vakıf Üniversitesi
 
 ---
 
-**Last Updated:** December 2024  
+**Last Updated:** December 2025  
 **Version:** 1.0.0  
 **Status:** Production Ready
