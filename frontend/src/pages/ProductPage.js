@@ -16,6 +16,15 @@ function ProductPage() {
     const role = ApiService.getRole();
     const isAdmin = role === 'ADMIN';
 
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalElements, setTotalElements] = useState(0);
+    const pageSize = 10;
+
+    // Search state
+    const [searchTerm, setSearchTerm] = useState('');
+
     const [formData, setFormData] = useState({
         name: '', sku: '', description: '', price: '', stockQuantity: '', reorderLevel: '10', categoryId: '', supplierId: ''
     });
@@ -23,7 +32,8 @@ function ProductPage() {
     useEffect(() => {
         fetchData();
         fetchExchangeRates(); // External API call
-    }, []);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentPage]);
 
     const fetchExchangeRates = async () => {
         try {
@@ -52,11 +62,13 @@ function ProductPage() {
         try {
             setLoading(true);
             const [productsRes, categoriesRes, suppliersRes] = await Promise.all([
-                ApiService.getAllProducts(),
+                ApiService.getAllProducts(currentPage, pageSize, 'createdAt'),
                 ApiService.getAllCategories(),
                 ApiService.getAllSuppliers()
             ]);
             setProducts(productsRes.productList || []);
+            setTotalPages(productsRes.totalPages || 1);
+            setTotalElements(productsRes.totalElements || 0);
             setCategories(categoriesRes.categoryList || []);
             setSuppliers(suppliersRes.supplierList || []);
         } catch (err) {
@@ -87,6 +99,7 @@ function ProductPage() {
             await ApiService.createProduct(dataToSend);
             setShowForm(false);
             setFormData({ name: '', sku: '', description: '', price: '', stockQuantity: '', reorderLevel: '10', categoryId: '', supplierId: '' });
+            setCurrentPage(0);
             fetchData();
         } catch (err) {
             setError('Ürün eklenemedi: ' + err.message);
@@ -103,6 +116,13 @@ function ProductPage() {
             }
         }
     };
+
+    // Filter products by search term
+    const filteredProducts = products.filter(prod =>
+        prod.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        prod.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        prod.categoryName?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
 
     if (loading) return <div className="dashboard-page"><div className="dashboard-container">Yükleniyor...</div></div>;
@@ -148,6 +168,27 @@ function ProductPage() {
                             <strong>Güncel Döviz Kurları (External API - ExchangeRate-API):</strong> 1 TRY = ${exchangeRates.usd.toFixed(4)} USD | €{exchangeRates.eur.toFixed(4)} EUR
                         </div>
                     )}
+
+                    {/* Search Box */}
+                    <div style={{marginBottom: '15px'}}>
+                        <input
+                            type="text"
+                            placeholder="🔍 Ürün ara (ad, SKU, kategori)..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            style={{
+                                width: '100%',
+                                maxWidth: '400px',
+                                padding: '10px 15px',
+                                borderRadius: '8px',
+                                border: '2px solid #e2e8f0',
+                                fontSize: '14px'
+                            }}
+                        />
+                        <span style={{marginLeft: '10px', color: '#718096', fontSize: '14px'}}>
+                            Toplam: {totalElements} ürün
+                        </span>
+                    </div>
 
                     {error && <div style={{color: 'red', margin: '10px 0'}}>{error}</div>}
 
@@ -209,7 +250,7 @@ function ProductPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {products.map((prod, index) => {
+                                    {filteredProducts.map((prod, index) => {
                                         const stockQty = prod.stockQuantity || prod.quantity || 0;
                                         const currentUsername = ApiService.getUsername();
                                         const canDelete = isAdmin || prod.createdByUsername === currentUsername;
@@ -260,6 +301,84 @@ function ProductPage() {
                                     })}
                                 </tbody>
                             </table>
+                        )}
+
+                        {/* Pagination */}
+                        {totalPages > 1 && (
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                gap: '10px',
+                                marginTop: '20px',
+                                padding: '15px'
+                            }}>
+                                <button
+                                    onClick={() => setCurrentPage(0)}
+                                    disabled={currentPage === 0}
+                                    style={{
+                                        padding: '8px 12px',
+                                        borderRadius: '6px',
+                                        border: '1px solid #e2e8f0',
+                                        background: currentPage === 0 ? '#f7fafc' : 'white',
+                                        cursor: currentPage === 0 ? 'not-allowed' : 'pointer',
+                                        opacity: currentPage === 0 ? 0.5 : 1
+                                    }}
+                                >
+                                    ⏮ İlk
+                                </button>
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                                    disabled={currentPage === 0}
+                                    style={{
+                                        padding: '8px 16px',
+                                        borderRadius: '6px',
+                                        border: '1px solid #e2e8f0',
+                                        background: currentPage === 0 ? '#f7fafc' : 'white',
+                                        cursor: currentPage === 0 ? 'not-allowed' : 'pointer',
+                                        opacity: currentPage === 0 ? 0.5 : 1
+                                    }}
+                                >
+                                    ◀ Önceki
+                                </button>
+                                <span style={{
+                                    padding: '8px 16px',
+                                    background: '#667eea',
+                                    color: 'white',
+                                    borderRadius: '6px',
+                                    fontWeight: 'bold'
+                                }}>
+                                    Sayfa {currentPage + 1} / {totalPages}
+                                </span>
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+                                    disabled={currentPage >= totalPages - 1}
+                                    style={{
+                                        padding: '8px 16px',
+                                        borderRadius: '6px',
+                                        border: '1px solid #e2e8f0',
+                                        background: currentPage >= totalPages - 1 ? '#f7fafc' : 'white',
+                                        cursor: currentPage >= totalPages - 1 ? 'not-allowed' : 'pointer',
+                                        opacity: currentPage >= totalPages - 1 ? 0.5 : 1
+                                    }}
+                                >
+                                    Sonraki ▶
+                                </button>
+                                <button
+                                    onClick={() => setCurrentPage(totalPages - 1)}
+                                    disabled={currentPage >= totalPages - 1}
+                                    style={{
+                                        padding: '8px 12px',
+                                        borderRadius: '6px',
+                                        border: '1px solid #e2e8f0',
+                                        background: currentPage >= totalPages - 1 ? '#f7fafc' : 'white',
+                                        cursor: currentPage >= totalPages - 1 ? 'not-allowed' : 'pointer',
+                                        opacity: currentPage >= totalPages - 1 ? 0.5 : 1
+                                    }}
+                                >
+                                    Son ⏭
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>

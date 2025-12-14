@@ -2,6 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../service/ApiService';
 import './DashboardPage.css';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
+import { Pie, Bar } from 'react-chartjs-2';
+
+// Register Chart.js components
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
 function DashboardPage() {
     const navigate = useNavigate();
@@ -17,6 +22,8 @@ function DashboardPage() {
     const [recentProducts, setRecentProducts] = useState([]);
     const [lowStockItems, setLowStockItems] = useState([]);
     const [userRole, setUserRole] = useState('');
+    const [categoryData, setCategoryData] = useState({ labels: [], data: [] });
+    const [transactionData, setTransactionData] = useState({ labels: [], purchases: [], sales: [] });
 
     useEffect(() => {
         // Get user role using ApiService (handles decryption)
@@ -53,6 +60,26 @@ function DashboardPage() {
             const recentProductsList = productsRes.productList?.slice(0, 5) || [];
             setRecentProducts(recentProductsList);
             setLowStockItems(lowStockRes.productList?.slice(0, 5) || []);
+
+            // Category distribution data for Pie Chart
+            const categoryCount = {};
+            productsRes.productList?.forEach(product => {
+                const catName = product.categoryName || 'Uncategorized';
+                categoryCount[catName] = (categoryCount[catName] || 0) + 1;
+            });
+            setCategoryData({
+                labels: Object.keys(categoryCount),
+                data: Object.values(categoryCount)
+            });
+
+            // Transaction data for Bar Chart (last 7 days simulation)
+            const purchaseCount = transactionsRes.transactionList?.filter(t => t.transactionType === 'PURCHASE').length || 0;
+            const saleCount = transactionsRes.transactionList?.filter(t => t.transactionType === 'SALE').length || 0;
+            const adjustCount = transactionsRes.transactionList?.filter(t => t.transactionType === 'ADJUSTMENT').length || 0;
+            setTransactionData({
+                labels: ['Purchases', 'Sales', 'Adjustments'],
+                data: [purchaseCount, saleCount, adjustCount]
+            });
 
             setLoading(false);
         } catch (err) {
@@ -127,6 +154,71 @@ function DashboardPage() {
                         <h3>{stats.totalTransactions}</h3>
                         <p>Transactions</p>
                     </div>
+                </div>
+            </div>
+
+            {/* Charts Section */}
+            <div className="charts-grid">
+                <div className="chart-card">
+                    <h3>📊 Products by Category</h3>
+                    {categoryData.labels.length > 0 ? (
+                        <div style={{ height: '250px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                            <Pie
+                                data={{
+                                    labels: categoryData.labels,
+                                    datasets: [{
+                                        data: categoryData.data,
+                                        backgroundColor: [
+                                            '#667eea', '#48bb78', '#ed8936', '#f56565', '#9f7aea',
+                                            '#38b2ac', '#ed64a6', '#4fd1c5', '#fc8181', '#63b3ed'
+                                        ],
+                                        borderWidth: 2,
+                                        borderColor: '#fff'
+                                    }]
+                                }}
+                                options={{
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: { position: 'bottom', labels: { boxWidth: 12 } }
+                                    }
+                                }}
+                            />
+                        </div>
+                    ) : (
+                        <p className="no-data">No category data available</p>
+                    )}
+                </div>
+
+                <div className="chart-card">
+                    <h3>📈 Transaction Summary</h3>
+                    {transactionData.data && transactionData.data.length > 0 ? (
+                        <div style={{ height: '250px' }}>
+                            <Bar
+                                data={{
+                                    labels: transactionData.labels,
+                                    datasets: [{
+                                        label: 'Count',
+                                        data: transactionData.data,
+                                        backgroundColor: ['#48bb78', '#f56565', '#ed8936'],
+                                        borderRadius: 8
+                                    }]
+                                }}
+                                options={{
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: { display: false }
+                                    },
+                                    scales: {
+                                        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                                    }
+                                }}
+                            />
+                        </div>
+                    ) : (
+                        <p className="no-data">No transaction data available</p>
+                    )}
                 </div>
             </div>
 

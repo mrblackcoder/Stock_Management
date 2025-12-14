@@ -11,6 +11,7 @@ function SupplierPage() {
     const [expandedSupplier, setExpandedSupplier] = useState(null);
     const [supplierProducts, setSupplierProducts] = useState({});
     const [allProducts, setAllProducts] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
     const role = ApiService.getRole();
     const isAdmin = role === 'ADMIN';
@@ -85,6 +86,13 @@ function SupplierPage() {
 
     if (loading) return <div className="dashboard-page"><div className="dashboard-container">Yükleniyor...</div></div>;
 
+    // Filter suppliers by search term
+    const filteredSuppliers = suppliers.filter(sup =>
+        sup.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        sup.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        sup.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
         <div className="dashboard-page">
 
@@ -98,6 +106,27 @@ function SupplierPage() {
                                 {showForm ? 'İptal' : '+ Yeni Tedarikçi'}
                             </button>
                         )}
+                    </div>
+
+                    {/* Search Box */}
+                    <div style={{margin: '15px 0'}}>
+                        <input
+                            type="text"
+                            placeholder="🔍 Tedarikçi ara (ad, email, telefon)..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            style={{
+                                width: '100%',
+                                maxWidth: '350px',
+                                padding: '10px 15px',
+                                borderRadius: '8px',
+                                border: '2px solid #e2e8f0',
+                                fontSize: '14px'
+                            }}
+                        />
+                        <span style={{marginLeft: '10px', color: '#718096', fontSize: '14px'}}>
+                            Toplam: {suppliers.length} tedarikçi
+                        </span>
                     </div>
 
                     {error && <div style={{color: 'red', margin: '10px 0'}}>{error}</div>}
@@ -131,8 +160,8 @@ function SupplierPage() {
                     )}
 
                     <div style={{marginTop: '30px', overflowX: 'auto'}}>
-                        {suppliers.length === 0 ? (
-                            <p>Henüz tedarikçi eklenmemiş.</p>
+                        {filteredSuppliers.length === 0 ? (
+                            <p>{searchTerm ? 'Arama sonucu bulunamadı.' : 'Henüz tedarikçi eklenmemiş.'}</p>
                         ) : (
                             <table style={{width: '100%', borderCollapse: 'collapse'}}>
                                 <thead>
@@ -145,7 +174,7 @@ function SupplierPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {suppliers.map((sup, index) => {
+                                    {filteredSuppliers.map((sup, index) => {
                                         const products = allProducts.filter(p => p.supplierName === sup.name || p.supplierId === sup.id);
                                         const isExpanded = expandedSupplier === sup.id;
 

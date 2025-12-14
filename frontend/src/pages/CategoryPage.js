@@ -10,6 +10,7 @@ function CategoryPage() {
     const [showForm, setShowForm] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [currentCategory, setCurrentCategory] = useState({ id: null, name: '', description: '' });
+    const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
     const role = ApiService.getRole();
     const isAdmin = role === 'ADMIN';
@@ -71,6 +72,12 @@ function CategoryPage() {
 
     if (loading) return <div className="dashboard-page"><div className="dashboard-container">Yükleniyor...</div></div>;
 
+    // Filter categories by search term
+    const filteredCategories = categories.filter(cat =>
+        cat.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        cat.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
         <div className="dashboard-page">
 
@@ -84,6 +91,27 @@ function CategoryPage() {
                                 {showForm ? 'İptal' : '+ Yeni Kategori'}
                             </button>
                         )}
+                    </div>
+
+                    {/* Search Box */}
+                    <div style={{margin: '15px 0'}}>
+                        <input
+                            type="text"
+                            placeholder="🔍 Kategori ara..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            style={{
+                                width: '100%',
+                                maxWidth: '300px',
+                                padding: '10px 15px',
+                                borderRadius: '8px',
+                                border: '2px solid #e2e8f0',
+                                fontSize: '14px'
+                            }}
+                        />
+                        <span style={{marginLeft: '10px', color: '#718096', fontSize: '14px'}}>
+                            Toplam: {categories.length} kategori
+                        </span>
                     </div>
 
                     {error && <div style={{color: 'red', margin: '10px 0'}}>{error}</div>}
@@ -114,8 +142,8 @@ function CategoryPage() {
                     )}
 
                     <div style={{marginTop: '30px'}}>
-                        {categories.length === 0 ? (
-                            <p>Henüz kategori eklenmemiş.</p>
+                        {filteredCategories.length === 0 ? (
+                            <p>{searchTerm ? 'Arama sonucu bulunamadı.' : 'Henüz kategori eklenmemiş.'}</p>
                         ) : (
                             <table style={{width: '100%', borderCollapse: 'collapse'}}>
                                 <thead>
@@ -127,7 +155,7 @@ function CategoryPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {categories.map((cat, index) => (
+                                    {filteredCategories.map((cat, index) => (
                                         <tr key={cat.id} style={{borderBottom: '1px solid #ddd', background: index % 2 === 0 ? '#f9f9f9' : 'white'}}>
                                             <td style={{padding: '12px'}}>{cat.id}</td>
                                             <td style={{padding: '12px'}}>{cat.name}</td>
