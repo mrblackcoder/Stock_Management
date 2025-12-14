@@ -117,7 +117,7 @@ function DashboardPage() {
             {/* Statistics Cards */}
             <div className="stats-grid">
                 <div className="stat-card blue">
-                    <div className="stat-icon">P</div>
+                    <div className="stat-icon"><i className="fa-solid fa-boxes-stacked"></i></div>
                     <div className="stat-info">
                         <h3>{stats.totalProducts}</h3>
                         <p>Total Products</p>
@@ -125,7 +125,7 @@ function DashboardPage() {
                 </div>
 
                 <div className="stat-card green">
-                    <div className="stat-icon">C</div>
+                    <div className="stat-icon"><i className="fa-solid fa-folder-tree"></i></div>
                     <div className="stat-info">
                         <h3>{stats.totalCategories}</h3>
                         <p>Categories</p>
@@ -133,7 +133,7 @@ function DashboardPage() {
                 </div>
 
                 <div className="stat-card orange">
-                    <div className="stat-icon">S</div>
+                    <div className="stat-icon"><i className="fa-solid fa-truck-field"></i></div>
                     <div className="stat-info">
                         <h3>{stats.totalSuppliers}</h3>
                         <p>Suppliers</p>
@@ -141,7 +141,7 @@ function DashboardPage() {
                 </div>
 
                 <div className="stat-card red">
-                    <div className="stat-icon">!</div>
+                    <div className="stat-icon"><i className="fa-solid fa-triangle-exclamation"></i></div>
                     <div className="stat-info">
                         <h3>{stats.lowStockProducts}</h3>
                         <p>Low Stock Alert</p>
@@ -149,7 +149,7 @@ function DashboardPage() {
                 </div>
 
                 <div className="stat-card purple">
-                    <div className="stat-icon">T</div>
+                    <div className="stat-icon"><i className="fa-solid fa-arrow-right-arrow-left"></i></div>
                     <div className="stat-info">
                         <h3>{stats.totalTransactions}</h3>
                         <p>Transactions</p>
@@ -160,7 +160,7 @@ function DashboardPage() {
             {/* Charts Section */}
             <div className="charts-grid">
                 <div className="chart-card">
-                    <h3>📊 Products by Category</h3>
+                    <h3><i className="fa-solid fa-chart-pie"></i> Products by Category</h3>
                     {categoryData.labels.length > 0 ? (
                         <div style={{ height: '250px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                             <Pie
@@ -191,7 +191,7 @@ function DashboardPage() {
                 </div>
 
                 <div className="chart-card">
-                    <h3>📈 Transaction Summary</h3>
+                    <h3><i className="fa-solid fa-chart-column"></i> Transaction Summary</h3>
                     {transactionData.data && transactionData.data.length > 0 ? (
                         <div style={{ height: '250px' }}>
                             <Bar

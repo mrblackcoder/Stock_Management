@@ -34,6 +34,7 @@ function TransactionPage() {
                 notes: location.state.productName ? `Reorder for ${location.state.productName}` : ''
             });
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.state]);
 
     const fetchData = async () => {

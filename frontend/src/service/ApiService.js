@@ -90,7 +90,6 @@ export default class ApiService {
             const bytes = CryptoJS.AES.decrypt(data, this.ENCRYPTION_KEY);
             return bytes.toString(CryptoJS.enc.Utf8);
         } catch (e) {
-            console.error("Decryption failed");
             return null;
         }
     }

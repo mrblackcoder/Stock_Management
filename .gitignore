@@ -48,6 +48,10 @@ backend_new.log
 # PID files
 *.pid
 
+# Presentation document (local only)
+PRESENTATION.md
+SUNUM.md
+
 # Test scripts
 *.tmp
 *.temp

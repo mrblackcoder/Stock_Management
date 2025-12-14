@@ -23,6 +23,7 @@ function SupplierPage() {
     useEffect(() => {
         fetchSuppliers();
         fetchAllProducts();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchSuppliers = async () => {

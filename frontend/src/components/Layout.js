@@ -25,12 +25,12 @@ function Layout({ children }) {
 
                 <nav className="sidebar-nav">
                     <NavLink to="/dashboard" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-                        <span className="nav-icon">■</span>
+                        <i className="fa-solid fa-chart-line nav-icon"></i>
                         <span className="nav-text">Dashboard</span>
                     </NavLink>
 
                     <NavLink to="/products" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-                        <span className="nav-icon">▪</span>
+                        <i className="fa-solid fa-boxes-stacked nav-icon"></i>
                         <span className="nav-text">Products</span>
                     </NavLink>
 
@@ -38,31 +38,31 @@ function Layout({ children }) {
                     {isAdmin && (
                         <>
                             <NavLink to="/categories" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-                                <span className="nav-icon">●</span>
+                                <i className="fa-solid fa-folder-tree nav-icon"></i>
                                 <span className="nav-text">Categories</span>
                             </NavLink>
 
                             <NavLink to="/suppliers" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-                                <span className="nav-icon">◆</span>
+                                <i className="fa-solid fa-truck-field nav-icon"></i>
                                 <span className="nav-text">Suppliers</span>
                             </NavLink>
 
                             <NavLink to="/transactions" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-                                <span className="nav-icon">↻</span>
+                                <i className="fa-solid fa-arrow-right-arrow-left nav-icon"></i>
                                 <span className="nav-text">Transactions</span>
                             </NavLink>
                         </>
                     )}
 
                     <NavLink to="/profile" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-                        <span className="nav-icon">⚙</span>
+                        <i className="fa-solid fa-user-gear nav-icon"></i>
                         <span className="nav-text">Profile</span>
                     </NavLink>
                 </nav>
 
                 <div className="sidebar-footer">
                     <button className="logout-btn" onClick={handleLogout}>
-                        ← Logout
+                        <i className="fa-solid fa-right-from-bracket"></i> Logout
                     </button>
                 </div>
             </aside>
@@ -87,7 +87,7 @@ function Layout({ children }) {
                             </div>
                         </div>
                         <button className="header-logout-btn" onClick={handleLogout} title="Logout">
-                            🚪 Çıkış
+                            <i className="fa-solid fa-right-from-bracket"></i> Logout
                         </button>
                     </div>
                 </header>
