@@ -42,7 +42,7 @@ docker-compose down
 
 | Service | URL | Credentials |
 |---------|-----|-------------|
-| Frontend | http://localhost:3000 | admin / admin123 |
+| Frontend | http://localhost:3000 | admin / &lt;your-admin-password&gt; |
 | Swagger UI | http://localhost:8080/swagger-ui.html | - |
 | Backend API | http://localhost:8080/api | JWT Token |
 | Actuator | http://localhost:8080/actuator | - |
@@ -88,7 +88,7 @@ TOKEN=$(curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "username": "admin",
-    "password": "admin123"
+    "password": "<your-admin-password>"
   }' | jq -r '.token')
 
 echo "Token: $TOKEN"
@@ -286,12 +286,8 @@ Returns:
 {
   "app": {
     "name": "Stock Management System",
-    "description": "Enterprise-grade Inventory Management System",
-    "version": "1.0.0",
-    "student": {
-      "name": "Mehmet Taha Boynikoğlu",
-      "id": "212 125 10 34"
-    }
+    "description": "Inventory Management System",
+    "version": "1.0.0"
   }
 }
 ```
@@ -423,7 +419,7 @@ mysql -h localhost -u root -p
 # Login again to get new token
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin123"}'
+  -d '{"username":"admin","password":"<your-admin-password>"}'
 ```
 
 ### Issue: "Frontend can't connect to backend"
@@ -445,7 +441,8 @@ npm start
 
 ## 📚 Additional Resources
 
-- **Full Documentation**: [DOCUMENTATION.md](./DOCUMENTATION.md)
+- **Project README**: [README.md](../README.md)
+- **Architecture**: [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)
 - **AWS Deployment**: [deployment/aws/AWS_DEPLOYMENT_GUIDE.md](./deployment/aws/AWS_DEPLOYMENT_GUIDE.md)
 - **HTTPS Setup**: [docs/HTTPS_SSL_SETUP.md](./docs/HTTPS_SSL_SETUP.md)
 - **Swagger UI**: http://localhost:8080/swagger-ui.html (when running)
@@ -467,4 +464,4 @@ npm start
 
 **Last Updated:** December 2024  
 **Version:** 1.0.0  
-**Author:** Mehmet Taha Boynikoğlu (212 125 10 34)
+**Author:** Mehmet Taha Boynikoğlu

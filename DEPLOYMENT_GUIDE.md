@@ -67,7 +67,7 @@ spring.datasource.password=root
 jwt.secret=${JWT_SECRET:your-very-long-secret-key-here}
 
 # Admin Password (CHANGE IN PRODUCTION!)
-admin.default.password=${ADMIN_PASSWORD:Admin@123!Secure}
+admin.default.password=${ADMIN_PASSWORD:<set-a-strong-password>}
 ```
 
 ### Step 4: Start Backend
@@ -97,9 +97,8 @@ npm start
 - **API Documentation**: http://localhost:8080/swagger-ui.html
 - **Health Check**: http://localhost:8080/actuator/health
 
-**Default Credentials:**
-- Username: `admin`
-- Password: `Admin@123!Secure`
+**Admin account:** created on first startup from the `ADMIN_PASSWORD` environment variable.
+No default password is shipped in this repository — set your own.
 
 ---
 
@@ -137,8 +136,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/inventory_management_db
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-root}
-      JWT_SECRET: ${JWT_SECRET:-default-development-secret-change-in-production}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin@123!Secure}
+      JWT_SECRET: ${JWT_SECRET:-<set-a-strong-secret>}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-<set-a-strong-password>}
     ports:
       - "8080:8080"
     depends_on:
@@ -708,7 +707,7 @@ chmod +x deploy.sh
 Deploy sonrası kontrol edilecekler:
 
 - [ ] Backend health check: `curl <EB_URL>/actuator/health`
-- [ ] Login API çalışıyor: `curl -X POST <EB_URL>/api/auth/login -d '{"username":"admin","password":"admin123"}'`
+- [ ] Login API çalışıyor: `curl -X POST <EB_URL>/api/auth/login -d '{"username":"<username>","password":"<password>"}'`
 - [ ] Frontend yükleniyor: Browser'da S3 URL aç
 - [ ] Frontend → Backend bağlantısı çalışıyor
 - [ ] Admin login yapılabiliyor
@@ -719,8 +718,7 @@ Deploy sonrası kontrol edilecekler:
 ## 📞 Support
 
 - **GitHub Issues**: https://github.com/mrblackcoder/Stock_Management/issues
-- **Student**: Mehmet Taha Boynikoğlu (212 125 10 34)
-- **University**: Fatih Sultan Mehmet Vakıf Üniversitesi
+- **Author**: Mehmet Taha Boynikoğlu
 
 ---
 
