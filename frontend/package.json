@@ -13,7 +13,7 @@
     "react": "^19.2.0",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.0",
-    "react-router-dom": "^7.9.6",
+    "react-router-dom": "6.30.4",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
   },
@@ -40,5 +40,10 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "jest": {
+    "moduleNameMapper": {
+      "^axios$": "<rootDir>/node_modules/axios/dist/browser/axios.cjs"
+    }
   }
 }
