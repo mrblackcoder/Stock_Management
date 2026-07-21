@@ -48,7 +48,7 @@ public class OpenAPIConfig {
                 .description("""
                         ## Inventory Management System REST API
 
-                        A comprehensive enterprise-grade API for managing inventory, products, categories, suppliers, and stock transactions.
+                        A REST API for managing inventory, products, categories, suppliers, and stock transactions.
 
                         ### Features:
                         - JWT Authentication & Authorization
@@ -63,16 +63,9 @@ public class OpenAPIConfig {
                         2. Login via `/api/auth/login` to get JWT token
                         3. Click "Authorize" button and enter: `Bearer YOUR_TOKEN`
                         4. All protected endpoints will now work
-
-                        ### Student Information:
-                        - **Name:** Mehmet Taha Boynikoğlu
-                        - **Student ID:** 212 125 10 34
-                        - **Course:** Web Design and Programming
-                        - **University:** Fatih Sultan Mehmet Vakıf Üniversitesi
                         """)
                 .contact(new Contact()
                         .name("Mehmet Taha Boynikoğlu")
-                        .email("your-email@example.com")
                         .url("https://github.com/mrblackcoder/Stock_Management"))
                 .license(new License()
                         .name("MIT License")

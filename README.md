@@ -6,92 +6,84 @@
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-A comprehensive, enterprise-grade web-based inventory management system built with modern technologies. This system allows users to track products, categories, suppliers, and stock transactions with secure authentication and role-based authorization.
+A full-stack web-based inventory management application built with Java 21, Spring Boot, Spring Security,
+Spring Data JPA, MySQL and React. It lets users manage products, categories, suppliers and stock
+transactions behind JWT authentication and role-based authorization.
 
 ## Project Overview
 
-**Student Name:** Mehmet Taha Boynikoğlu  
-**Student ID:** 2121251034  
-**Course:** Web Design and Programming  
-**University:** Fatih Sultan Mehmet Vakıf Üniversitesi
+The project demonstrates REST API design, relational data modelling, JWT-based authentication,
+role-based authorization (ADMIN/USER), Docker-based containerization and CI workflow configuration.
 
-### Project Description
-
-This project is a full-stack web application that provides a complete inventory management solution. Users can:
-- Register and log in securely with JWT authentication
+Users can:
+- Register and log in with JWT authentication
 - Manage products, categories, and suppliers
-- Track all stock transactions (purchases, sales, adjustments)
-- Monitor inventory levels in real-time with low stock alerts
-- Access the system remotely via RESTful API
-- Use embedded Thymeleaf pages for authentication
-
-The system implements enterprise-level security with role-based access control (ADMIN/USER) and integrates with external web services for currency conversion.
+- Track stock transactions (purchases, sales, adjustments)
+- Monitor inventory levels with low-stock alerts
+- Access the system via a RESTful API
+- Convert product prices using an external currency-exchange service
 
 ## Quick Start
 
 ### Prerequisites
-- Java 21+
-- MySQL 8.0+
-- Node.js 18+
-- Git
+- JDK 21
+- Docker and Docker Compose
+- Node.js 18+ and npm, when running the frontend outside Docker
 
-### Installation
+> The project targets Java 21 through Gradle toolchains. Use JDK 21 for consistent local and CI builds.
+> The current Gradle 8.14.3 wrapper is not officially supported for running on JDK 25 or JDK 26.
 
-1. **Clone repository**
+### Run with Docker (recommended)
 ```bash
-git clone <repository-url>
+git clone https://github.com/mrblackcoder/Stock_Management.git
 cd Stock_Management
+cp .env.docker.example .env   # then edit .env and set your own secrets
+docker compose up --build
 ```
 
-2. **Setup database**
+### Run locally (backend + frontend)
+
+1. **Create the database**
 ```sql
 CREATE DATABASE inventory_management_db;
 ```
 
-3. **Configure application** (if needed)
-```bash
-# Edit src/main/resources/application.properties
-# Update MySQL password if different from Root@12345
-```
+2. **Configure the backend** — set your DB credentials and a JWT secret via environment variables
+   (`JWT_SECRET`, `ADMIN_PASSWORD`, DB settings). See `src/main/resources/application.properties` for the
+   keys and `.env.example` for the expected variables.
 
-4. **Run backend**
+3. **Run the backend** (JDK 21)
 ```bash
 ./gradlew bootRun
 ```
 
-5. **Run frontend**
+4. **Run the frontend**
 ```bash
 cd frontend
 npm install
 npm start
 ```
 
-6. **Access application**
+5. **Access the application**
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:8080
 - **Swagger UI**: http://localhost:8080/swagger-ui.html
 - **Health Check**: http://localhost:8080/actuator/health
-- **Metrics**: http://localhost:8080/actuator/metrics
-- **App Info**: http://localhost:8080/actuator/info
-- **Default Login**: `admin` / `Admin@123!Secure`
 
-## Full Documentation
+> The initial admin account is created from the `ADMIN_PASSWORD` environment variable on first startup.
+> No default credentials are shipped in this repository — set your own.
 
-For complete documentation including:
-- Detailed architecture
-- Database schema
-- API endpoints
-- Security features
-- AWS deployment guide
-- Testing instructions
+## Documentation
 
-Please see the [Complete Documentation](./DOCUMENTATION.md)
+- [Architecture](./docs/ARCHITECTURE.md)
+- [Database Schema](./docs/DATABASE_SCHEMA.md)
+- [Deployment Guide](./DEPLOYMENT_GUIDE.md)
 
 ## Technology Stack
 
-**Backend:** Java 21, Spring Boot 3.5.7, Spring Security, MySQL, JWT  
-**Frontend:** React 19, Axios, Bootstrap 5, Thymeleaf  
-**Tools:** Gradle, Git, IntelliJ IDEA
+**Backend:** Java 21, Spring Boot 3.5.7, Spring Security, Spring Data JPA, MySQL, JWT
+**Frontend:** React 19, Axios, Bootstrap 5
+**Tooling:** Gradle, Docker, GitHub Actions, Swagger/OpenAPI
 
 ## Key API Endpoints
 
@@ -123,25 +115,28 @@ Please see the [Complete Documentation](./DOCUMENTATION.md)
 
 ## Features
 
-- JWT Authentication & Authorization
-- Role-based Access Control (ADMIN/USER)
-- Complete CRUD Operations
-- Stock Transaction Management
-- Low Stock Alerts
-- External API Integration
-- Responsive UI
-- RESTful API
-- Secure Password Hashing (BCrypt)
-- Client-side Token Encryption
+- JWT authentication with refresh-token rotation
+- Role-based access control (ADMIN/USER)
+- CRUD operations for products, categories and suppliers
+- Stock transaction management (purchase / sale / adjustment)
+- Low-stock alerts
+- External currency-conversion API integration
+- BCrypt password hashing and brute-force login lockout
+- Pagination and sorting on list endpoints
+- Responsive React UI
+- RESTful API documented with Swagger/OpenAPI
+
+## Background
+
+The project was initially developed as a university coursework project and was later extended as a
+Java/Spring Boot portfolio application.
 
 ## Contact
 
-**Mehmet Taha Boynikoğlu**  
-Student ID: 2121251034  
-Fatih Sultan Mehmet Vakıf Üniversitesi
+**Mehmet Taha Boynikoğlu**
+GitHub: https://github.com/mrblackcoder/Stock_Management
 
 ---
 
-**Last Updated:** December 2025  
-**Version:** 1.0.0  
-**Status:** Production Ready
+**Version:** 1.0.0
+**License:** MIT

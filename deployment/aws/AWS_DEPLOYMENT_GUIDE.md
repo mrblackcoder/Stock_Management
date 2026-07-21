@@ -152,7 +152,7 @@ curl http://$EB_URL/actuator/health
 # Test login endpoint
 curl -X POST http://$EB_URL/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin123"}'
+  -d '{"username":"admin","password":"<your-admin-password>"}'
 ```
 
 ---
@@ -376,7 +376,7 @@ curl https://api.yourdomain.com/actuator/health
 # Test API
 curl -X POST https://api.yourdomain.com/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin123"}'
+  -d '{"username":"admin","password":"<your-admin-password>"}'
 ```
 
 ### 7.2 Test Frontend

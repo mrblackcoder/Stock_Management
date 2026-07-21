@@ -185,7 +185,7 @@ CREATE INDEX idx_refresh_tokens_user ON refresh_tokens(user_id);
 ## Sample Data
 
 ```sql
--- Default Admin User (password: Admin@123!Secure)
+-- Default Admin User (password set via the ADMIN_PASSWORD environment variable)
 INSERT INTO users (username, email, password, role, created_at) VALUES 
 ('admin', 'admin@stockmanagement.com', '$2a$10$...', 'ADMIN', NOW());
 
