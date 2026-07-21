@@ -43,7 +43,7 @@ ecs_max_capacity  = 4
 # Application Secrets (Use Secrets Manager in production!)
 # -----------------------------------------------------------------------------
 jwt_secret     = "CHANGE_ME_MINIMUM_256_CHARACTERS_LONG_SUPER_SECRET_KEY_FOR_JWT_TOKEN_SIGNING_PLEASE_GENERATE_A_SECURE_ONE_USING_OPENSSL_RAND_BASE64_64"
-admin_password = "Admin@123!Secure"
+admin_password = "CHANGE_ME_STRONG_ADMIN_PASSWORD"
 
 # -----------------------------------------------------------------------------
 # CORS Configuration (comma-separated)
