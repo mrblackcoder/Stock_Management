@@ -11,6 +11,7 @@ import com.ims.stockmanagement.repositories.CategoryRepository;
 import com.ims.stockmanagement.repositories.ProductRepository;
 import com.ims.stockmanagement.repositories.SupplierRepository;
 import com.ims.stockmanagement.repositories.UserRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,7 +34,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@org.mockito.junit.jupiter.MockitoSettings(strictness = org.mockito.quality.Strictness.LENIENT)
 class ProductServiceTest {
 
     @Mock
@@ -106,6 +106,11 @@ class ProductServiceTest {
         testProductDTO.setReorderLevel(10);
         testProductDTO.setCategoryId(1L);
         testProductDTO.setSupplierId(1L);
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     private void setupSecurityContext() {
@@ -218,8 +223,6 @@ class ProductServiceTest {
     @Test
     void testUpdateProduct_Success() {
         // Arrange
-        setupSecurityContext();
-        
         ProductDTO updateDTO = new ProductDTO();
         updateDTO.setName("Updated Laptop");
         updateDTO.setPrice(BigDecimal.valueOf(1600.00));
