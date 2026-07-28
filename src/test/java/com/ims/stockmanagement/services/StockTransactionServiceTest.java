@@ -96,7 +96,7 @@ class StockTransactionServiceTest {
         request.setTransactionType(TransactionType.PURCHASE);
         request.setQuantity(20);
 
-        when(productRepository.findById(1L)).thenReturn(Optional.of(testProduct));
+        when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(testProduct));
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(transactionRepository.save(any(StockTransaction.class))).thenAnswer(inv -> inv.getArgument(0));
         when(modelMapper.map(any(StockTransaction.class), eq(TransactionDTO.class))).thenReturn(new TransactionDTO());
@@ -127,7 +127,7 @@ class StockTransactionServiceTest {
         request.setTransactionType(TransactionType.SALE);
         request.setQuantity(30);
 
-        when(productRepository.findById(1L)).thenReturn(Optional.of(testProduct));
+        when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(testProduct));
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(transactionRepository.save(any(StockTransaction.class))).thenAnswer(inv -> inv.getArgument(0));
         when(modelMapper.map(any(StockTransaction.class), eq(TransactionDTO.class))).thenReturn(new TransactionDTO());
@@ -158,7 +158,7 @@ class StockTransactionServiceTest {
         request.setTransactionType(TransactionType.SALE);
         request.setQuantity(100); // greater than the 50 in stock
 
-        when(productRepository.findById(1L)).thenReturn(Optional.of(testProduct));
+        when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(testProduct));
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
 
         InsufficientStockException exception = assertThrows(
@@ -182,7 +182,7 @@ class StockTransactionServiceTest {
         request.setTransactionType(TransactionType.PURCHASE);
         request.setQuantity(10);
 
-        when(productRepository.findById(1L)).thenReturn(Optional.of(testProduct));
+        when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(testProduct));
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.isAuthenticated()).thenReturn(true);
         when(authentication.getName()).thenReturn("admin");

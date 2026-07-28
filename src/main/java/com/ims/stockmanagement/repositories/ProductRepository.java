@@ -2,9 +2,11 @@ package com.ims.stockmanagement.repositories;
 
 import com.ims.stockmanagement.models.Category;
 import com.ims.stockmanagement.models.Product;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -17,6 +19,16 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // N+1 optimized: Find by ID with all relations
     @Query("SELECT p FROM Product p LEFT JOIN FETCH p.supplier LEFT JOIN FETCH p.category LEFT JOIN FETCH p.createdBy WHERE p.id = :id")
     Optional<Product> findByIdWithRelations(@Param("id") Long id);
+
+    /**
+     * Loads a product with a row-level write lock (SELECT ... FOR UPDATE).
+     * Must be called inside an active transaction; the lock is held until that
+     * transaction commits or rolls back, serializing concurrent stock mutations
+     * for the same product.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Product p WHERE p.id = :id")
+    Optional<Product> findByIdForUpdate(@Param("id") Long id);
 
     // N+1 optimized: Search by name with relations
     @Query("SELECT p FROM Product p LEFT JOIN FETCH p.supplier LEFT JOIN FETCH p.category LEFT JOIN FETCH p.createdBy WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%'))")
