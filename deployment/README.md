@@ -44,14 +44,23 @@ frontend build to S3 behind CloudFront. Requires the `AWS_ACCESS_KEY_ID`,
 `REACT_APP_ENCRYPTION_KEY` repository secrets, plus a pre-existing ECR repository, ECS
 cluster/service and S3/CloudFront distribution matching the task definition.
 
-## 4. Terraform
+## 4. Elastic Beanstalk (separate reference walkthrough)
+
+[`deployment/aws/AWS_DEPLOYMENT_GUIDE.md`](aws/AWS_DEPLOYMENT_GUIDE.md) documents a
+**separate**, manual Elastic Beanstalk + RDS + S3/CloudFront deployment approach — a
+different AWS path than item 3 above. **`deploy-aws.yml` does not execute this Elastic
+Beanstalk walkthrough**; the two are unrelated. As with every cloud configuration in this
+index, **no live Elastic Beanstalk environment is proven** by this repository. See that guide
+for the full step-by-step walkthrough; it is not duplicated here.
+
+## 5. Terraform
 
 [`terraform/`](../terraform) contains infrastructure-as-code (ALB, ECS, RDS, S3/CloudFront)
-that matches the ECS reference deployment above. It is **not invoked automatically** by CI or
-by either deployment workflow — it must be reviewed, configured (`terraform.tfvars`) and run
-manually before use.
+that matches the ECS reference deployment (item 3). It is **not invoked automatically** by CI
+or by either deployment workflow — it must be reviewed, configured (`terraform.tfvars`) and
+run manually before use.
 
-## 5. Production Docker Compose
+## 6. Production Docker Compose
 
 [`docker-compose.prod.yml`](../docker-compose.prod.yml) is a reference production Compose
 file (backend image from ECR, external RDS) intended as a template for a container-based
