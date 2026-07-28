@@ -28,7 +28,7 @@ Users can:
 ### Prerequisites
 - JDK 21
 - Docker and Docker Compose
-- Node.js 18+ and npm, when running the frontend outside Docker
+- Node.js 20+ and npm, when running the frontend outside Docker
 
 > The project targets Java 21 through Gradle toolchains. Use JDK 21 for consistent local and CI builds.
 > The current Gradle 8.14.3 wrapper is not officially supported for running on JDK 25 or JDK 26.
@@ -82,7 +82,7 @@ npm start
 ## Technology Stack
 
 **Backend:** Java 21, Spring Boot 3.5.7, Spring Security, Spring Data JPA, MySQL, JWT
-**Frontend:** React 19, Axios, Bootstrap 5
+**Frontend:** React 19, React Router, Axios, Chart.js
 **Tooling:** Gradle, Docker, GitHub Actions, Swagger/OpenAPI
 
 ## Key API Endpoints
@@ -138,5 +138,4 @@ GitHub: https://github.com/mrblackcoder/Stock_Management
 
 ---
 
-**Version:** 1.0.0
-**License:** MIT
+**License:** MIT — see [LICENSE](./LICENSE)

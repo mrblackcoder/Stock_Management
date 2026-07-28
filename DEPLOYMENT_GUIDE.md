@@ -10,6 +10,22 @@
 
 ---
 
+## ℹ️ Deployment Status
+
+- **Docker Compose (below) is the only deployment path this repository directly runs and
+  verifies.**
+- The GitHub Actions deployment workflows are **manually triggered only**
+  (`workflow_dispatch`) — a normal `git push` or pull request runs CI (tests and build) and
+  does **not** deploy anything.
+- The AWS steps in this guide describe a manual **Elastic Beanstalk** deployment path. The
+  repository also includes a separate, **ECS/Fargate + S3/CloudFront** reference deployment
+  driven by `.github/workflows/deploy-aws.yml`. These are two different reference approaches;
+  neither is automatically executed, and this repository does not prove that either has a
+  currently live AWS environment.
+- See [`deployment/README.md`](deployment/README.md) for the full deployment index.
+
+---
+
 ## 🏠 Local Development Setup
 
 ### Prerequisites
@@ -168,17 +184,17 @@ networks:
 
 **Start all services:**
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 **Stop all services:**
 ```bash
-docker-compose down
+docker compose down
 ```
 
 **View logs:**
 ```bash
-docker-compose logs -f backend
+docker compose logs -f backend
 ```
 
 ---

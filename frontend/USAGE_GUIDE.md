@@ -29,13 +29,13 @@ npm start
 **Option B: Using Docker**
 ```bash
 # Start all services (MySQL + Backend)
-docker-compose up -d
+docker compose up -d
 
 # View logs
-docker-compose logs -f
+docker compose logs -f
 
 # Stop all services
-docker-compose down
+docker compose down
 ```
 
 ### 2. Access the Application
@@ -215,7 +215,10 @@ curl -X GET http://localhost:8080/api/users/all \
   -H "Authorization: Bearer $TOKEN"
 ```
 
-**Note**: Only ADMIN role can access user management endpoints.
+**Note**: Only ADMIN role can access user management endpoints. Admin user-management API
+integration is being aligned between the frontend client and backend as part of a later
+API/frontend cleanup — verify the exact path in the backend controller before relying on
+this example.
 
 ---
 
@@ -321,27 +324,27 @@ curl http://localhost:8080/actuator/prometheus
 
 ```bash
 # Start services
-docker-compose up -d
+docker compose up -d
 
 # View logs
-docker-compose logs -f backend
-docker-compose logs -f mysql
+docker compose logs -f backend
+docker compose logs -f mysql
 
 # Check status
-docker-compose ps
+docker compose ps
 
 # Execute commands in container
-docker-compose exec backend sh
-docker-compose exec mysql mysql -u root -p
+docker compose exec backend sh
+docker compose exec mysql mysql -u root -p
 
 # Restart a service
-docker-compose restart backend
+docker compose restart backend
 
 # Stop and remove all
-docker-compose down
+docker compose down
 
 # Stop and remove with volumes
-docker-compose down -v
+docker compose down -v
 ```
 
 ---
@@ -362,19 +365,6 @@ docker-compose down -v
 
 # View coverage report
 open build/reports/jacoco/test/html/index.html
-```
-
-### Integration Tests
-
-```bash
-# Start test database
-docker-compose -f docker-compose.test.yml up -d
-
-# Run integration tests
-./gradlew integrationTest
-
-# Stop test database
-docker-compose -f docker-compose.test.yml down
 ```
 
 ---
@@ -400,13 +390,13 @@ kill -9 <PID>
 **Solution:**
 ```bash
 # Check MySQL is running
-docker-compose ps mysql
+docker compose ps mysql
 
 # Check MySQL logs
-docker-compose logs mysql
+docker compose logs mysql
 
 # Restart MySQL
-docker-compose restart mysql
+docker compose restart mysql
 
 # Test connection
 mysql -h localhost -u root -p
@@ -456,7 +446,7 @@ npm start
 3. **Use production profile** for deployment: `--spring.profiles.active=production`
 4. **Keep JWT tokens secure** - never commit them to Git
 5. **Monitor metrics** regularly using `/actuator/metrics`
-6. **Test Docker build** before deploying: `docker-compose up`
+6. **Test Docker build** before deploying: `docker compose up`
 7. **Run tests before commit**: `./gradlew test`
 8. **Use environment variables** for sensitive data in production
 

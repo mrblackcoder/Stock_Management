@@ -44,10 +44,10 @@ Exact sensitive values are intentionally omitted from this public report.
 - Corrected unsupported documentation claims
 - Repaired broken documentation links
 
-### PR2 — Build and testing
-- Establish a reproducible JDK 21 build
-- Restore or improve automated tests
-- Ensure CI exposes failures
+### PR2 — Build and testing — Completed
+- Established a reproducible JDK 21 build
+- Restored and extended automated tests
+- Ensured CI exposes failures
 
 ### PR3 — Transaction consistency
 - Validate stock operations
@@ -66,6 +66,7 @@ Exact sensitive values are intentionally omitted from this public report.
 
 ## Status
 
-PR1 addresses documentation, metadata, guides and example-configuration hygiene. Runtime security,
-transaction consistency, testing and API/frontend improvements remain planned as separate, reviewable
-pull requests.
+PR1 and PR2 are complete: documentation, metadata, guides and example-configuration hygiene are
+addressed, and the backend now has an established, CI-verified baseline of 54 passing automated tests.
+Runtime security, transaction consistency and API/frontend improvements remain planned as separate,
+reviewable pull requests.
