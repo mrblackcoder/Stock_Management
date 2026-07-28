@@ -153,8 +153,8 @@ public class StockTransactionService {
      */
     @Transactional
     public Response createTransaction(TransactionRequest request) {
-        // Ürün kontrolü
-        Product product = productRepository.findById(request.getProductId())
+        // Ürün kontrolü - stok mutasyonunu seri hale getirmek için satır kilidi ile yükle
+        Product product = productRepository.findByIdForUpdate(request.getProductId())
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + request.getProductId()));
 
         // Kullanıcı kontrolü - request'ten gelmiyorsa authenticated user'ı al
@@ -220,7 +220,10 @@ public class StockTransactionService {
                 .orElseThrow(() -> new NotFoundException("Transaction not found with id: " + id));
 
         // Stoku geri al (reverse operation)
-        Product product = transaction.getProduct();
+        // Mutasyon hedefi olarak kilitli örneği kullan, fetch join ile gelen örneği değil
+        Product product = productRepository.findByIdForUpdate(transaction.getProduct().getId())
+                .orElseThrow(() -> new NotFoundException(
+                        "Product not found with id: " + transaction.getProduct().getId()));
         TransactionType reverseType;
 
         switch (transaction.getTransactionType()) {
