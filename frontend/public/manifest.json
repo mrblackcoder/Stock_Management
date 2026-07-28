@@ -1,6 +1,7 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Stock Management",
+  "name": "Stock Management System",
+  "description": "Inventory management client for products, categories, suppliers and stock transactions",
   "icons": [
     {
       "src": "favicon.ico",
