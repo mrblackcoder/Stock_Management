@@ -1,10 +1,30 @@
 # AWS Deployment Guide - Stock Management System
 
+## ℹ️ How this relates to the GitHub Actions workflow
+
+This document is a **manual, step-by-step reference** for an Elastic Beanstalk-based
+deployment. It is a different path from the repository's actual GitHub Actions workflow,
+[`.github/workflows/deploy-aws.yml`](../../.github/workflows/deploy-aws.yml), which deploys
+the backend to **ECS Fargate** (via ECR) and the frontend to **S3 + CloudFront** using the
+task definition at [`.aws/task-definition.json`](../../.aws/task-definition.json).
+
+- The GitHub Actions workflow only runs when manually triggered (`workflow_dispatch`) — it
+  is never started by a `git push` or pull request.
+- It requires the `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `CLOUDFRONT_DISTRIBUTION_ID`,
+  `REACT_APP_API_URL` and `REACT_APP_ENCRYPTION_KEY` repository secrets, and pre-existing AWS
+  resources (ECR repository, ECS cluster/service) matching the task definition.
+- [`terraform/`](../../terraform) contains infrastructure-as-code for the ECS-based approach
+  and is not automatically invoked by this workflow or by either path in this document.
+- Both this Elastic Beanstalk guide and the ECS-based workflow are **reference
+  configurations** — this repository does not verify that either has live AWS infrastructure
+  running. See [`deployment/README.md`](../README.md) for the full deployment index.
+
 ## Overview
 
-This guide provides step-by-step instructions for deploying the Stock Management System to AWS.
+This guide provides step-by-step instructions for one way to deploy the Stock Management
+System to AWS, using Elastic Beanstalk.
 
-**Architecture:**
+**Architecture (this guide):**
 - **Database:** Amazon RDS (MySQL)
 - **Backend:** AWS Elastic Beanstalk (Java/Spring Boot)
 - **Frontend:** Amazon S3 + CloudFront (React)
@@ -34,7 +54,7 @@ aws rds create-db-instance \
     --engine mysql \
     --engine-version 8.0.35 \
     --master-username admin \
-    --master-user-password YourSecurePassword123! \
+    --master-user-password <your-rds-password> \
     --allocated-storage 20 \
     --db-name inventory_management_db \
     --backup-retention-period 7 \
@@ -75,7 +95,7 @@ echo "RDS Endpoint: $RDS_ENDPOINT"
 
 ```bash
 mysql -h $RDS_ENDPOINT -u admin -p
-# Enter password: YourSecurePassword123!
+# Enter password: <your-rds-password>
 
 # Test database
 SHOW DATABASES;
@@ -122,7 +142,7 @@ eb setenv \
     SPRING_PROFILES_ACTIVE=production \
     SPRING_DATASOURCE_URL="jdbc:mysql://$RDS_ENDPOINT:3306/inventory_management_db" \
     SPRING_DATASOURCE_USERNAME=admin \
-    SPRING_DATASOURCE_PASSWORD=YourSecurePassword123! \
+    SPRING_DATASOURCE_PASSWORD=<your-rds-password> \
     JWT_SECRET="your-super-secret-jwt-key-minimum-256-bits-long-change-this-in-production" \
     JWT_EXPIRATION=86400000 \
     CORS_ALLOWED_ORIGINS="https://yourdomain.com,https://www.yourdomain.com"
