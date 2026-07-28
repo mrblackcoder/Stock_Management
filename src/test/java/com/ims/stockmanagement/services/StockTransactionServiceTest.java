@@ -83,6 +83,14 @@ class StockTransactionServiceTest {
         testProduct.setReorderLevel(10);
     }
 
+    private void setupAuthenticatedSecurityContext() {
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn("admin");
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(testUser));
+        SecurityContextHolder.setContext(securityContext);
+    }
+
     @AfterEach
     void tearDown() {
         SecurityContextHolder.clearContext();
@@ -90,14 +98,13 @@ class StockTransactionServiceTest {
 
     @Test
     void purchaseIncreasesStockAndSavesTransaction() {
+        setupAuthenticatedSecurityContext();
         TransactionRequest request = new TransactionRequest();
         request.setProductId(1L);
-        request.setUserId(1L);
         request.setTransactionType(TransactionType.PURCHASE);
         request.setQuantity(20);
 
         when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(testProduct));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(transactionRepository.save(any(StockTransaction.class))).thenAnswer(inv -> inv.getArgument(0));
         when(modelMapper.map(any(StockTransaction.class), eq(TransactionDTO.class))).thenReturn(new TransactionDTO());
 
@@ -121,14 +128,13 @@ class StockTransactionServiceTest {
 
     @Test
     void saleDecreasesStockAndSavesTransaction() {
+        setupAuthenticatedSecurityContext();
         TransactionRequest request = new TransactionRequest();
         request.setProductId(1L);
-        request.setUserId(1L);
         request.setTransactionType(TransactionType.SALE);
         request.setQuantity(30);
 
         when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(testProduct));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(transactionRepository.save(any(StockTransaction.class))).thenAnswer(inv -> inv.getArgument(0));
         when(modelMapper.map(any(StockTransaction.class), eq(TransactionDTO.class))).thenReturn(new TransactionDTO());
 
@@ -152,15 +158,13 @@ class StockTransactionServiceTest {
 
     @Test
     void saleWithInsufficientStockThrowsAndPersistsNothing() {
+        setupAuthenticatedSecurityContext();
         TransactionRequest request = new TransactionRequest();
         request.setProductId(1L);
-        request.setUserId(1L);
         request.setTransactionType(TransactionType.SALE);
         request.setQuantity(100); // greater than the 50 in stock
 
         when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(testProduct));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-
         InsufficientStockException exception = assertThrows(
                 InsufficientStockException.class,
                 () -> stockTransactionService.createTransaction(request)
@@ -175,19 +179,14 @@ class StockTransactionServiceTest {
     }
 
     @Test
-    void actorResolvedFromSecurityContextWhenUserIdNull() {
+    void actorIsAlwaysResolvedFromSecurityContext() {
+        setupAuthenticatedSecurityContext();
         TransactionRequest request = new TransactionRequest();
         request.setProductId(1L);
-        request.setUserId(null);
         request.setTransactionType(TransactionType.PURCHASE);
         request.setQuantity(10);
 
         when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(testProduct));
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.isAuthenticated()).thenReturn(true);
-        when(authentication.getName()).thenReturn("admin");
-        SecurityContextHolder.setContext(securityContext);
-        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(testUser));
         when(transactionRepository.save(any(StockTransaction.class))).thenAnswer(inv -> inv.getArgument(0));
         when(modelMapper.map(any(StockTransaction.class), eq(TransactionDTO.class))).thenReturn(new TransactionDTO());
 
@@ -200,5 +199,21 @@ class StockTransactionServiceTest {
         verify(userRepository, times(1)).findByUsername("admin");
         verify(userRepository, never()).findById(anyLong());
         assertEquals(201, response.getStatusCode());
+    }
+
+    @Test
+    void unauthenticatedInvocationFailsWithoutPersistingTransaction() {
+        SecurityContextHolder.clearContext();
+        TransactionRequest request = new TransactionRequest();
+        request.setProductId(1L);
+        request.setTransactionType(TransactionType.PURCHASE);
+        request.setQuantity(10);
+
+        when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(testProduct));
+
+        assertThrows(SecurityException.class, () -> stockTransactionService.createTransaction(request));
+
+        verify(productRepository, never()).save(any(Product.class));
+        verify(transactionRepository, never()).save(any(StockTransaction.class));
     }
 }
