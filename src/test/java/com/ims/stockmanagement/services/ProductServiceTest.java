@@ -1,6 +1,7 @@
 package com.ims.stockmanagement.services;
 
 import com.ims.stockmanagement.dtos.ProductDTO;
+import com.ims.stockmanagement.dtos.ProductUpdateRequest;
 import com.ims.stockmanagement.dtos.Response;
 import com.ims.stockmanagement.exceptions.NotFoundException;
 import com.ims.stockmanagement.models.Category;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -223,24 +225,128 @@ class ProductServiceTest {
     @Test
     void testUpdateProduct_Success() {
         // Arrange
-        ProductDTO updateDTO = new ProductDTO();
-        updateDTO.setName("Updated Laptop");
-        updateDTO.setPrice(BigDecimal.valueOf(1600.00));
-        updateDTO.setCategoryId(1L);
+        ProductUpdateRequest updateRequest = new ProductUpdateRequest();
+        updateRequest.setName("Updated Laptop");
+        updateRequest.setSku("LAP-001"); // unchanged, so no uniqueness lookup is triggered
+        updateRequest.setPrice(BigDecimal.valueOf(1600.00));
+        updateRequest.setCategoryId(1L);
 
-        when(productRepository.findByIdWithRelations(1L)).thenReturn(Optional.of(testProduct));
+        when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(testProduct));
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(testCategory));
         when(productRepository.save(any(Product.class))).thenReturn(testProduct);
-        when(modelMapper.map(any(Product.class), eq(ProductDTO.class))).thenReturn(updateDTO);
+        when(modelMapper.map(any(Product.class), eq(ProductDTO.class))).thenReturn(testProductDTO);
 
         // Act
-        Response response = productService.updateProduct(1L, updateDTO);
+        Response response = productService.updateProduct(1L, updateRequest);
 
         // Assert
         assertNotNull(response);
         assertEquals(200, response.getStatusCode());
         assertEquals("Product updated successfully", response.getMessage());
         verify(productRepository, times(1)).save(any(Product.class));
+    }
+
+    /**
+     * Regression guard for the create path: introducing the update-only request type
+     * must not stop ProductDTO from carrying an opening stock into a new product.
+     */
+    @Test
+    void createProduct_persistsOpeningStockQuantity() {
+        // Arrange
+        setupSecurityContext();
+
+        ProductDTO createDTO = new ProductDTO();
+        createDTO.setName("Opening Stock Laptop");
+        createDTO.setSku("LAP-OPEN-001");
+        createDTO.setPrice(BigDecimal.valueOf(1200.00));
+        createDTO.setStockQuantity(42);
+        createDTO.setReorderLevel(7);
+        createDTO.setCategoryId(1L);
+        createDTO.setSupplierId(1L);
+
+        when(productRepository.existsBySku("LAP-OPEN-001")).thenReturn(false);
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(testCategory));
+        when(supplierRepository.findById(1L)).thenReturn(Optional.of(testSupplier));
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(testUser));
+        when(productRepository.save(any(Product.class))).thenReturn(testProduct);
+        when(modelMapper.map(any(Product.class), eq(ProductDTO.class))).thenReturn(testProductDTO);
+
+        // Act
+        Response response = productService.createProduct(createDTO);
+
+        // Assert
+        assertEquals(201, response.getStatusCode());
+
+        ArgumentCaptor<Product> persisted = ArgumentCaptor.forClass(Product.class);
+        verify(productRepository).save(persisted.capture());
+        assertEquals(42, persisted.getValue().getStockQuantity());
+        assertEquals(7, persisted.getValue().getReorderLevel());
+        assertEquals(testUser, persisted.getValue().getCreatedBy());
+    }
+
+    /**
+     * The update path must read the product through the pessimistic-lock query and must
+     * never assign stock. Hibernate emits a full-column UPDATE, so the only thing keeping
+     * stock correct is that the value written back is the one just read under the lock.
+     */
+    @Test
+    void updateProduct_loadsUnderLockAndNeverAssignsStock() {
+        // Arrange
+        Product lockedProduct = new Product();
+        lockedProduct.setId(1L);
+        lockedProduct.setName("Laptop Dell XPS 15");
+        lockedProduct.setSku("LAP-001");
+        lockedProduct.setPrice(BigDecimal.valueOf(1500.00));
+        lockedProduct.setStockQuantity(50);
+        lockedProduct.setReorderLevel(10);
+        lockedProduct.setCategory(testCategory);
+
+        ProductUpdateRequest updateRequest = new ProductUpdateRequest();
+        updateRequest.setName("Renamed Laptop");
+        updateRequest.setSku("LAP-002"); // changed, so the uniqueness check runs
+        updateRequest.setDescription("Updated description");
+        updateRequest.setPrice(BigDecimal.valueOf(1750.00));
+        updateRequest.setReorderLevel(25);
+        updateRequest.setCategoryId(1L);
+        updateRequest.setSupplierId(1L);
+        updateRequest.setImageUrl("https://example.com/laptop.png");
+
+        when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(lockedProduct));
+        when(productRepository.existsBySku("LAP-002")).thenReturn(false);
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(testCategory));
+        when(supplierRepository.findById(1L)).thenReturn(Optional.of(testSupplier));
+        when(productRepository.save(any(Product.class))).thenReturn(lockedProduct);
+        when(modelMapper.map(any(Product.class), eq(ProductDTO.class))).thenReturn(testProductDTO);
+
+        // Act
+        Response response = productService.updateProduct(1L, updateRequest);
+
+        // Assert
+        assertEquals(200, response.getStatusCode());
+
+        // The lookup is the locking one, never the plain fetch-join read.
+        verify(productRepository).findByIdForUpdate(1L);
+        verify(productRepository, never()).findByIdWithRelations(anyLong());
+
+        ArgumentCaptor<Product> persisted = ArgumentCaptor.forClass(Product.class);
+        verify(productRepository).save(persisted.capture());
+        Product saved = persisted.getValue();
+
+        // Stock is exactly what the locked read returned.
+        assertEquals(50, saved.getStockQuantity());
+
+        // Every editable field was applied.
+        assertEquals("Renamed Laptop", saved.getName());
+        assertEquals("LAP-002", saved.getSku());
+        assertEquals("Updated description", saved.getDescription());
+        assertEquals(BigDecimal.valueOf(1750.00), saved.getPrice());
+        assertEquals(25, saved.getReorderLevel());
+        assertEquals(testCategory, saved.getCategory());
+        assertEquals(testSupplier, saved.getSupplier());
+        assertEquals("https://example.com/laptop.png", saved.getImageUrl());
+
+        // No stock-owning collaborator participates in an ordinary edit.
+        verifyNoInteractions(userRepository);
     }
 
     @Test
