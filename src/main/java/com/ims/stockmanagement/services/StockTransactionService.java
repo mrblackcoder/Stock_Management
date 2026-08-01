@@ -221,6 +221,13 @@ public class StockTransactionService {
 
         switch (transaction.getTransactionType()) {
             case PURCHASE:
+                int stockAfterPurchaseReversal = product.getStockQuantity() - transaction.getQuantity();
+                if (stockAfterPurchaseReversal < 0) {
+                    throw new InsufficientStockException(
+                            "Insufficient stock to reverse purchase transaction " + transaction.getId() +
+                            ". Available: " + product.getStockQuantity() +
+                            ", Required: " + transaction.getQuantity());
+                }
                 reverseType = TransactionType.SALE;
                 break;
             case SALE:

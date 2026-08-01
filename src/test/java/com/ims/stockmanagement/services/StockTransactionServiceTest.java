@@ -216,4 +216,62 @@ class StockTransactionServiceTest {
         verify(productRepository, never()).save(any(Product.class));
         verify(transactionRepository, never()).save(any(StockTransaction.class));
     }
+
+    @Test
+    void deletingPurchaseWithSufficientStockReversesStockAndDeletesTransaction() {
+        StockTransaction transaction = transactionWithTypeAndQuantity(TransactionType.PURCHASE, 20);
+        when(transactionRepository.findByIdWithProductAndUser(1L)).thenReturn(Optional.of(transaction));
+        when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(testProduct));
+
+        Response response = stockTransactionService.deleteTransaction(1L);
+
+        assertEquals(30, testProduct.getStockQuantity());
+        verify(productRepository).findByIdForUpdate(1L);
+        verify(productRepository).save(testProduct);
+        verify(transactionRepository).delete(transaction);
+        assertEquals(200, response.getStatusCode());
+    }
+
+    @Test
+    void deletingPurchaseWithInsufficientStockRejectsReversalWithoutPersistence() {
+        testProduct.setStockQuantity(10);
+        StockTransaction transaction = transactionWithTypeAndQuantity(TransactionType.PURCHASE, 20);
+        when(transactionRepository.findByIdWithProductAndUser(1L)).thenReturn(Optional.of(transaction));
+        when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(testProduct));
+
+        InsufficientStockException exception = assertThrows(
+                InsufficientStockException.class,
+                () -> stockTransactionService.deleteTransaction(1L));
+
+        assertTrue(exception.getMessage().contains("Insufficient stock to reverse purchase"));
+        assertEquals(10, testProduct.getStockQuantity());
+        verify(productRepository).findByIdForUpdate(1L);
+        verify(productRepository, never()).save(any(Product.class));
+        verify(transactionRepository, never()).delete(any(StockTransaction.class));
+    }
+
+    @Test
+    void deletingSaleRestoresStockAndDeletesTransaction() {
+        StockTransaction transaction = transactionWithTypeAndQuantity(TransactionType.SALE, 20);
+        when(transactionRepository.findByIdWithProductAndUser(1L)).thenReturn(Optional.of(transaction));
+        when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(testProduct));
+
+        Response response = stockTransactionService.deleteTransaction(1L);
+
+        assertEquals(70, testProduct.getStockQuantity());
+        verify(productRepository).findByIdForUpdate(1L);
+        verify(productRepository).save(testProduct);
+        verify(transactionRepository).delete(transaction);
+        assertEquals(200, response.getStatusCode());
+    }
+
+    private StockTransaction transactionWithTypeAndQuantity(TransactionType type, int quantity) {
+        StockTransaction transaction = new StockTransaction();
+        transaction.setId(1L);
+        transaction.setProduct(testProduct);
+        transaction.setUser(testUser);
+        transaction.setTransactionType(type);
+        transaction.setQuantity(quantity);
+        return transaction;
+    }
 }
