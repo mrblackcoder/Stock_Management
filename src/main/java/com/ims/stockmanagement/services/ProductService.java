@@ -276,7 +276,11 @@ public class ProductService {
 
         // Stok hareketi geçmişi denetim kaydıdır: ADMIN dahil hiç kimse ürün silerek
         // bu geçmişi yok edemez. Kontrol, kilit hâlâ tutulurken yapılır.
-        if (stockTransactionRepository.existsByProductId(id)) {
+        //
+        // Kilitli okuma şart: MySQL REPEATABLE READ altında kilitsiz bir sorgu,
+        // bu işlem ürün kilidini beklerken commit edilmiş bir hareketi göremez ve
+        // silme, alan kuralı yerine yabancı anahtara takılırdı.
+        if (stockTransactionRepository.findFirstByProduct_IdOrderByIdAsc(id).isPresent()) {
             throw new ProductHasTransactionHistoryException(PRODUCT_HAS_TRANSACTION_HISTORY_MESSAGE);
         }
 

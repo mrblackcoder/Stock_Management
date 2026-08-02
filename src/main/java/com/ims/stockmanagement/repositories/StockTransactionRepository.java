@@ -5,9 +5,11 @@ import com.ims.stockmanagement.models.StockTransaction;
 import com.ims.stockmanagement.models.User;
 import com.ims.stockmanagement.enums.TransactionType;
 import com.ims.stockmanagement.enums.TransactionStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -62,7 +64,26 @@ public interface StockTransactionRepository extends JpaRepository<StockTransacti
      * Ledger-history probe used before deleting a Product. Deliberately an existence
      * check rather than a row fetch: the caller only needs to know whether any audit
      * history exists.
+     *
+     * Non-locking consistent read: under MySQL REPEATABLE READ it is served from the
+     * transaction's snapshot, so it must not be used to decide a deletion that races
+     * with transaction creation. Use findFirstByProduct_IdOrderByIdAsc for that.
      */
     boolean existsByProductId(Long productId);
+
+    /**
+     * Locking ledger-history probe used to decide whether a Product may be deleted.
+     *
+     * PESSIMISTIC_WRITE makes this a current read rather than a snapshot read, so it
+     * observes a StockTransaction committed by another transaction while this one was
+     * waiting for the Product row lock. The non-locking existsByProductId cannot see
+     * such a row under MySQL REPEATABLE READ, which lets the deletion slip through to
+     * the foreign key instead of the domain rule.
+     *
+     * Returns at most one entity: the decision only needs to know whether history
+     * exists, and no ledger row is read in full beyond the first.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<StockTransaction> findFirstByProduct_IdOrderByIdAsc(Long productId);
 }
 
