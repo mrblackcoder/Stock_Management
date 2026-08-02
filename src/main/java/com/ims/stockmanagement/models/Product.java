@@ -55,7 +55,12 @@ public class Product {
     @JsonIgnore
     private User createdBy;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    /**
+     * Read-only association: stock transactions are audit history and are never removed
+     * as a side effect of deleting a Product. Deleting a Product that still has ledger
+     * rows is rejected in ProductService; the database foreign key stays as a backstop.
+     */
+    @OneToMany(mappedBy = "product")
     @JsonIgnore
     private List<StockTransaction> transactions = new ArrayList<>();
 

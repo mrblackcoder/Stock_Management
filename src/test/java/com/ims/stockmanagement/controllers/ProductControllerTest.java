@@ -7,6 +7,7 @@ import com.ims.stockmanagement.dtos.Response;
 import com.ims.stockmanagement.exceptions.AlreadyExistsException;
 import com.ims.stockmanagement.exceptions.GlobalExceptionHandler;
 import com.ims.stockmanagement.exceptions.NotFoundException;
+import com.ims.stockmanagement.exceptions.ProductHasTransactionHistoryException;
 import com.ims.stockmanagement.services.ExternalApiService;
 import com.ims.stockmanagement.services.ProductService;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,12 +25,14 @@ import java.math.BigDecimal;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -224,5 +227,30 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.message", containsString("already exists")));
 
         verify(productService, times(1)).createProduct(any(ProductDTO.class));
+    }
+
+    @Test
+    void deleteProduct_withTransactionHistoryReturns409() throws Exception {
+        when(productService.deleteProduct(1L)).thenThrow(new ProductHasTransactionHistoryException(
+                "Product cannot be deleted because it has stock transaction history."));
+
+        String body = mockMvc.perform(delete("/api/products/1"))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.statusCode").value(409))
+                .andExpect(jsonPath("$.message")
+                        .value("Product cannot be deleted because it has stock transaction history."))
+                .andExpect(jsonPath("$.timestamp").exists())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        // The client never sees database internals behind the conflict.
+        for (String leak : new String[]{"constraint", "foreign key", "SQL", "FK9", "stock_transactions", "database"}) {
+            assertFalse(body.toLowerCase().contains(leak.toLowerCase()),
+                    "response body must not disclose '" + leak + "': " + body);
+        }
+
+        verify(productService, times(1)).deleteProduct(1L);
     }
 }

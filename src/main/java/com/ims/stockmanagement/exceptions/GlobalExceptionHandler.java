@@ -82,6 +82,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(response);
     }
 
+    @ExceptionHandler(ProductHasTransactionHistoryException.class)
+    public ResponseEntity<Response> handleProductHasTransactionHistoryException(
+            ProductHasTransactionHistoryException ex) {
+        Response response = Response.builder()
+                .statusCode(HttpStatus.CONFLICT.value())
+                .message(ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
     @ExceptionHandler(PessimisticLockingFailureException.class)
     public ResponseEntity<Response> handlePessimisticLockingFailureException(PessimisticLockingFailureException ex) {
         log.warn("Stock transaction lock conflict", ex);

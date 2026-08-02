@@ -57,5 +57,12 @@ public interface StockTransactionRepository extends JpaRepository<StockTransacti
     List<StockTransaction> findByTransactionDateBetween(LocalDateTime startDate, LocalDateTime endDate);
 
     List<StockTransaction> findByProductIdOrderByTransactionDateDesc(Long productId);
+
+    /**
+     * Ledger-history probe used before deleting a Product. Deliberately an existence
+     * check rather than a row fetch: the caller only needs to know whether any audit
+     * history exists.
+     */
+    boolean existsByProductId(Long productId);
 }
 
