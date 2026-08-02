@@ -4,12 +4,15 @@ import com.ims.stockmanagement.dtos.ProductDTO;
 import com.ims.stockmanagement.dtos.ProductUpdateRequest;
 import com.ims.stockmanagement.dtos.Response;
 import com.ims.stockmanagement.exceptions.NotFoundException;
+import com.ims.stockmanagement.exceptions.ProductHasTransactionHistoryException;
 import com.ims.stockmanagement.models.Category;
 import com.ims.stockmanagement.models.Product;
+import com.ims.stockmanagement.models.StockTransaction;
 import com.ims.stockmanagement.models.Supplier;
 import com.ims.stockmanagement.models.User;
 import com.ims.stockmanagement.repositories.CategoryRepository;
 import com.ims.stockmanagement.repositories.ProductRepository;
+import com.ims.stockmanagement.repositories.StockTransactionRepository;
 import com.ims.stockmanagement.repositories.SupplierRepository;
 import com.ims.stockmanagement.repositories.UserRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -17,6 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -49,6 +53,9 @@ class ProductServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private StockTransactionRepository stockTransactionRepository;
 
     @Mock
     private ModelMapper modelMapper;
@@ -350,15 +357,16 @@ class ProductServiceTest {
     }
 
     @Test
-    void testDeleteProduct_Success() {
+    void deleteProduct_withoutHistorySucceeds() {
         // Arrange
         setupSecurityContext();
         doReturn(java.util.Collections.singletonList(
             new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN")))
             .when(authentication).getAuthorities();
-        
-        when(productRepository.findByIdWithRelations(1L)).thenReturn(Optional.of(testProduct));
+
+        when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(testProduct));
         when(userRepository.findByUsername("admin")).thenReturn(Optional.of(testUser));
+        when(stockTransactionRepository.findFirstByProduct_IdOrderByIdAsc(1L)).thenReturn(Optional.empty());
         doNothing().when(productRepository).delete(testProduct);
 
         // Act
@@ -368,7 +376,56 @@ class ProductServiceTest {
         assertNotNull(response);
         assertEquals(200, response.getStatusCode());
         assertEquals("Product deleted successfully", response.getMessage());
+
+        // The deletion lookup is the locking one, never the plain fetch-join read.
+        verify(productRepository, times(1)).findByIdForUpdate(1L);
+        verify(productRepository, never()).findByIdWithRelations(anyLong());
         verify(productRepository, times(1)).delete(testProduct);
+
+        // The history check is the locking read, taken while the product lock is held.
+        InOrder lockThenCheck = inOrder(productRepository, stockTransactionRepository);
+        lockThenCheck.verify(productRepository).findByIdForUpdate(1L);
+        lockThenCheck.verify(stockTransactionRepository).findFirstByProduct_IdOrderByIdAsc(1L);
+
+        // The non-locking probe must not drive the deletion decision.
+        verify(stockTransactionRepository, never()).existsByProductId(anyLong());
+    }
+
+    /**
+     * Ledger history is audit data: a product carrying transactions cannot be hard
+     * deleted, and ADMIN is no exception.
+     */
+    @Test
+    void deleteProduct_withHistoryIsRejected() {
+        // Arrange - caller is ADMIN, the strongest role available.
+        setupSecurityContext();
+        doReturn(java.util.Collections.singletonList(
+            new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN")))
+            .when(authentication).getAuthorities();
+
+        StockTransaction existingHistory = new StockTransaction();
+        existingHistory.setId(99L);
+
+        when(productRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(testProduct));
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(testUser));
+        when(stockTransactionRepository.findFirstByProduct_IdOrderByIdAsc(1L))
+                .thenReturn(Optional.of(existingHistory));
+
+        // Act
+        ProductHasTransactionHistoryException exception = assertThrows(
+                ProductHasTransactionHistoryException.class,
+                () -> productService.deleteProduct(1L));
+
+        // Assert
+        assertEquals("Product cannot be deleted because it has stock transaction history.",
+                exception.getMessage());
+
+        // Neither the product nor any ledger row is touched: the locking probe is the
+        // only interaction with the transaction repository.
+        verify(productRepository, never()).delete(any(Product.class));
+        verify(stockTransactionRepository, times(1)).findFirstByProduct_IdOrderByIdAsc(1L);
+        verify(stockTransactionRepository, never()).existsByProductId(anyLong());
+        verifyNoMoreInteractions(stockTransactionRepository);
     }
 
     @Test

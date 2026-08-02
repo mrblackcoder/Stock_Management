@@ -5,12 +5,14 @@ import com.ims.stockmanagement.dtos.ProductUpdateRequest;
 import com.ims.stockmanagement.dtos.Response;
 import com.ims.stockmanagement.exceptions.AlreadyExistsException;
 import com.ims.stockmanagement.exceptions.NotFoundException;
+import com.ims.stockmanagement.exceptions.ProductHasTransactionHistoryException;
 import com.ims.stockmanagement.models.Category;
 import com.ims.stockmanagement.models.Product;
 import com.ims.stockmanagement.models.Supplier;
 import com.ims.stockmanagement.models.User;
 import com.ims.stockmanagement.repositories.CategoryRepository;
 import com.ims.stockmanagement.repositories.ProductRepository;
+import com.ims.stockmanagement.repositories.StockTransactionRepository;
 import com.ims.stockmanagement.repositories.SupplierRepository;
 import com.ims.stockmanagement.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,10 +34,15 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProductService {
 
+    /** Fixed public wording: never leaks product, constraint or table details. */
+    static final String PRODUCT_HAS_TRANSACTION_HISTORY_MESSAGE =
+            "Product cannot be deleted because it has stock transaction history.";
+
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final SupplierRepository supplierRepository;
     private final UserRepository userRepository;
+    private final StockTransactionRepository stockTransactionRepository;
     private final ModelMapper modelMapper;
 
     /**
@@ -242,9 +249,6 @@ public class ProductService {
     @Transactional
     @PreAuthorize("isAuthenticated()")
     public Response deleteProduct(Long id) {
-        Product product = productRepository.findByIdWithRelations(id)
-                .orElseThrow(() -> new NotFoundException("Product not found with id: " + id));
-
         // Mevcut kullanıcıyı al
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -253,6 +257,11 @@ public class ProductService {
         String username = authentication.getName();
         User currentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new NotFoundException("User not found: " + username));
+
+        // Ürünü satır kilidiyle yükle: geçmiş kontrolü ile silme aynı kilit altında olmalı,
+        // aksi halde araya giren bir stok işlemi kontrolden sonra kayıt ekleyebilir.
+        Product product = productRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new NotFoundException("Product not found with id: " + id));
 
         // Kullanıcı kontrolü: Sadece ürünü oluşturan kullanıcı veya ADMIN silebilir
         boolean isAdmin = authentication.getAuthorities().stream()
@@ -263,6 +272,16 @@ public class ProductService {
 
         if (!isAdmin && !isOwner) {
             throw new SecurityException("You can only delete products that you created");
+        }
+
+        // Stok hareketi geçmişi denetim kaydıdır: ADMIN dahil hiç kimse ürün silerek
+        // bu geçmişi yok edemez. Kontrol, kilit hâlâ tutulurken yapılır.
+        //
+        // Kilitli okuma şart: MySQL REPEATABLE READ altında kilitsiz bir sorgu,
+        // bu işlem ürün kilidini beklerken commit edilmiş bir hareketi göremez ve
+        // silme, alan kuralı yerine yabancı anahtara takılırdı.
+        if (stockTransactionRepository.findFirstByProduct_IdOrderByIdAsc(id).isPresent()) {
+            throw new ProductHasTransactionHistoryException(PRODUCT_HAS_TRANSACTION_HISTORY_MESSAGE);
         }
 
         productRepository.delete(product);
