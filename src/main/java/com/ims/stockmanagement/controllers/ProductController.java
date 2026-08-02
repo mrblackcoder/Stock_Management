@@ -1,6 +1,7 @@
 package com.ims.stockmanagement.controllers;
 
 import com.ims.stockmanagement.dtos.ProductDTO;
+import com.ims.stockmanagement.dtos.ProductUpdateRequest;
 import com.ims.stockmanagement.dtos.Response;
 import com.ims.stockmanagement.services.ExternalApiService;
 import com.ims.stockmanagement.services.ProductService;
@@ -95,8 +96,8 @@ public class ProductController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Response> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductDTO productDTO) {
-        Response response = productService.updateProduct(id, productDTO);
+    public ResponseEntity<Response> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductUpdateRequest updateRequest) {
+        Response response = productService.updateProduct(id, updateRequest);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 

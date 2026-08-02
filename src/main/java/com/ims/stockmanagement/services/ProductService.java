@@ -1,6 +1,7 @@
 package com.ims.stockmanagement.services;
 
 import com.ims.stockmanagement.dtos.ProductDTO;
+import com.ims.stockmanagement.dtos.ProductUpdateRequest;
 import com.ims.stockmanagement.dtos.Response;
 import com.ims.stockmanagement.exceptions.AlreadyExistsException;
 import com.ims.stockmanagement.exceptions.NotFoundException;
@@ -181,39 +182,43 @@ public class ProductService {
     /**
      * Ürün güncelle (UPDATE - CRUD)
      * Method Level Security: Authenticated users can update products
+     *
+     * Stok bu yoldan hiç yazılmaz. Ürün, satır kilidiyle (findByIdForUpdate) okunur;
+     * kilit okuma ile commit arasında tutulduğu için eşzamanlı bir stok işlemi araya
+     * giremez ve Hibernate'in tüm sütunları içeren UPDATE'i, kilit altında okunan
+     * güncel stok değerini geri yazar.
      */
     @Transactional
     @PreAuthorize("isAuthenticated()")
-    public Response updateProduct(Long id, ProductDTO productDTO) {
-        Product existingProduct = productRepository.findByIdWithRelations(id)
+    public Response updateProduct(Long id, ProductUpdateRequest updateRequest) {
+        Product existingProduct = productRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + id));
 
         // SKU değiştiyse ve başka biri kullanıyorsa hata ver
-        if (!existingProduct.getSku().equals(productDTO.getSku()) &&
-                productRepository.existsBySku(productDTO.getSku())) {
-            throw new AlreadyExistsException("Product already exists with SKU: " + productDTO.getSku());
+        if (!existingProduct.getSku().equals(updateRequest.getSku()) &&
+                productRepository.existsBySku(updateRequest.getSku())) {
+            throw new AlreadyExistsException("Product already exists with SKU: " + updateRequest.getSku());
         }
 
         // Kategori kontrolü
-        Category category = categoryRepository.findById(productDTO.getCategoryId())
-                .orElseThrow(() -> new NotFoundException("Category not found with id: " + productDTO.getCategoryId()));
+        Category category = categoryRepository.findById(updateRequest.getCategoryId())
+                .orElseThrow(() -> new NotFoundException("Category not found with id: " + updateRequest.getCategoryId()));
 
         // Tedarikçi kontrolü (opsiyonel)
         Supplier supplier = null;
-        if (productDTO.getSupplierId() != null) {
-            supplier = supplierRepository.findById(productDTO.getSupplierId())
-                    .orElseThrow(() -> new NotFoundException("Supplier not found with id: " + productDTO.getSupplierId()));
+        if (updateRequest.getSupplierId() != null) {
+            supplier = supplierRepository.findById(updateRequest.getSupplierId())
+                    .orElseThrow(() -> new NotFoundException("Supplier not found with id: " + updateRequest.getSupplierId()));
         }
 
-        existingProduct.setName(productDTO.getName());
-        existingProduct.setSku(productDTO.getSku());
-        existingProduct.setDescription(productDTO.getDescription());
-        existingProduct.setPrice(productDTO.getPrice());
-        existingProduct.setStockQuantity(productDTO.getStockQuantity() != null ? productDTO.getStockQuantity() : existingProduct.getStockQuantity());
-        existingProduct.setReorderLevel(productDTO.getReorderLevel() != null ? productDTO.getReorderLevel() : existingProduct.getReorderLevel());
+        existingProduct.setName(updateRequest.getName());
+        existingProduct.setSku(updateRequest.getSku());
+        existingProduct.setDescription(updateRequest.getDescription());
+        existingProduct.setPrice(updateRequest.getPrice());
+        existingProduct.setReorderLevel(updateRequest.getReorderLevel() != null ? updateRequest.getReorderLevel() : existingProduct.getReorderLevel());
         existingProduct.setCategory(category);
         existingProduct.setSupplier(supplier);
-        existingProduct.setImageUrl(productDTO.getImageUrl());
+        existingProduct.setImageUrl(updateRequest.getImageUrl());
 
         Product updatedProduct = productRepository.save(existingProduct);
         ProductDTO updatedProductDTO = convertToDTO(updatedProduct);

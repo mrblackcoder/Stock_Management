@@ -157,22 +157,15 @@ public class StockTransactionService {
         Product product = productRepository.findByIdForUpdate(request.getProductId())
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + request.getProductId()));
 
-        // Kullanıcı kontrolü - request'ten gelmiyorsa authenticated user'ı al
-        User user;
-        if (request.getUserId() != null) {
-            user = userRepository.findById(request.getUserId())
-                    .orElseThrow(() -> new NotFoundException("User not found with id: " + request.getUserId()));
-        } else {
-            // Spring Security context'inden authenticated user'ı al
-            org.springframework.security.core.Authentication authentication =
-                    org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-            if (authentication == null || !authentication.isAuthenticated()) {
-                throw new SecurityException("No authenticated user found. Please login first.");
-            }
-            String username = authentication.getName();
-            user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new NotFoundException("User not found with username: " + username));
+        // Transaction actor is always the authenticated user, never client input.
+        org.springframework.security.core.Authentication authentication =
+                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new SecurityException("No authenticated user found. Please login first.");
         }
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new NotFoundException("User not found with username: " + username));
 
         // İşlem tipine göre stok kontrolü
         if (request.getTransactionType() == TransactionType.SALE) {
@@ -228,6 +221,13 @@ public class StockTransactionService {
 
         switch (transaction.getTransactionType()) {
             case PURCHASE:
+                int stockAfterPurchaseReversal = product.getStockQuantity() - transaction.getQuantity();
+                if (stockAfterPurchaseReversal < 0) {
+                    throw new InsufficientStockException(
+                            "Insufficient stock to reverse purchase transaction " + transaction.getId() +
+                            ". Available: " + product.getStockQuantity() +
+                            ", Required: " + transaction.getQuantity());
+                }
                 reverseType = TransactionType.SALE;
                 break;
             case SALE:
@@ -391,4 +391,3 @@ public class StockTransactionService {
         return dto;
     }
 }
-

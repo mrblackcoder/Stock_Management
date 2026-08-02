@@ -1,5 +1,6 @@
 package com.ims.stockmanagement.dtos;
 
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.ims.stockmanagement.enums.TransactionType;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -16,8 +17,6 @@ public class TransactionRequest {
     @NotNull(message = "Product ID is required")
     private Long productId;
 
-    private Long userId;
-
     @NotNull(message = "Transaction type is required")
     private TransactionType transactionType;
 
@@ -31,4 +30,13 @@ public class TransactionRequest {
 
     @Size(max = 500, message = "Notes cannot exceed 500 characters")
     private String notes;
+
+    /**
+     * The transaction actor is always derived from the authenticated principal.
+     * This local rejection prevents older clients from silently supplying an identity.
+     */
+    @JsonSetter("userId")
+    public void rejectClientSuppliedUserId(Long ignoredUserId) {
+        throw new IllegalArgumentException("userId must not be supplied; transaction actor is derived from authentication");
+    }
 }

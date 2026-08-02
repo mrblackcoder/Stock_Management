@@ -405,15 +405,7 @@ export default class ApiService {
     }
 
     static async createTransaction(transactionData) {
-        const user = this.getUser();
-        if (!user || !user.id) {
-            throw new Error("User not authenticated. Please login again.");
-        }
-        const dataWithUserId = {
-            ...transactionData,
-            userId: user.id
-        };
-        const response = await axios.post(`${this.BASE_URL}/transactions`, dataWithUserId, {
+        const response = await axios.post(`${this.BASE_URL}/transactions`, transactionData, {
             headers: this.getHeader()
         });
         return response.data;
@@ -433,4 +425,3 @@ export default class ApiService {
         return response.data;
     }
 }
-

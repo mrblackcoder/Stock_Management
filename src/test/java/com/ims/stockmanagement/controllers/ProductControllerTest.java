@@ -2,6 +2,7 @@ package com.ims.stockmanagement.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ims.stockmanagement.dtos.ProductDTO;
+import com.ims.stockmanagement.dtos.ProductUpdateRequest;
 import com.ims.stockmanagement.dtos.Response;
 import com.ims.stockmanagement.exceptions.AlreadyExistsException;
 import com.ims.stockmanagement.exceptions.GlobalExceptionHandler;
@@ -11,6 +12,7 @@ import com.ims.stockmanagement.services.ProductService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -21,6 +23,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.math.BigDecimal;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -30,6 +33,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -110,15 +114,26 @@ class ProductControllerTest {
         verify(productService, times(1)).getProductById(1L);
     }
 
+    private ProductUpdateRequest validUpdateRequest() {
+        ProductUpdateRequest request = new ProductUpdateRequest();
+        request.setName("Laptop Dell XPS 15");
+        request.setSku("LAP-001");
+        request.setDescription("Refreshed description");
+        request.setPrice(new BigDecimal("1500.00"));
+        request.setReorderLevel(10);
+        request.setCategoryId(1L);
+        return request;
+    }
+
     @Test
-    void updateProduct_returns200() throws Exception {
-        ProductDTO request = validProductDTO();
+    void updateProduct_withoutStockQuantityReturns200() throws Exception {
+        ProductUpdateRequest request = validUpdateRequest();
 
         Response serviceResponse = Response.builder()
                 .statusCode(200)
                 .message("Product updated successfully")
                 .build();
-        when(productService.updateProduct(eq(1L), any(ProductDTO.class))).thenReturn(serviceResponse);
+        when(productService.updateProduct(eq(1L), any(ProductUpdateRequest.class))).thenReturn(serviceResponse);
 
         mockMvc.perform(put("/api/products/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -126,7 +141,41 @@ class ProductControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value(200));
 
-        verify(productService, times(1)).updateProduct(eq(1L), any(ProductDTO.class));
+        // The body binds to the update-only type, carrying every editable field.
+        ArgumentCaptor<ProductUpdateRequest> bound = ArgumentCaptor.forClass(ProductUpdateRequest.class);
+        verify(productService, times(1)).updateProduct(eq(1L), bound.capture());
+        assertEquals("Laptop Dell XPS 15", bound.getValue().getName());
+        assertEquals("LAP-001", bound.getValue().getSku());
+        assertEquals("Refreshed description", bound.getValue().getDescription());
+        assertEquals(new BigDecimal("1500.00"), bound.getValue().getPrice());
+        assertEquals(10, bound.getValue().getReorderLevel());
+        assertEquals(1L, bound.getValue().getCategoryId());
+    }
+
+    @Test
+    void updateProduct_withStockQuantityReturns400AndDoesNotInvokeService() throws Exception {
+        // Otherwise-valid edit that additionally carries an absolute stock value.
+        String body = """
+                {
+                  "name": "Laptop Dell XPS 15",
+                  "sku": "LAP-001",
+                  "description": "Refreshed description",
+                  "price": 1500.00,
+                  "reorderLevel": 10,
+                  "categoryId": 1,
+                  "stockQuantity": 99
+                }
+                """;
+
+        mockMvc.perform(put("/api/products/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.statusCode").value(400));
+
+        // Rejection happens during JSON binding, before the service is reached.
+        verify(productService, never()).updateProduct(any(), any());
     }
 
     @Test
