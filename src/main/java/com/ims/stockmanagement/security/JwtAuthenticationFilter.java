@@ -1,7 +1,6 @@
 package com.ims.stockmanagement.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ims.stockmanagement.dtos.Response;
+import com.ims.stockmanagement.models.User;
 import com.ims.stockmanagement.repositories.UserRepository;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -14,7 +13,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -22,7 +20,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -31,7 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
-    private final ObjectMapper objectMapper;
+    private final SecurityErrorResponseWriter responseWriter;
 
     @Override
     protected void doFilterInternal(
@@ -52,8 +50,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             final String username = jwtService.extractUsername(jwt);
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                userRepository.findByUsername(username).ifPresent(userDetails -> {
+                Optional<User> loadedUser = userRepository.findByUsername(username);
+
+                if (loadedUser.isPresent()) {
+                    User userDetails = loadedUser.get();
+
                     if (jwtService.isTokenValid(jwt, userDetails)) {
+                        // Account state is re-checked on every request. A token stays
+                        // cryptographically valid until it expires, so without this a user
+                        // disabled after login would keep full access with the old token.
+                        if (!userDetails.isEnabled()) {
+                            SecurityContextHolder.clearContext();
+                            log.warn("Rejected access token presented for a disabled account");
+                            sendErrorResponse(response, HttpStatus.UNAUTHORIZED,
+                                    SecurityErrorMessages.AUTHENTICATION_INVALID);
+                            return;
+                        }
+
                         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                                 userDetails,
                                 null,
@@ -62,7 +75,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                         SecurityContextHolder.getContext().setAuthentication(authToken);
                     }
-                });
+                }
             }
 
             filterChain.doFilter(request, response);
@@ -86,15 +99,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private void sendErrorResponse(HttpServletResponse response, HttpStatus status, String message) throws IOException {
-        response.setStatus(status.value());
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-
-        Response errorResponse = Response.builder()
-                .statusCode(status.value())
-                .message(message)
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        objectMapper.writeValue(response.getOutputStream(), errorResponse);
+        responseWriter.write(response, status, message);
     }
 }

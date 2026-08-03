@@ -29,6 +29,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AuthService {
 
+    /**
+     * The single response to any failed login. Identical whether the username exists,
+     * the password was wrong, or how many attempts remain, so a caller cannot enumerate
+     * accounts or pace attempts against the lockout threshold.
+     */
+    private static final String INVALID_CREDENTIALS_MESSAGE = "Invalid username or password.";
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -111,7 +118,7 @@ public class AuthService {
 
             // 4. Fetch user details
             User user = userRepository.findByUsername(request.getUsername())
-                    .orElseThrow(() -> new InvalidCredentialsException("Invalid username or password"));
+                    .orElseThrow(() -> new InvalidCredentialsException(INVALID_CREDENTIALS_MESSAGE));
 
             // 5. Generate JWT token
             String token = jwtService.generateToken(user);
@@ -137,10 +144,10 @@ public class AuthService {
             int remainingAttempts = loginAttemptService.getRemainingAttempts(request.getUsername());
 
             if (remainingAttempts > 0) {
-                throw new InvalidCredentialsException(
-                    "Invalid username or password. " +
-                    remainingAttempts + " attempt(s) remaining before account lockout."
-                );
+                // The count is still tracked and still drives the lockout, but it is not
+                // disclosed: telling an attacker how many tries remain lets them stay
+                // under the threshold indefinitely.
+                throw new InvalidCredentialsException(INVALID_CREDENTIALS_MESSAGE);
             } else {
                 throw new AccountLockedException(
                     "Account locked due to too many failed login attempts. " +

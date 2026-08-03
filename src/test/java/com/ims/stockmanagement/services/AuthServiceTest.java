@@ -247,9 +247,49 @@ class AuthServiceTest {
             () -> authService.login(loginRequest)
         );
 
-        assertTrue(exception.getMessage().contains("Invalid"));
+        assertEquals("Invalid username or password.", exception.getMessage());
         verify(loginAttemptService, times(1)).loginFailed(loginRequest.getUsername());
         verify(jwtService, never()).generateToken(any(User.class));
+    }
+
+    @Test
+    void testLogin_FailureMessageDoesNotDiscloseRemainingAttempts() {
+        // Two failures at different points in the lockout countdown must be indistinguishable:
+        // a caller that can read the remaining count can stay just under the threshold forever.
+        when(loginAttemptService.isBlocked(loginRequest.getUsername())).thenReturn(false);
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+            .thenThrow(new BadCredentialsException("Bad credentials"));
+        when(loginAttemptService.getRemainingAttempts(loginRequest.getUsername())).thenReturn(4, 1);
+
+        String firstMessage = assertThrows(InvalidCredentialsException.class,
+            () -> authService.login(loginRequest)).getMessage();
+        String lastMessage = assertThrows(InvalidCredentialsException.class,
+            () -> authService.login(loginRequest)).getMessage();
+
+        assertEquals("Invalid username or password.", firstMessage);
+        assertEquals(firstMessage, lastMessage, "the message must not vary with the attempt count");
+        assertFalse(firstMessage.matches(".*\\d.*"), "no attempt count may appear in the message");
+        assertFalse(firstMessage.toLowerCase().contains("attempt"));
+        assertFalse(firstMessage.toLowerCase().contains("remaining"));
+
+        // The counter itself is still maintained; only its disclosure is removed.
+        verify(loginAttemptService, times(2)).loginFailed(loginRequest.getUsername());
+    }
+
+    @Test
+    void testLogin_LockoutThresholdStillTriggersAccountLocked() {
+        when(loginAttemptService.isBlocked(loginRequest.getUsername())).thenReturn(false);
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+            .thenThrow(new BadCredentialsException("Bad credentials"));
+        when(loginAttemptService.getRemainingAttempts(loginRequest.getUsername())).thenReturn(0);
+
+        AccountLockedException exception = assertThrows(
+            AccountLockedException.class,
+            () -> authService.login(loginRequest)
+        );
+
+        assertTrue(exception.getMessage().contains("locked"));
+        verify(loginAttemptService, times(1)).loginFailed(loginRequest.getUsername());
     }
 
     @Test
