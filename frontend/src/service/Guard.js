@@ -2,11 +2,22 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import ApiService from './ApiService';
 
-export const ProtectedRoute = ({ children }) => {
-    const token = ApiService.getToken(); // Bu artık expire kontrolü de yapıyor
+/**
+ * True when the browser still holds something worth continuing with.
+ *
+ * getToken() reports a locally expired access token as absent, so testing it alone
+ * made the guard tear down the session - refresh token included - before any request
+ * could reach the interceptor that knows how to renew it. A stored refresh token is
+ * treated purely as permission to let that one-time refresh run; it is never taken
+ * as proof of authorization. The backend still decides every individual request, and
+ * a refresh that fails clears the session from the interceptor.
+ */
+const hasResumableSession = () =>
+    Boolean(ApiService.getToken() || ApiService.getRefreshToken());
 
-    if (!token) {
-        // Token yok veya expired
+export const ProtectedRoute = ({ children }) => {
+    if (!hasResumableSession()) {
+        // Nothing left to resume: drop any stale metadata and send the user to login.
         ApiService.clearAuth();
         return <Navigate to="/login" replace />;
     }
@@ -15,14 +26,14 @@ export const ProtectedRoute = ({ children }) => {
 };
 
 export const AdminRoute = ({ children }) => {
-    const token = ApiService.getToken();
     const role = ApiService.getRole();
 
-    if (!token) {
+    if (!hasResumableSession()) {
         ApiService.clearAuth();
         return <Navigate to="/login" replace />;
     }
 
+    // Role enforcement is unchanged: an expired access token never widens access.
     if (role !== 'ADMIN') {
         return <Navigate to="/dashboard" replace />;
     }
