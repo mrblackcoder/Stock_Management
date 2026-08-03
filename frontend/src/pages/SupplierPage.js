@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../service/ApiService';
+import { extractApiMessage, isAuthFailure } from '../service/apiError';
 import './DashboardPage.css';
 
 function SupplierPage() {
@@ -32,8 +33,8 @@ function SupplierPage() {
             const response = await ApiService.getAllSuppliers();
             setSuppliers(response.supplierList || []);
         } catch (err) {
-            setError('Tedarikçiler yüklenemedi: ' + err.message);
-            if (err.message.includes('403') || err.message.includes('401')) {
+            setError(extractApiMessage(err, 'Tedarikçiler yüklenemedi.'));
+            if (isAuthFailure(err)) {
                 ApiService.logout();
                 navigate('/login');
             }
@@ -70,7 +71,7 @@ function SupplierPage() {
             setFormData({ name: '', email: '', phone: '', address: '', description: '' });
             fetchSuppliers();
         } catch (err) {
-            setError('Tedarikçi eklenemedi: ' + err.message);
+            setError(extractApiMessage(err, 'Tedarikçi eklenemedi.'));
         }
     };
 
@@ -80,7 +81,7 @@ function SupplierPage() {
                 await ApiService.deleteSupplier(id);
                 fetchSuppliers();
             } catch (err) {
-                setError('Silme başarısız: ' + err.message);
+                setError(extractApiMessage(err, 'Silme başarısız.'));
             }
         }
     };
