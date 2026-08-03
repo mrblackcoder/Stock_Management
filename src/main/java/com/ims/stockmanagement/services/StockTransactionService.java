@@ -67,11 +67,16 @@ public class StockTransactionService {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
 
+        // Same contract as the product list: explicit pagination fields, and no raw
+        // Page or StockTransaction entity in the payload.
         return Response.builder()
                 .statusCode(200)
                 .message("Transactions retrieved successfully")
                 .transactionList(transactionDTOs)
-                .data(transactionPage)
+                .page(transactionPage.getNumber())
+                .size(transactionPage.getSize())
+                .totalPages(transactionPage.getTotalPages())
+                .totalElements(transactionPage.getTotalElements())
                 .timestamp(LocalDateTime.now())
                 .build();
     }

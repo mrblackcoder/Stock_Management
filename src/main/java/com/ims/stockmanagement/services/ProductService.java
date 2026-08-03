@@ -86,11 +86,17 @@ public class ProductService {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
 
+        // Pagination is reported as explicit top-level fields. The Page itself is not
+        // returned: serializing it exposed raw Product entities and depended on
+        // PageImpl's unstable JSON shape.
         return Response.builder()
                 .statusCode(200)
                 .message("Products retrieved successfully")
                 .productList(productDTOs)
-                .data(productPage)
+                .page(productPage.getNumber())
+                .size(productPage.getSize())
+                .totalPages(productPage.getTotalPages())
+                .totalElements(productPage.getTotalElements())
                 .timestamp(LocalDateTime.now())
                 .build();
     }

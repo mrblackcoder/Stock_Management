@@ -24,6 +24,14 @@ public class Response {
     private Object data;
     private LocalDateTime timestamp;
 
+    // Pagination metadata for list endpoints. Explicit top-level fields rather than a
+    // serialized Page: PageImpl's JSON shape is not a supported contract, and putting
+    // the Page in `data` also exposed the raw entities it wraps.
+    private Integer page;
+    private Integer size;
+    private Integer totalPages;
+    private Long totalElements;
+
     // Specific response fields for different entities
     private UserDTO user;
     private CategoryDTO category;
