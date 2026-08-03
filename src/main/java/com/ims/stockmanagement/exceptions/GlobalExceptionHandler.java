@@ -1,12 +1,14 @@
 package com.ims.stockmanagement.exceptions;
 
 import com.ims.stockmanagement.dtos.Response;
+import com.ims.stockmanagement.security.SecurityErrorMessages;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -105,23 +107,49 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
     }
 
+    /**
+     * Database constraint conflicts (foreign keys, unique indexes, not-null columns).
+     *
+     * The driver message for these carries the constraint name, the table and column
+     * names and often the offending SQL, so it is logged and never returned. The caller
+     * learns only that the operation conflicts with data that already exists.
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Response> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
+        log.error("Database integrity constraint violated", ex);
+
+        Response response = Response.builder()
+                .statusCode(HttpStatus.CONFLICT.value())
+                .message("The operation conflicts with existing data.")
+                .timestamp(LocalDateTime.now())
+                .build();
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
     // ==================== Security Exceptions ====================
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Response> handleBadCredentialsException(BadCredentialsException ex) {
         Response response = Response.builder()
                 .statusCode(HttpStatus.UNAUTHORIZED.value())
-                .message("Invalid username or password")
+                .message("Invalid username or password.")
                 .timestamp(LocalDateTime.now())
                 .build();
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
+    /**
+     * Denials raised by method security (@PreAuthorize) and by the service-layer
+     * ownership rules. Uses the same body as RestAccessDeniedHandler so a caller cannot
+     * tell where in the stack the denial was decided.
+     */
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Response> handleAccessDeniedException(AccessDeniedException ex) {
+        log.debug("Authorization denied", ex);
+
         Response response = Response.builder()
                 .statusCode(HttpStatus.FORBIDDEN.value())
-                .message("Access denied. You don't have permission to access this resource.")
+                .message(SecurityErrorMessages.ACCESS_FORBIDDEN)
                 .timestamp(LocalDateTime.now())
                 .build();
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
@@ -256,11 +284,19 @@ public class GlobalExceptionHandler {
 
     // ==================== Generic Exception ====================
 
+    /**
+     * Last-resort handler for unmapped runtime failures.
+     *
+     * The exception message is whatever the failing layer produced - it can contain SQL,
+     * file paths, class names or user data - so it is logged in full and never echoed.
+     */
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Response> handleRuntimeException(RuntimeException ex) {
+        log.error("Unhandled runtime exception", ex);
+
         Response response = Response.builder()
                 .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .message("An unexpected error occurred: " + ex.getMessage())
+                .message("An unexpected error occurred.")
                 .timestamp(LocalDateTime.now())
                 .build();
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);

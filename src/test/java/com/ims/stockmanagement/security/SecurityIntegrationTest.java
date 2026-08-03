@@ -9,22 +9,31 @@ import com.ims.stockmanagement.repositories.CategoryRepository;
 import com.ims.stockmanagement.repositories.ProductRepository;
 import com.ims.stockmanagement.repositories.StockTransactionRepository;
 import com.ims.stockmanagement.repositories.UserRepository;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.crypto.SecretKey;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -41,6 +50,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @Transactional
 class SecurityIntegrationTest {
+
+    private static final String AUTHENTICATION_REQUIRED_MESSAGE =
+            "Authentication is required to access this resource.";
+    private static final String ACCESS_FORBIDDEN_MESSAGE =
+            "You do not have permission to access this resource.";
+    private static final String AUTHENTICATION_INVALID_MESSAGE =
+            "Authentication is invalid.";
+
+    @Value("${jwt.secret}")
+    private String jwtSecret;
 
     @Autowired
     private MockMvc mockMvc;
@@ -98,28 +117,157 @@ class SecurityIntegrationTest {
                 .formatted(productId, extraField);
     }
 
+    private SecretKey signingKey() {
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /** Correctly signed for this application, but already past its expiry. */
+    private String expiredTokenFor(User user) {
+        long now = System.currentTimeMillis();
+        return Jwts.builder()
+                .subject(user.getUsername())
+                .issuedAt(new Date(now - 7_200_000))
+                .expiration(new Date(now - 3_600_000))
+                .signWith(signingKey())
+                .compact();
+    }
+
+    /**
+     * Header and payload this application would accept, carrying a signature produced
+     * with a different key - the shape of a forged or in-flight-modified token.
+     */
+    private String tamperedSignatureTokenFor(User user) {
+        String valid = jwtService.generateToken(user);
+        SecretKey foreignKey = Keys.hmacShaKeyFor(
+                "a-completely-different-signing-key-of-sufficient-length-256".getBytes(StandardCharsets.UTF_8));
+        String forged = Jwts.builder()
+                .subject(user.getUsername())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 3_600_000))
+                .signWith(foreignKey)
+                .compact();
+
+        return valid.substring(0, valid.lastIndexOf('.') + 1)
+                + forged.substring(forged.lastIndexOf('.') + 1);
+    }
+
     @AfterEach
     void clearSecurityContext() {
         org.springframework.security.core.context.SecurityContextHolder.clearContext();
     }
 
     @Test
-    void protectedEndpointWithoutTokenReturns403() throws Exception {
-        // No Authorization header: the chain rejects the anonymous request via the default entry point.
-        // Records current baseline behavior (403); not a claim that 403 is the desired long-term API.
+    void protectedEndpointWithoutTokenReturns401() throws Exception {
+        // No Authorization header: the configured entry point answers "authenticate first"
+        // with a stable JSON 401, instead of the framework default 403 that made a missing
+        // credential indistinguishable from a real authorization denial.
         mockMvc.perform(get("/api/products/1"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.statusCode").value(401))
+                .andExpect(jsonPath("$.message").value(AUTHENTICATION_REQUIRED_MESSAGE))
+                .andExpect(jsonPath("$.timestamp").exists());
     }
 
     @Test
     void protectedEndpointWithInvalidTokenReturns401() throws Exception {
         // A malformed Bearer token is rejected by JwtAuthenticationFilter, which writes a JSON 401.
-        mockMvc.perform(get("/api/products/1")
+        String body = mockMvc.perform(get("/api/products/1")
                         .header("Authorization", "Bearer not-a-real-token"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.statusCode").value(401))
-                .andExpect(jsonPath("$.message").isNotEmpty());
+                .andExpect(jsonPath("$.message").isNotEmpty())
+                .andReturn().getResponse().getContentAsString();
+
+        assertSafeSecurityErrorBody(body);
+    }
+
+    @Test
+    void adminEndpointWithUserTokenReturns403() throws Exception {
+        User user = saveUserFixture("secuser");
+        String token = jwtService.generateToken(user);
+
+        // The same valid USER token authenticates successfully but is denied an ADMIN-only method.
+        String body = mockMvc.perform(get("/api/users")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.statusCode").value(403))
+                .andExpect(jsonPath("$.message").value(ACCESS_FORBIDDEN_MESSAGE))
+                .andExpect(jsonPath("$.timestamp").exists())
+                .andReturn().getResponse().getContentAsString();
+
+        assertSafeSecurityErrorBody(body);
+    }
+
+    @Test
+    void disabledUserTokenReturns401() throws Exception {
+        User user = saveUserFixture("secuser");
+        // Token minted while the account was still usable, exactly like one already in a
+        // client's hands when an administrator disables the account.
+        String token = jwtService.generateToken(user);
+
+        user.setEnabled(false);
+        userRepository.save(user);
+
+        String body = mockMvc.perform(get("/api/products/999999")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.statusCode").value(401))
+                .andExpect(jsonPath("$.message").value(AUTHENTICATION_INVALID_MESSAGE))
+                .andExpect(jsonPath("$.timestamp").exists())
+                .andReturn().getResponse().getContentAsString();
+
+        assertSafeSecurityErrorBody(body);
+        assertNull(SecurityContextHolder.getContext().getAuthentication(),
+                "a disabled account must never reach the SecurityContext");
+    }
+
+    @Test
+    void expiredTokenReturns401() throws Exception {
+        User user = saveUserFixture("secuser");
+        String expiredToken = expiredTokenFor(user);
+
+        String body = mockMvc.perform(get("/api/products/999999")
+                        .header("Authorization", "Bearer " + expiredToken))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.statusCode").value(401))
+                .andExpect(jsonPath("$.message").isNotEmpty())
+                .andReturn().getResponse().getContentAsString();
+
+        assertSafeSecurityErrorBody(body);
+    }
+
+    @Test
+    void tamperedSignatureReturns401() throws Exception {
+        User user = saveUserFixture("secuser");
+        String tamperedToken = tamperedSignatureTokenFor(user);
+
+        String body = mockMvc.perform(get("/api/products/999999")
+                        .header("Authorization", "Bearer " + tamperedToken))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.statusCode").value(401))
+                .andExpect(jsonPath("$.message").isNotEmpty())
+                .andReturn().getResponse().getContentAsString();
+
+        assertSafeSecurityErrorBody(body);
+    }
+
+    /**
+     * A security error body may state what the caller must do next and nothing else:
+     * no exception class, no stack frame, no token content, no endpoint internals.
+     */
+    private void assertSafeSecurityErrorBody(String body) {
+        String lower = body.toLowerCase();
+        for (String leak : List.of("exception", "java.", "org.springframework", "io.jsonwebtoken",
+                "stacktrace", "at com.ims", "bearer", "jwt", "sql")) {
+            assertFalse(lower.contains(leak),
+                    "security error body must not expose internals, found '" + leak + "' in: " + body);
+        }
     }
 
     @Test
@@ -135,17 +283,6 @@ class SecurityIntegrationTest {
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.statusCode").value(404));
-    }
-
-    @Test
-    void adminEndpointWithUserTokenReturns403() throws Exception {
-        User user = saveUserFixture("secuser");
-        String token = jwtService.generateToken(user);
-
-        // The same valid USER token authenticates successfully but is denied an ADMIN-only method.
-        mockMvc.perform(get("/api/users")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isForbidden());
     }
 
     @Test

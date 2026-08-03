@@ -39,6 +39,8 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserDetailsService userDetailsService;
     private final Environment environment;
+    private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
+    private final RestAccessDeniedHandler restAccessDeniedHandler;
 
     // CORS allowed origins from environment variable (comma-separated)
     @Value("${cors.allowed.origins:http://localhost:3000,http://localhost:80,http://127.0.0.1:3000}")
@@ -131,6 +133,15 @@ public class SecurityConfig {
 
                         // Default: require authentication
                         .anyRequest().authenticated()
+                )
+                // Stable, body-identical security failures.
+                // Without an explicit entry point the stateless chain answers a request
+                // that carries no credentials with 403, which is indistinguishable from a
+                // real authorization denial. 401 now means "authenticate", 403 means
+                // "authenticated, still not allowed".
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(restAuthenticationEntryPoint)
+                        .accessDeniedHandler(restAccessDeniedHandler)
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)

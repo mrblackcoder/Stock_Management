@@ -5,6 +5,7 @@ import com.ims.stockmanagement.dtos.TransactionDTO;
 import com.ims.stockmanagement.dtos.TransactionRequest;
 import com.ims.stockmanagement.enums.TransactionStatus;
 import com.ims.stockmanagement.enums.TransactionType;
+import com.ims.stockmanagement.enums.UserRole;
 import com.ims.stockmanagement.exceptions.InsufficientStockException;
 import com.ims.stockmanagement.exceptions.NotFoundException;
 import com.ims.stockmanagement.models.Product;
@@ -17,6 +18,10 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -158,14 +163,7 @@ public class StockTransactionService {
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + request.getProductId()));
 
         // Transaction actor is always the authenticated user, never client input.
-        org.springframework.security.core.Authentication authentication =
-                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new SecurityException("No authenticated user found. Please login first.");
-        }
-        String username = authentication.getName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new NotFoundException("User not found with username: " + username));
+        User user = requireAuthenticatedUser();
 
         // İşlem tipine göre stok kontrolü
         if (request.getTransactionType() == TransactionType.SALE) {
@@ -272,8 +270,21 @@ public class StockTransactionService {
     /**
      * Kullanıcıya göre işlemleri getir
      * N+1 optimized: Uses FETCH JOIN to load product and user in single query
+     *
+     * Authorization: an ADMIN may read any user's history; a normal USER may read only
+     * their own. Enforced here rather than in the controller so every caller of this
+     * service - not only the HTTP route - is subject to the same rule.
      */
     public Response getTransactionsByUser(Long userId) {
+        User currentUser = requireAuthenticatedUser();
+
+        // Decided before the target is loaded, so a denied caller cannot use the
+        // 403/404 difference to probe which user ids exist.
+        if (!isAdmin(currentUser) && !currentUser.getId().equals(userId)) {
+            throw new AccessDeniedException(
+                    "User " + currentUser.getId() + " may not read the transaction history of user " + userId);
+        }
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
 
@@ -329,11 +340,20 @@ public class StockTransactionService {
     /**
      * İşlem güncelle (UPDATE - CRUD)
      * Not: Sadece notes ve status güncellenebilir, stok değişikliği için yeni işlem oluşturulmalı
+     *
+     * Authorization: an ADMIN may annotate any transaction; a normal USER may annotate
+     * only a transaction whose recorded actor is that same authenticated user.
      */
     @Transactional
     public Response updateTransaction(Long id, TransactionRequest request) {
         StockTransaction transaction = transactionRepository.findByIdWithProductAndUser(id)
                 .orElseThrow(() -> new NotFoundException("Transaction not found with id: " + id));
+
+        User currentUser = requireAuthenticatedUser();
+        if (!isAdmin(currentUser) && !isActor(currentUser, transaction)) {
+            throw new AccessDeniedException(
+                    "User " + currentUser.getId() + " may not update transaction " + id);
+        }
 
         // Sadece notes güncellenebilir (stok tutarlılığı için diğer alanlar değiştirilemez)
         if (request.getNotes() != null) {
@@ -349,6 +369,34 @@ public class StockTransactionService {
                 .transaction(transactionDTO)
                 .timestamp(LocalDateTime.now())
                 .build();
+    }
+
+    /**
+     * Resolves the caller as a persisted User.
+     *
+     * Only the authenticated principal's name is trusted; the row is then reloaded from
+     * the database so role and identity come from persisted state rather than from
+     * anything the request could influence.
+     */
+    private User requireAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || authentication instanceof AnonymousAuthenticationToken) {
+            throw new SecurityException("No authenticated user found. Please login first.");
+        }
+
+        String username = authentication.getName();
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new NotFoundException("User not found with username: " + username));
+    }
+
+    private boolean isAdmin(User user) {
+        return user.getRole() == UserRole.ADMIN;
+    }
+
+    private boolean isActor(User user, StockTransaction transaction) {
+        return transaction.getUser() != null && user.getId().equals(transaction.getUser().getId());
     }
 
     /**
