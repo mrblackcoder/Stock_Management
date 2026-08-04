@@ -2,9 +2,12 @@ package com.ims.stockmanagement.controllers;
 
 import com.ims.stockmanagement.dtos.Response;
 import com.ims.stockmanagement.dtos.UserDTO;
+import com.ims.stockmanagement.dtos.UserProfileUpdateRequest;
 import com.ims.stockmanagement.exceptions.NotFoundException;
 import com.ims.stockmanagement.models.User;
 import com.ims.stockmanagement.repositories.UserRepository;
+import com.ims.stockmanagement.services.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +26,7 @@ import java.util.stream.Collectors;
 public class UserController {
 
     private final UserRepository userRepository;
+    private final UserService userService;
     private final ModelMapper modelMapper;
 
     @GetMapping("/profile")
@@ -51,41 +55,15 @@ public class UserController {
 
     @PutMapping("/profile")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Response> updateUserProfile(@RequestBody UserDTO userDTO) {
+    public ResponseEntity<Response> updateUserProfile(@Valid @RequestBody UserProfileUpdateRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new SecurityException("No authenticated user found");
         }
-        String username = authentication.getName();
 
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new NotFoundException("User not found: " + username));
-
-        // Only allow updating email and fullName (not username, role, or password)
-        if (userDTO.getEmail() != null && !userDTO.getEmail().isBlank()) {
-            // Check if email is already used by another user
-            userRepository.findByEmail(userDTO.getEmail())
-                    .filter(existingUser -> !existingUser.getId().equals(user.getId()))
-                    .ifPresent(existingUser -> {
-                        throw new IllegalArgumentException("Email already in use: " + userDTO.getEmail());
-                    });
-            user.setEmail(userDTO.getEmail());
-        }
-
-        if (userDTO.getFullName() != null && !userDTO.getFullName().isBlank()) {
-            user.setFullName(userDTO.getFullName());
-        }
-
-        User updatedUser = userRepository.save(user);
-        UserDTO updatedUserDTO = modelMapper.map(updatedUser, UserDTO.class);
-
-        Response response = Response.builder()
-                .statusCode(200)
-                .message("User profile updated successfully")
-                .user(updatedUserDTO)
-                .timestamp(LocalDateTime.now())
-                .build();
-
+        // Only the authenticated name crosses into the service; the request body
+        // carries no identity, so it cannot select which account is edited.
+        Response response = userService.updateOwnProfile(authentication.getName(), request);
         return ResponseEntity.ok(response);
     }
 
