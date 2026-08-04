@@ -1,75 +1,115 @@
 import axios from "axios";
 import CryptoJS from "crypto-js";
 
-// Flag to prevent multiple refresh attempts
+/**
+ * Protected traffic. Carries the 401 -> refresh -> retry interceptor.
+ */
+export const apiClient = axios.create();
+
+/**
+ * Authentication traffic: login, register and the refresh call itself.
+ *
+ * Deliberately interceptor-free. When the refresh request shared the intercepted
+ * client, its own 401 re-entered the interceptor, saw isRefreshing === true and
+ * parked itself in the queue that only its own completion could drain - the
+ * refresh awaited a promise that could never settle, so the flag stayed true and
+ * every later 401 hung behind it. Separating the clients makes that impossible by
+ * construction rather than by flag bookkeeping.
+ */
+export const authClient = axios.create();
+
+// Guards a single in-flight refresh; requests that arrive during it wait here.
 let isRefreshing = false;
 let failedQueue = [];
 
 const processQueue = (error, token = null) => {
-    failedQueue.forEach(prom => {
+    // Detach first so a queued rejection handler cannot observe a stale queue.
+    const pending = failedQueue;
+    failedQueue = [];
+    pending.forEach(({ resolve, reject }) => {
         if (error) {
-            prom.reject(error);
+            reject(error);
         } else {
-            prom.resolve(token);
+            resolve(token);
         }
     });
-    failedQueue = [];
 };
 
-// Axios interceptor - 401 hatalarında refresh token dene
-axios.interceptors.response.use(
+const redirectToLogin = () => {
+    if (typeof window !== "undefined" && window.location &&
+        !String(window.location.pathname).includes("/login")) {
+        window.location.href = "/login";
+    }
+};
+
+/** Terminal failure: the session cannot be recovered, so drop it and send the user to login. */
+const failAuthentication = (error) => {
+    ApiService.clearAuth();
+    redirectToLogin();
+    return Promise.reject(error);
+};
+
+const withAuthorization = (config, token) => {
+    config.headers = { ...(config.headers || {}), Authorization: `Bearer ${token}` };
+    return config;
+};
+
+apiClient.interceptors.response.use(
     response => response,
     async error => {
         const originalRequest = error.config;
-        
-        if (error.response?.status === 401 && !originalRequest._retry) {
-            if (isRefreshing) {
-                return new Promise((resolve, reject) => {
-                    failedQueue.push({ resolve, reject });
-                }).then(token => {
-                    originalRequest.headers['Authorization'] = 'Bearer ' + token;
-                    return axios(originalRequest);
-                }).catch(err => {
-                    return Promise.reject(err);
-                });
-            }
 
-            originalRequest._retry = true;
-            isRefreshing = true;
-
-            const refreshToken = ApiService.getRefreshToken();
-            
-            if (refreshToken) {
-                try {
-                    const response = await axios.post(`${ApiService.BASE_URL}/auth/refresh-token`, {
-                        refreshToken: refreshToken
-                    });
-                    
-                    const { token: newToken } = response.data;
-                    ApiService.saveToken(newToken);
-                    
-                    processQueue(null, newToken);
-                    originalRequest.headers['Authorization'] = 'Bearer ' + newToken;
-                    return axios(originalRequest);
-                } catch (refreshError) {
-                    processQueue(refreshError, null);
-                    ApiService.clearAuth();
-                    if (!window.location.pathname.includes('/login')) {
-                        window.location.href = '/login';
-                    }
-                    return Promise.reject(refreshError);
-                } finally {
-                    isRefreshing = false;
-                }
-            } else {
-                // No refresh token, clear and redirect
-                ApiService.clearAuth();
-                if (!window.location.pathname.includes('/login')) {
-                    window.location.href = '/login';
-                }
-            }
+        if (error.response?.status !== 401 || !originalRequest) {
+            return Promise.reject(error);
         }
-        return Promise.reject(error);
+
+        // Already retried with a freshly minted token and still refused: the account
+        // is disabled or otherwise unusable. One attempt, then a hard logout - no
+        // message matching, no second refresh, no loop.
+        if (originalRequest._retry) {
+            return failAuthentication(error);
+        }
+
+        // Read the refresh token before claiming the refresh slot, so the
+        // nothing-to-refresh case can never leave isRefreshing stuck true.
+        const refreshToken = ApiService.getRefreshToken();
+        if (!refreshToken) {
+            return failAuthentication(error);
+        }
+
+        if (isRefreshing) {
+            originalRequest._retry = true;
+            return new Promise((resolve, reject) => {
+                failedQueue.push({ resolve, reject });
+            }).then(token => apiClient(withAuthorization(originalRequest, token)));
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+            const { data } = await authClient.post(`${ApiService.BASE_URL}/auth/refresh-token`, {
+                refreshToken: refreshToken
+            });
+
+            const newToken = data?.token;
+            if (!newToken) {
+                throw new Error("Refresh response did not contain an access token");
+            }
+
+            ApiService.saveToken(newToken);
+            if (data.refreshToken) {
+                ApiService.saveRefreshToken(data.refreshToken);
+            }
+
+            processQueue(null, newToken);
+            return apiClient(withAuthorization(originalRequest, newToken));
+        } catch (refreshError) {
+            processQueue(refreshError, null);
+            return failAuthentication(refreshError);
+        } finally {
+            isRefreshing = false;
+        }
     }
 );
 
@@ -116,10 +156,12 @@ export default class ApiService {
     static getToken() {
         const encryptedToken = localStorage.getItem("token");
         if (!encryptedToken) return null;
-        
+
         const token = this.decrypt(encryptedToken);
         if (!token || this.isTokenExpired(token)) {
-            this.clearAuth(); // Token expired, clear all auth data
+            // Locally expired only. The refresh token is deliberately preserved:
+            // clearing it here destroyed the very credential the 401 handler needs,
+            // which made refresh unreachable for its main case.
             return null;
         }
         return token;
@@ -197,28 +239,34 @@ export default class ApiService {
     }
 
     static getHeader() {
+        const headers = { "Content-Type": "application/json" };
+
+        // Only send Authorization when there is a usable token. Sending
+        // "Bearer null" made an expired session look like a malformed token.
         const token = this.getToken();
-        return {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-        };
+        if (token) {
+            headers.Authorization = `Bearer ${token}`;
+        }
+        return headers;
     }
 
     /** AUTH API */
 
+    // Authentication calls use the interceptor-free client: a rejected login or
+    // register must reach its caller unchanged and must never start a token refresh.
     static async registerUser(registerData) {
-        const response = await axios.post(`${this.BASE_URL}/auth/register`, registerData);
+        const response = await authClient.post(`${this.BASE_URL}/auth/register`, registerData);
         return response.data;
     }
 
     static async loginUser(loginData) {
-        const response = await axios.post(`${this.BASE_URL}/auth/login`, loginData);
+        const response = await authClient.post(`${this.BASE_URL}/auth/login`, loginData);
         return response.data;
     }
 
     static async logout() {
         try {
-            await axios.post(`${this.BASE_URL}/auth/logout`, {}, {
+            await apiClient.post(`${this.BASE_URL}/auth/logout`, {}, {
                 headers: this.getHeader()
             });
         } catch (e) {
@@ -232,7 +280,7 @@ export default class ApiService {
         if (!refreshToken) {
             throw new Error("No refresh token available");
         }
-        const response = await axios.post(`${this.BASE_URL}/auth/refresh-token`, {
+        const response = await authClient.post(`${this.BASE_URL}/auth/refresh-token`, {
             refreshToken: refreshToken
         });
         return response.data;
@@ -241,7 +289,7 @@ export default class ApiService {
     /** GENERIC HTTP METHODS */
 
     static async get(url) {
-        const response = await axios.get(`${this.BASE_URL}${url}`, {
+        const response = await apiClient.get(`${this.BASE_URL}${url}`, {
             headers: this.getHeader()
         });
         return response.data;
@@ -250,14 +298,14 @@ export default class ApiService {
     /** USER API */
 
     static async getAllUsers() {
-        const response = await axios.get(`${this.BASE_URL}/users/all`, {
+        const response = await apiClient.get(`${this.BASE_URL}/users`, {
             headers: this.getHeader()
         });
         return response.data;
     }
 
     static async getUserProfile() {
-        const response = await axios.get(`${this.BASE_URL}/users/profile`, {
+        const response = await apiClient.get(`${this.BASE_URL}/users/profile`, {
             headers: this.getHeader()
         });
         return response.data;
@@ -266,49 +314,49 @@ export default class ApiService {
     /** PRODUCT API */
 
     static async getAllProducts(page = 0, size = 10, sortBy = "id") {
-        const response = await axios.get(`${this.BASE_URL}/products?page=${page}&size=${size}&sortBy=${sortBy}`, {
+        const response = await apiClient.get(`${this.BASE_URL}/products?page=${page}&size=${size}&sortBy=${sortBy}`, {
             headers: this.getHeader()
         });
         return response.data;
     }
 
     static async getProductById(productId) {
-        const response = await axios.get(`${this.BASE_URL}/products/${productId}`, {
+        const response = await apiClient.get(`${this.BASE_URL}/products/${productId}`, {
             headers: this.getHeader()
         });
         return response.data;
     }
 
     static async createProduct(productData) {
-        const response = await axios.post(`${this.BASE_URL}/products`, productData, {
+        const response = await apiClient.post(`${this.BASE_URL}/products`, productData, {
             headers: this.getHeader()
         });
         return response.data;
     }
 
     static async updateProduct(productId, productData) {
-        const response = await axios.put(`${this.BASE_URL}/products/${productId}`, productData, {
+        const response = await apiClient.put(`${this.BASE_URL}/products/${productId}`, productData, {
             headers: this.getHeader()
         });
         return response.data;
     }
 
     static async deleteProduct(productId) {
-        const response = await axios.delete(`${this.BASE_URL}/products/${productId}`, {
+        const response = await apiClient.delete(`${this.BASE_URL}/products/${productId}`, {
             headers: this.getHeader()
         });
         return response.data;
     }
 
     static async searchProducts(keyword) {
-        const response = await axios.get(`${this.BASE_URL}/products/search?keyword=${keyword}`, {
+        const response = await apiClient.get(`${this.BASE_URL}/products/search?keyword=${keyword}`, {
             headers: this.getHeader()
         });
         return response.data;
     }
 
     static async getLowStockProducts() {
-        const response = await axios.get(`${this.BASE_URL}/products/low-stock`, {
+        const response = await apiClient.get(`${this.BASE_URL}/products/low-stock`, {
             headers: this.getHeader()
         });
         return response.data;
@@ -317,35 +365,35 @@ export default class ApiService {
     /** CATEGORY API */
 
     static async getAllCategories() {
-        const response = await axios.get(`${this.BASE_URL}/categories`, {
+        const response = await apiClient.get(`${this.BASE_URL}/categories`, {
             headers: this.getHeader()
         });
         return response.data;
     }
 
     static async getCategoryById(categoryId) {
-        const response = await axios.get(`${this.BASE_URL}/categories/${categoryId}`, {
+        const response = await apiClient.get(`${this.BASE_URL}/categories/${categoryId}`, {
             headers: this.getHeader()
         });
         return response.data;
     }
 
     static async createCategory(categoryData) {
-        const response = await axios.post(`${this.BASE_URL}/categories`, categoryData, {
+        const response = await apiClient.post(`${this.BASE_URL}/categories`, categoryData, {
             headers: this.getHeader()
         });
         return response.data;
     }
 
     static async updateCategory(categoryId, categoryData) {
-        const response = await axios.put(`${this.BASE_URL}/categories/${categoryId}`, categoryData, {
+        const response = await apiClient.put(`${this.BASE_URL}/categories/${categoryId}`, categoryData, {
             headers: this.getHeader()
         });
         return response.data;
     }
 
     static async deleteCategory(categoryId) {
-        const response = await axios.delete(`${this.BASE_URL}/categories/${categoryId}`, {
+        const response = await apiClient.delete(`${this.BASE_URL}/categories/${categoryId}`, {
             headers: this.getHeader()
         });
         return response.data;
@@ -354,35 +402,35 @@ export default class ApiService {
     /** SUPPLIER API */
 
     static async getAllSuppliers() {
-        const response = await axios.get(`${this.BASE_URL}/suppliers`, {
+        const response = await apiClient.get(`${this.BASE_URL}/suppliers`, {
             headers: this.getHeader()
         });
         return response.data;
     }
 
     static async getSupplierById(supplierId) {
-        const response = await axios.get(`${this.BASE_URL}/suppliers/${supplierId}`, {
+        const response = await apiClient.get(`${this.BASE_URL}/suppliers/${supplierId}`, {
             headers: this.getHeader()
         });
         return response.data;
     }
 
     static async createSupplier(supplierData) {
-        const response = await axios.post(`${this.BASE_URL}/suppliers`, supplierData, {
+        const response = await apiClient.post(`${this.BASE_URL}/suppliers`, supplierData, {
             headers: this.getHeader()
         });
         return response.data;
     }
 
     static async updateSupplier(supplierId, supplierData) {
-        const response = await axios.put(`${this.BASE_URL}/suppliers/${supplierId}`, supplierData, {
+        const response = await apiClient.put(`${this.BASE_URL}/suppliers/${supplierId}`, supplierData, {
             headers: this.getHeader()
         });
         return response.data;
     }
 
     static async deleteSupplier(supplierId) {
-        const response = await axios.delete(`${this.BASE_URL}/suppliers/${supplierId}`, {
+        const response = await apiClient.delete(`${this.BASE_URL}/suppliers/${supplierId}`, {
             headers: this.getHeader()
         });
         return response.data;
@@ -391,35 +439,35 @@ export default class ApiService {
     /** STOCK TRANSACTION API */
 
     static async getAllTransactions() {
-        const response = await axios.get(`${this.BASE_URL}/transactions`, {
+        const response = await apiClient.get(`${this.BASE_URL}/transactions`, {
             headers: this.getHeader()
         });
         return response.data;
     }
 
     static async getTransactionById(transactionId) {
-        const response = await axios.get(`${this.BASE_URL}/transactions/${transactionId}`, {
+        const response = await apiClient.get(`${this.BASE_URL}/transactions/${transactionId}`, {
             headers: this.getHeader()
         });
         return response.data;
     }
 
     static async createTransaction(transactionData) {
-        const response = await axios.post(`${this.BASE_URL}/transactions`, transactionData, {
+        const response = await apiClient.post(`${this.BASE_URL}/transactions`, transactionData, {
             headers: this.getHeader()
         });
         return response.data;
     }
 
     static async updateTransaction(transactionId, transactionData) {
-        const response = await axios.put(`${this.BASE_URL}/transactions/${transactionId}`, transactionData, {
+        const response = await apiClient.put(`${this.BASE_URL}/transactions/${transactionId}`, transactionData, {
             headers: this.getHeader()
         });
         return response.data;
     }
 
     static async deleteTransaction(transactionId) {
-        const response = await axios.delete(`${this.BASE_URL}/transactions/${transactionId}`, {
+        const response = await apiClient.delete(`${this.BASE_URL}/transactions/${transactionId}`, {
             headers: this.getHeader()
         });
         return response.data;

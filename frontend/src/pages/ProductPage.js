@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../service/ApiService';
+import { extractApiMessage, isAuthFailure } from '../service/apiError';
 import './DashboardPage.css';
 
 function ProductPage() {
@@ -72,8 +73,8 @@ function ProductPage() {
             setCategories(categoriesRes.categoryList || []);
             setSuppliers(suppliersRes.supplierList || []);
         } catch (err) {
-            setError('Veriler yüklenemedi: ' + err.message);
-            if (err.message.includes('403') || err.message.includes('401')) {
+            setError(extractApiMessage(err, 'Veriler yüklenemedi.'));
+            if (isAuthFailure(err)) {
                 ApiService.logout();
                 navigate('/login');
             }
@@ -102,7 +103,7 @@ function ProductPage() {
             setCurrentPage(0);
             fetchData();
         } catch (err) {
-            setError('Ürün eklenemedi: ' + err.message);
+            setError(extractApiMessage(err, 'Ürün eklenemedi.'));
         }
     };
 
@@ -112,7 +113,7 @@ function ProductPage() {
                 await ApiService.deleteProduct(id);
                 fetchData();
             } catch (err) {
-                setError('Silme başarısız: ' + err.message);
+                setError(extractApiMessage(err, 'Silme başarısız.'));
             }
         }
     };

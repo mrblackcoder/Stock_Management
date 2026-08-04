@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../service/ApiService';
+import { extractApiMessage } from '../service/apiError';
 import './DashboardPage.css';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
 import { Pie, Bar } from 'react-chartjs-2';
@@ -83,7 +84,7 @@ function DashboardPage() {
 
             setLoading(false);
         } catch (err) {
-            setError('Failed to load dashboard data. Please try again.');
+            setError(extractApiMessage(err, 'Failed to load dashboard data. Please try again.'));
             setLoading(false);
         }
     };

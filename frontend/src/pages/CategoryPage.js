@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../service/ApiService';
+import { extractApiMessage, isAuthFailure } from '../service/apiError';
 import './CategoryPage.css';
 
 // Category colors and icons based on name keywords
@@ -79,8 +80,8 @@ function CategoryPage() {
             setCategories(response.categoryList || []);
             setError('');
         } catch (err) {
-            setError('Failed to load categories: ' + err.message);
-            if (err.message.includes('403') || err.message.includes('401')) {
+            setError(extractApiMessage(err, 'Failed to load categories.'));
+            if (isAuthFailure(err)) {
                 ApiService.logout();
                 navigate('/login');
             }
@@ -102,7 +103,7 @@ function CategoryPage() {
             setEditMode(false);
             fetchCategories();
         } catch (err) {
-            setError('Operation failed: ' + err.message);
+            setError(extractApiMessage(err, 'Operation failed.'));
         }
     };
 
@@ -118,7 +119,7 @@ function CategoryPage() {
                 await ApiService.deleteCategory(id);
                 fetchCategories();
             } catch (err) {
-                setError('Delete failed: ' + err.message);
+                setError(extractApiMessage(err, 'Delete failed.'));
             }
         }
     };

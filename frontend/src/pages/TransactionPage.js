@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ApiService from '../service/ApiService';
+import { extractApiMessage, isAuthFailure } from '../service/apiError';
 import './DashboardPage.css';
 
 function TransactionPage() {
@@ -47,8 +48,8 @@ function TransactionPage() {
             setTransactions(transactionsRes.transactionList || []);
             setProducts(productsRes.productList || []);
         } catch (err) {
-            setError('Veriler yüklenemedi: ' + err.message);
-            if (err.message.includes('403') || err.message.includes('401')) {
+            setError(extractApiMessage(err, 'Veriler yüklenemedi.'));
+            if (isAuthFailure(err)) {
                 ApiService.logout();
                 navigate('/login');
             }
@@ -71,7 +72,7 @@ function TransactionPage() {
             setFormData({ productId: '', transactionType: 'PURCHASE', quantity: '', notes: '' });
             fetchData();
         } catch (err) {
-            setError('Transaction eklenemedi: ' + err.message);
+            setError(extractApiMessage(err, 'Transaction eklenemedi.'));
         }
     };
 
@@ -81,7 +82,7 @@ function TransactionPage() {
                 await ApiService.deleteTransaction(id);
                 fetchData();
             } catch (err) {
-                setError('Silme başarısız: ' + err.message);
+                setError(extractApiMessage(err, 'Silme başarısız.'));
             }
         }
     };
