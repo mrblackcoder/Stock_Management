@@ -239,6 +239,51 @@ class UserProfileUpdateIntegrationTest {
         assertCallerUntouched();
     }
 
+    /**
+     * The request DTO's own internals must be as unacceptable as any other field.
+     *
+     * `unsupportedFields` is the collector itself; the rest are the names Bean
+     * Validation derives from the @AssertTrue rules. None of them is a settable
+     * property, so Jackson treats them as unknown and routes them to the collector -
+     * but that depends on their staying getter-only, which is exactly what these
+     * cases pin down. Adding a setter to any of them would turn it into a known
+     * ignored property that slips past the collector, and these tests would fail.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "unsupportedFields",
+            "onlySupportedFieldsPresent",
+            "atLeastOneFieldProvided",
+            "emailNotBlank",
+            "fullNameNotBlank",
+            "fullNameLengthValid"
+    })
+    void internalBeanPropertyAloneReturnsUnsupportedFieldError(String property) throws Exception {
+        assertRejected("{\"" + property + "\":true}", UNSUPPORTED_FIELDS);
+
+        assertCallerUntouched();
+        assertOtherUserUntouched();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "unsupportedFields",
+            "onlySupportedFieldsPresent",
+            "atLeastOneFieldProvided",
+            "emailNotBlank",
+            "fullNameNotBlank",
+            "fullNameLengthValid"
+    })
+    void internalBeanPropertyAlongsideValidEditReturnsUnsupportedFieldError(String property) throws Exception {
+        assertRejected("{\"fullName\":\"Attempted Update\",\"" + property + "\":true}", UNSUPPORTED_FIELDS);
+
+        // The otherwise-valid edit travelling with it must not be applied.
+        assertEquals(callerFullNameBefore, reload(caller).getFullName(),
+                "a rejected request must not persist the editable field it carried");
+        assertCallerUntouched();
+        assertOtherUserUntouched();
+    }
+
     // ==================== Duplicate email ====================
 
     @Test
