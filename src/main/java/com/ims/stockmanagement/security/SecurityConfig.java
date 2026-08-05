@@ -116,9 +116,9 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health/**", "/actuator/info", "/actuator/prometheus").permitAll()
                         .requestMatchers("/actuator/**").authenticated()
 
-                        // Frontend pages - no authentication required
-                        .requestMatchers("/", "/login", "/register", "/dashboard", "/products",
-                                "/categories", "/suppliers", "/transactions", "/profile").permitAll()
+                        // The React SPA owns /, /login, /dashboard and the rest of the
+                        // application routes; the backend serves only the API, so those
+                        // paths are no longer opened up here.
 
                         // Static resources - no authentication required
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/static/**").permitAll()

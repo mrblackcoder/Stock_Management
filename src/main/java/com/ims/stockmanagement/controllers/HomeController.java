@@ -10,14 +10,14 @@ import java.util.Map;
 public class HomeController {
 
     /**
-     * API status check endpoint
-     * Note: Root "/" is handled by WebController for Thymeleaf pages
+     * API status check endpoint.
+     * The backend serves only the API; the React SPA owns the browser routes.
      */
     @GetMapping("/api")
     public Map<String, Object> home() {
         Map<String, Object> response = new HashMap<>();
         response.put("status", "running");
-        response.put("message", "Inventory Management System API is running");
+        response.put("message", "Stock Management System API is running");
         response.put("version", "1.0.0");
 
         Map<String, String> endpoints = new HashMap<>();
