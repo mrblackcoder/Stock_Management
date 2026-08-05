@@ -218,13 +218,18 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, errorMessage);
         });
 
-        String errorMessage = errors.entrySet().stream()
-                .map(entry -> entry.getKey() + ": " + entry.getValue())
-                .collect(Collectors.joining("; "));
+        // A single violation is reported verbatim, so a rule that owns exactly one
+        // input yields one stable public message. Several violations still need the
+        // field names to be intelligible, so those keep the annotated form.
+        String errorMessage = errors.size() == 1
+                ? errors.values().iterator().next()
+                : "Validation failed: " + errors.entrySet().stream()
+                        .map(entry -> entry.getKey() + ": " + entry.getValue())
+                        .collect(Collectors.joining("; "));
 
         Response response = Response.builder()
                 .statusCode(HttpStatus.BAD_REQUEST.value())
-                .message("Validation failed: " + errorMessage)
+                .message(errorMessage)
                 .timestamp(LocalDateTime.now())
                 .build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
