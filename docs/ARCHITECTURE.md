@@ -7,20 +7,20 @@
 │                              CLIENT LAYER                                    │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
-│    ┌──────────────────────┐         ┌──────────────────────┐                │
-│    │   React Frontend     │         │   Thymeleaf Pages    │                │
-│    │   (Port 3000/80)     │         │   (Server-Side)      │                │
-│    │                      │         │                      │                │
-│    │  - Dashboard         │         │  - Login Page        │                │
-│    │  - Products          │         │  - Register Page     │                │
-│    │  - Categories        │         │  - Dashboard         │                │
-│    │  - Suppliers         │         │                      │                │
-│    │  - Transactions      │         │                      │                │
-│    │  - Profile           │         │                      │                │
-│    └──────────┬───────────┘         └──────────┬───────────┘                │
-│               │                                │                            │
-│               │    REST API (JSON)             │    HTTP (HTML)              │
-│               └───────────────┬────────────────┘                            │
+│    ┌──────────────────────┐                                                 │
+│    │   React SPA          │   The browser UI is served entirely by Nginx.   │
+│    │   (Port 3000/80)     │   The backend exposes only the REST API - it     │
+│    │                      │   renders no server-side pages.                  │
+│    │  - Dashboard         │                                                  │
+│    │  - Products          │                                                  │
+│    │  - Categories        │                                                  │
+│    │  - Suppliers         │                                                  │
+│    │  - Transactions      │                                                  │
+│    │  - Profile           │                                                  │
+│    └──────────┬───────────┘                                                 │
+│               │                                                              │
+│               │    REST API (JSON)                                           │
+│               └───────────────┬──────────────────────────────────────────────┤
 │                               │                                              │
 └───────────────────────────────┼──────────────────────────────────────────────┘
                                 │

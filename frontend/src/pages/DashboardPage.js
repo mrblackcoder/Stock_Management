@@ -112,7 +112,7 @@ function DashboardPage() {
         <div className="dashboard-page">
             <div className="dashboard-header">
                 <h1>Dashboard</h1>
-                <p>Welcome to your Inventory Management System</p>
+                <p>Welcome to your Stock Management System</p>
             </div>
 
             {/* Statistics Cards */}

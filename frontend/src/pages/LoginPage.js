@@ -61,7 +61,7 @@ function LoginPage() {
             <div className="login-card">
                 <div className="login-header">
                     <i className="fas fa-box-open"></i>
-                    <h2>Inventory Management System</h2>
+                    <h2>Stock Management System</h2>
                     <p>Login to your account</p>
                 </div>
 

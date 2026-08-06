@@ -135,7 +135,7 @@ function RegisterPage() {
                 <div className="login-header">
                     <i className="fas fa-user-plus"></i>
                     <h2>Create Account</h2>
-                    <p>Register for Inventory Management System</p>
+                    <p>Register for Stock Management System</p>
                 </div>
 
                 {error && (

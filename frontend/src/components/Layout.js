@@ -72,7 +72,7 @@ function Layout({ children }) {
                 {/* Top Header Bar */}
                 <header className="top-header">
                     <div className="header-left">
-                        <h1 className="page-title">Inventory Management System</h1>
+                        <h1 className="page-title">Stock Management System</h1>
                     </div>
                     <div className="header-right">
                         <div className="user-profile">
