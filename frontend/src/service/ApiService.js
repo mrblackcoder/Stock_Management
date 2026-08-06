@@ -116,18 +116,26 @@ apiClient.interceptors.response.use(
 export default class ApiService {
 
     static BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8080/api";
-    // Encryption key - environment variable'dan alınabilir
-    static ENCRYPTION_KEY = process.env.REACT_APP_ENCRYPTION_KEY || "ims-secure-key-2024-stock-mgmt";
+    /**
+     * Key used to obfuscate values kept in localStorage.
+     *
+     * Public by design: every REACT_APP_* value is compiled into the browser bundle,
+     * so this key ships to the client and anyone can read it. It raises the effort of
+     * casually eyeballing localStorage - it is not a security boundary, and it stops
+     * nothing that has script access to the page. The real controls are server-side:
+     * short-lived access tokens, and authorization checked on every request.
+     */
+    static STORAGE_OBFUSCATION_KEY =
+        process.env.REACT_APP_ENCRYPTION_KEY || "ims-secure-key-2024-stock-mgmt";
 
-    // Encrypt data using CryptoJS
-    static encrypt(data) {
-        return CryptoJS.AES.encrypt(data, this.ENCRYPTION_KEY).toString();
+    /** Obfuscates a stored value. Not encryption in any meaningful sense - see above. */
+    static obfuscate(data) {
+        return CryptoJS.AES.encrypt(data, this.STORAGE_OBFUSCATION_KEY).toString();
     }
 
-    // Decrypt data using CryptoJS
-    static decrypt(data) {
+    static deobfuscate(data) {
         try {
-            const bytes = CryptoJS.AES.decrypt(data, this.ENCRYPTION_KEY);
+            const bytes = CryptoJS.AES.decrypt(data, this.STORAGE_OBFUSCATION_KEY);
             return bytes.toString(CryptoJS.enc.Utf8);
         } catch (e) {
             return null;
@@ -146,18 +154,18 @@ export default class ApiService {
         }
     }
 
-    // Save token with encryption
+    // Save token (obfuscated in localStorage)
     static saveToken(token) {
-        const encryptedToken = this.encrypt(token);
-        localStorage.setItem("token", encryptedToken);
+        const storedValue = this.obfuscate(token);
+        localStorage.setItem("token", storedValue);
     }
 
     // Retrieve the token (returns null if expired)
     static getToken() {
-        const encryptedToken = localStorage.getItem("token");
-        if (!encryptedToken) return null;
+        const storedValue = localStorage.getItem("token");
+        if (!storedValue) return null;
 
-        const token = this.decrypt(encryptedToken);
+        const token = this.deobfuscate(storedValue);
         if (!token || this.isTokenExpired(token)) {
             // Locally expired only. The refresh token is deliberately preserved:
             // clearing it here destroyed the very credential the 401 handler needs,
@@ -169,62 +177,62 @@ export default class ApiService {
     
     // Get token without expiry check (for specific cases)
     static getRawToken() {
-        const encryptedToken = localStorage.getItem("token");
-        if (!encryptedToken) return null;
-        return this.decrypt(encryptedToken);
+        const storedValue = localStorage.getItem("token");
+        if (!storedValue) return null;
+        return this.deobfuscate(storedValue);
     }
     
     // Save refresh token
     static saveRefreshToken(refreshToken) {
-        const encryptedToken = this.encrypt(refreshToken);
-        localStorage.setItem("refreshToken", encryptedToken);
+        const storedValue = this.obfuscate(refreshToken);
+        localStorage.setItem("refreshToken", storedValue);
     }
     
     // Get refresh token
     static getRefreshToken() {
-        const encryptedToken = localStorage.getItem("refreshToken");
-        if (!encryptedToken) return null;
-        return this.decrypt(encryptedToken);
+        const storedValue = localStorage.getItem("refreshToken");
+        if (!storedValue) return null;
+        return this.deobfuscate(storedValue);
     }
 
-    // Save role with encryption
+    // Save role (obfuscated in localStorage)
     static saveRole(role) {
-        const encryptedRole = this.encrypt(role);
-        localStorage.setItem("role", encryptedRole);
+        const storedRole = this.obfuscate(role);
+        localStorage.setItem("role", storedRole);
     }
 
     // Retrieve the role
     static getRole() {
-        const encryptedRole = localStorage.getItem("role");
-        if (!encryptedRole) return null;
-        return this.decrypt(encryptedRole);
+        const storedRole = localStorage.getItem("role");
+        if (!storedRole) return null;
+        return this.deobfuscate(storedRole);
     }
 
     // Save username
     static saveUsername(username) {
-        const encryptedUsername = this.encrypt(username);
-        localStorage.setItem("username", encryptedUsername);
+        const storedUsername = this.obfuscate(username);
+        localStorage.setItem("username", storedUsername);
     }
 
     // Get username
     static getUsername() {
-        const encryptedUsername = localStorage.getItem("username");
-        if (!encryptedUsername) return null;
-        return this.decrypt(encryptedUsername);
+        const storedUsername = localStorage.getItem("username");
+        if (!storedUsername) return null;
+        return this.deobfuscate(storedUsername);
     }
 
     // Save user object
     static saveUser(user) {
-        const encryptedUser = this.encrypt(JSON.stringify(user));
-        localStorage.setItem("user", encryptedUser);
+        const storedUser = this.obfuscate(JSON.stringify(user));
+        localStorage.setItem("user", storedUser);
     }
 
     // Get user object
     static getUser() {
-        const encryptedUser = localStorage.getItem("user");
-        if (!encryptedUser) return null;
+        const storedUser = localStorage.getItem("user");
+        if (!storedUser) return null;
         try {
-            return JSON.parse(this.decrypt(encryptedUser));
+            return JSON.parse(this.deobfuscate(storedUser));
         } catch (e) {
             return null;
         }
