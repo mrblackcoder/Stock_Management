@@ -21,6 +21,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -275,6 +276,23 @@ public class GlobalExceptionHandler {
                 .timestamp(LocalDateTime.now())
                 .build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    /**
+     * Nothing is mapped at the requested path and no static resource matches it.
+     *
+     * Without this the catch-all below turns an ordinary wrong URL into a 500. The
+     * backend serves only /api/**, actuator and the API docs, so every other path is
+     * simply absent. The path itself is not echoed back.
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Response> handleNoResourceFound(NoResourceFoundException ex) {
+        Response response = Response.builder()
+                .statusCode(HttpStatus.NOT_FOUND.value())
+                .message("The requested resource was not found.")
+                .timestamp(LocalDateTime.now())
+                .build();
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
