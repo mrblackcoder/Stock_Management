@@ -289,7 +289,7 @@ Returns:
 {
   "app": {
     "name": "Stock Management System",
-    "description": "Inventory Management System",
+    "description": "Stock Management System",
     "version": "1.0.0"
   }
 }

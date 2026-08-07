@@ -46,7 +46,7 @@ public class OpenAPIConfig {
                 .title("Stock Management System API")
                 .version("1.0.0")
                 .description("""
-                        ## Inventory Management System REST API
+                        ## Stock Management System REST API
 
                         A REST API for managing inventory, products, categories, suppliers, and stock transactions.
 

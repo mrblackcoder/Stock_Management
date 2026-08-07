@@ -108,8 +108,7 @@ npm start
 ```
 
 ### Step 6: Access Application
-- **React SPA**: http://localhost:3000
-- **Thymeleaf Login**: http://localhost:8080/login
+- **Application UI (React SPA)**: http://localhost:3000
 - **API Documentation**: http://localhost:8080/swagger-ui.html
 - **Health Check**: http://localhost:8080/actuator/health
 

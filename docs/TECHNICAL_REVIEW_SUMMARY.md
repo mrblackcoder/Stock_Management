@@ -1,5 +1,14 @@
 # Technical Review Summary
 
+> **Historical document — not a description of the current codebase.**
+>
+> This summary captures the portfolio-readiness review that produced the plan for
+> pull requests #13–#18. The items it lists have since been addressed or
+> deliberately deferred; it is retained as a record of the plan, not as a current
+> status report.
+>
+> For what the system guarantees today, see [README.md](../README.md).
+
 ## Purpose
 
 This document summarizes a portfolio-readiness review of the project and the plan for acting on it.
